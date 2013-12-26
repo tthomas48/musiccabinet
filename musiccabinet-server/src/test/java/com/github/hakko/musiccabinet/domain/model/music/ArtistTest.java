@@ -17,7 +17,7 @@ public class ArtistTest {
 	
 	@Test (expected = IllegalArgumentException.class)
 	public void artistNameIsNullsafe() {
-		new Artist(null);
+		new Artist((String) null);
 	}
 
 	@Test

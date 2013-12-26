@@ -37,6 +37,18 @@
 			<artifactId>commons-io</artifactId>
 			<version>${version.commons-io}</version>
 		</dependency>
+    <dependency>
+      <groupId>jahspotify</groupId>
+      <artifactId>jahspotify-api</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>jahspotify</groupId>
+      <artifactId>jahspotify-native-jar</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <scope>runtime</scope>
+    </dependency>
 		<dependency>
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>

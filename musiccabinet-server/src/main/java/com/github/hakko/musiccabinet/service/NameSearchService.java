@@ -9,11 +9,12 @@ import com.github.hakko.musiccabinet.domain.model.music.Artist;
 import com.github.hakko.musiccabinet.domain.model.music.SearchCriteria;
 import com.github.hakko.musiccabinet.domain.model.music.Track;
 
-public class NameSearchService {
+public class NameSearchService implements INameSearchService {
 
 	private NameSearchDao nameSearchDao;
 	
 	public NameSearchResult<Artist> getArtists(String userQuery, int offset, int limit) {
+		
 		return nameSearchDao.getArtists(userQuery, offset, limit);
 	}
 	

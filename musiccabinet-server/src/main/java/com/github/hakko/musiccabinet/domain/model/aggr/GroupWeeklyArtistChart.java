@@ -48,6 +48,8 @@ public class GroupWeeklyArtistChart {
 		  if (o.getClass() != getClass()) return false;
 
 		  GroupWeeklyArtistChart gwac = (GroupWeeklyArtistChart) o;
+		  System.err.println(groupName + " vs. " + gwac.groupName);
+		  System.err.println(artistPlayCounts + " vs. " + gwac.artistPlayCounts);
           return new EqualsBuilder()
           .append(groupName, gwac.groupName)
           .append(artistPlayCounts, gwac.artistPlayCounts)
