@@ -191,7 +191,7 @@ public class DirectoryBrowserServiceTest {
 		
 		Assert.assertEquals("The Beatles", album.getArtist().getName());
 		Assert.assertEquals("1962-1966", album.getName());
-		Assert.assertEquals(4, album.getTrackIds().size());
+		Assert.assertEquals(4, album.getTrackUris().size());
 	}
 
 	@Test

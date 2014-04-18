@@ -7,6 +7,7 @@ import java.sql.SQLException;
 
 import org.springframework.jdbc.core.RowMapper;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
 import com.github.hakko.musiccabinet.domain.model.library.MetaData;
 import com.github.hakko.musiccabinet.domain.model.library.MetaData.Mediatype;
 import com.github.hakko.musiccabinet.domain.model.music.Track;
@@ -35,8 +36,8 @@ public class TrackWithMetadataRowMapper implements RowMapper<Track> {
 		md.setSize(rs.getInt(18));
 		md.setModified(rs.getTimestamp(19).getTime());
 		int trackId = rs.getInt(20);
-		md.setAlbumId(rs.getInt(21));
-		md.setArtistId(rs.getInt(22));
+		md.setAlbumUri(new SubsonicUri(rs.getInt(21)));
+		md.setArtistUri(new SubsonicUri(rs.getInt(22)));
 
 		return new Track(trackId, trackName, md);
 	}

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.LastFmDao;
 import com.github.hakko.musiccabinet.dao.LibraryBrowserDao;
 import com.github.hakko.musiccabinet.dao.MusicDao;
@@ -21,9 +22,9 @@ import com.github.hakko.musiccabinet.ws.lastfm.TrackUnLoveClient;
 
 public class StarService {
 
-	private Map<Integer, Set<Integer>> starredArtists = new HashMap<Integer, Set<Integer>>();
-	private Map<Integer, Set<Integer>> starredAlbums = new HashMap<Integer, Set<Integer>>();
-	private Map<Integer, Set<Integer>> starredTracks = new HashMap<Integer, Set<Integer>>();
+	private Map<Integer, Set<Uri>> starredArtists = new HashMap<Integer, Set<Uri>>();
+	private Map<Integer, Set<Uri>> starredAlbums = new HashMap<Integer, Set<Uri>>();
+	private Map<Integer, Set<Uri>> starredTracks = new HashMap<Integer, Set<Uri>>();
 
 	private Map<String, LastFmUser> cachedUsers = new HashMap<>();
 	
@@ -35,73 +36,73 @@ public class StarService {
 	private TrackLoveClient trackLoveClient;
 	private TrackUnLoveClient trackUnLoveClient;
 	
-	public void starArtist(String lastFmUsername, int artistId) {
+	public void starArtist(String lastFmUsername, Uri artistUri) {
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
-		starDao.starArtist(lastFmUser, artistId);
-		getStarredArtistIds(lastFmUser).add(artistId);
+		starDao.starArtist(lastFmUser, artistUri);
+		getStarredArtistUris(lastFmUser).add(artistUri);
 	}
 	
-	public void unstarArtist(String lastFmUsername, int artistId) {
+	public void unstarArtist(String lastFmUsername, Uri artistUri) {
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
-		starDao.unstarArtist(lastFmUser, artistId);
-		getStarredArtistIds(lastFmUser).remove(artistId);
+		starDao.unstarArtist(lastFmUser, artistUri);
+		getStarredArtistUris(lastFmUser).remove(artistUri);
 	}
 	
-	protected Set<Integer> getStarredArtistIds(LastFmUser lastFmUser) {
+	protected Set<Uri> getStarredArtistUris(LastFmUser lastFmUser) {
 		if (!starredArtists.containsKey(lastFmUser.getId())) {
 			starredArtists.put(lastFmUser.getId(), new HashSet<>(
-					starDao.getStarredArtistIds(lastFmUser, 0, MAX_VALUE, null)));
+					starDao.getStarredArtistUris(lastFmUser, 0, MAX_VALUE, null)));
 		}
 		return starredArtists.get(lastFmUser.getId());
 	}
 
 	public List<Artist> getStarredArtists(String lastFmUsername) {
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
-		return musicDao.getArtists(getStarredArtistIds(lastFmUser));
+		return musicDao.getArtists(getStarredArtistUris(lastFmUser));
 	}
 	
-	public void starAlbum(String lastFmUsername, int albumId) {
+	public void starAlbum(String lastFmUsername, Uri albumUri) {
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
-		starDao.starAlbum(lastFmUser, albumId);
-		getStarredAlbumIds(lastFmUser).add(albumId);
+		starDao.starAlbum(lastFmUser, albumUri);
+		getStarredAlbumUris(lastFmUser).add(albumUri);
 	}
 	
-	public void unstarAlbum(String lastFmUsername, int albumId) {
+	public void unstarAlbum(String lastFmUsername, Uri albumUri) {
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
-		starDao.unstarAlbum(lastFmUser, albumId);
-		getStarredAlbumIds(lastFmUser).remove(albumId);
+		starDao.unstarAlbum(lastFmUser, albumUri);
+		getStarredAlbumUris(lastFmUser).remove(albumUri);
 	}
 	
-	protected Set<Integer> getStarredAlbumIds(LastFmUser lastFmUser) {
+	protected Set<Uri> getStarredAlbumUris(LastFmUser lastFmUser) {
 		if (!starredAlbums.containsKey(lastFmUser.getId())) {
 			starredAlbums.put(lastFmUser.getId(), new HashSet<>(
-					starDao.getStarredAlbumIds(lastFmUser, 0, MAX_VALUE, null)));
+					starDao.getStarredAlbumUris(lastFmUser, 0, MAX_VALUE, null)));
 		}
 		return starredAlbums.get(lastFmUser.getId());
 	}
 
-	public void starTrack(String lastFmUsername, int trackId) throws ApplicationException {
+	public void starTrack(String lastFmUsername, Uri trackUri) throws ApplicationException {
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
-		starDao.starTrack(lastFmUser, trackId);
-		getStarredTracks(lastFmUser).add(trackId);
+		starDao.starTrack(lastFmUser, trackUri);
+		getStarredTracks(lastFmUser).add(trackUri);
 		if (lastFmSettingsService.isSyncStarredAndLovedTracks()) {
-			trackLoveClient.love(browserDao.getTrack(trackId), lastFmUser);
+			trackLoveClient.love(browserDao.getTrack(trackUri), lastFmUser);
 		}
 	}
 	
-	public void unstarTrack(String lastFmUsername, int trackId) throws ApplicationException {
+	public void unstarTrack(String lastFmUsername, Uri trackUri) throws ApplicationException {
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
-		starDao.unstarTrack(lastFmUser, trackId);
-		getStarredTracks(lastFmUser).remove(trackId);
+		starDao.unstarTrack(lastFmUser, trackUri);
+		getStarredTracks(lastFmUser).remove(trackUri);
 		if (lastFmSettingsService.isSyncStarredAndLovedTracks()) {
-			trackUnLoveClient.unlove(browserDao.getTrack(trackId), lastFmUser);
+			trackUnLoveClient.unlove(browserDao.getTrack(trackUri), lastFmUser);
 		}
 	}
 	
-	protected Set<Integer> getStarredTracks(LastFmUser lastFmUser) {
+	protected Set<Uri> getStarredTracks(LastFmUser lastFmUser) {
 		if (!starredTracks.containsKey(lastFmUser.getId())) {
 			starredTracks.put(lastFmUser.getId(), new HashSet<>(
-					starDao.getStarredTrackIds(lastFmUser, 0, MAX_VALUE, null)));
+					starDao.getStarredTrackUris(lastFmUser, 0, MAX_VALUE, null)));
 		}
 		return starredTracks.get(lastFmUser.getId());
 	}
@@ -115,34 +116,34 @@ public class StarService {
 		return lastFmUser;
 	}
 
-	public boolean isArtistStarred(String lastFmUsername, int artistId) {
+	public boolean isArtistStarred(String lastFmUsername, Uri artistUri) {
 		if (lastFmUsername == null) {
 			return false;
 		}
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
-		return getStarredArtistIds(lastFmUser).contains(artistId);
+		return getStarredArtistUris(lastFmUser).contains(artistUri);
 	}
 
-	public boolean[] getStarredAlbumsMask(String lastFmUsername, List<Integer> albumIds) {
+	public boolean[] getStarredAlbumsMask(String lastFmUsername, List<? extends Uri> albumIds) {
 		boolean[] mask = new boolean[albumIds.size()];
 		if (lastFmUsername == null) {
 			return mask;
 		}
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
 		for (int i = 0; i < mask.length; i++) {
-			mask[i] = getStarredAlbumIds(lastFmUser).contains(albumIds.get(i));
+			mask[i] = getStarredAlbumUris(lastFmUser).contains(albumIds.get(i));
 		}
 		return mask;
 	}
 
-	public boolean[] getStarredTracksMask(String lastFmUsername, List<Integer> trackIds) {
-		boolean[] mask = new boolean[trackIds.size()];
+	public boolean[] getStarredTracksMask(String lastFmUsername, List<? extends Uri> trackUris) {
+		boolean[] mask = new boolean[trackUris.size()];
 		if (lastFmUsername == null) {
 			return mask;
 		}
 		LastFmUser lastFmUser = getLastFmUser(lastFmUsername);
 		for (int i = 0; i < mask.length; i++) {
-			mask[i] = getStarredTracks(lastFmUser).contains(trackIds.get(i));
+			mask[i] = getStarredTracks(lastFmUser).contains(trackUris.get(i));
 		}
 		return mask;
 	}

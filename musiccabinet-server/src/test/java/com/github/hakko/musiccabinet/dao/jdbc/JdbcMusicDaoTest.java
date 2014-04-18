@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil;
 import com.github.hakko.musiccabinet.domain.model.music.Track;
 import com.github.hakko.musiccabinet.exception.ApplicationException;
@@ -31,12 +32,12 @@ public class JdbcMusicDaoTest {
 		String madonna1 = "madonna", madonna2 = "madonna";
 		String cher = "cher";
 		
-		int id1 = dao.getArtistId(madonna1);
-		int id2 = dao.getArtistId(madonna2);
-		int id3 = dao.getArtistId(cher);
+		Uri id1 = dao.getArtistUri(madonna1);
+		Uri id2 = dao.getArtistUri(madonna2);
+		Uri id3 = dao.getArtistUri(cher);
 		
-		Assert.assertTrue(id1 == id2);
-		Assert.assertFalse(id1 == id3);
+		Assert.assertTrue(id1.equals(id2));
+		Assert.assertFalse(id1.equals(id3));
 	}
 	
 	@Test
@@ -47,14 +48,14 @@ public class JdbcMusicDaoTest {
 		
 		String trackName = "AMAZING GRACE";
 
-		int trackId1 = dao.getTrackId(artist1, trackName);
-		int trackId2 = dao.getTrackId(artist2, trackName);
-		int trackId3 = dao.getTrackId(artist3, trackName);
+		Uri trackId1 = dao.getTrackUri(artist1, trackName);
+		Uri trackId2 = dao.getTrackUri(artist2, trackName);
+		Uri trackId3 = dao.getTrackUri(artist3, trackName);
 			
-		Assert.assertFalse(trackId1 == trackId2);
-		Assert.assertFalse(trackId2 == trackId3);
+		Assert.assertFalse(trackId1.equals(trackId2));
+		Assert.assertFalse(trackId2.equals(trackId3));
 		
-		int trackId2Again = dao.getTrackId(artist2, trackName);
+		Uri trackId2Again = dao.getTrackUri(artist2, trackName);
 		
 		Assert.assertEquals(trackId2, trackId2Again);
 	}
@@ -64,7 +65,7 @@ public class JdbcMusicDaoTest {
 		final String artistName = "Death Grips";
 		final String trackName = "I've Seen Footage";
 
-		int trackId = dao.getTrackId(artistName, trackName);
+		Uri trackId = dao.getTrackUri(artistName, trackName);
 		Track track = dao.getTrack(trackId);
 
 		Assert.assertEquals(artistName, track.getArtist().getName());

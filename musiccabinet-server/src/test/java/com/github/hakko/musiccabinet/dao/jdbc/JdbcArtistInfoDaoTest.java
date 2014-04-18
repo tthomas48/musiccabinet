@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil;
 import com.github.hakko.musiccabinet.domain.model.music.ArtistInfo;
 import com.github.hakko.musiccabinet.exception.ApplicationException;
@@ -62,7 +64,7 @@ public class JdbcArtistInfoDaoTest {
 
 		// re-create artists
 		for (ArtistInfo ai : new ArtistInfo[]{aiAbba, aiCher, aiTina}) {
-			musicDao.getArtistId(ai.getArtist());
+			musicDao.getArtistUri(ai.getArtist());
 		}
 		
 	}
@@ -107,7 +109,7 @@ public class JdbcArtistInfoDaoTest {
 	@Test
 	public void unknownArtistInfoReturnsNull() throws ApplicationException {
 		int unknownId = -1;
-		ArtistInfo artistInfo = dao.getArtistInfo(unknownId);
+		ArtistInfo artistInfo = dao.getArtistInfo(new SubsonicUri(unknownId));
 
 		assertNull(artistInfo);
 	}
@@ -116,10 +118,10 @@ public class JdbcArtistInfoDaoTest {
 	public void biographyAndImageUrlAreReturnedAsInfo() throws ApplicationException {
 		deleteArtistInfos();
 
-		int abbaId = musicDao.getArtistId(aiAbba.getArtist());
+		Uri abbaUri = musicDao.getArtistUri(aiAbba.getArtist());
 
 		dao.createArtistInfo(Arrays.asList(aiAbba));
-		ArtistInfo dbAbba = dao.getArtistInfo(abbaId);
+		ArtistInfo dbAbba = dao.getArtistInfo(abbaUri);
 		
 		Assert.assertEquals(ABBA_IMAGE_URL, dbAbba.getLargeImageUrl());
 		Assert.assertEquals(ABBA_BIO_SUMMARY, dbAbba.getBioSummary());
@@ -129,14 +131,14 @@ public class JdbcArtistInfoDaoTest {
 	public void bioSummaryCanBeUpdated() {
 		deleteArtistInfos();
 
-		int abbaId = musicDao.getArtistId(aiAbba.getArtist());
+		Uri abbaUri = musicDao.getArtistUri(aiAbba.getArtist());
 
 		String biography = "new ABBA biography";
 
 		dao.createArtistInfo(Arrays.asList(aiAbba));
-		dao.setBioSummary(abbaId, biography);
+		dao.setBioSummary(abbaUri, biography);
 		
-		ArtistInfo dbAbba = dao.getArtistInfo(abbaId);
+		ArtistInfo dbAbba = dao.getArtistInfo(abbaUri);
 		
 		Assert.assertEquals(biography, dbAbba.getBioSummary());
 	}
@@ -145,10 +147,10 @@ public class JdbcArtistInfoDaoTest {
 	public void bioContentIsExposedInDetailedArtistInfo() {
 		deleteArtistInfos();
 
-		int tinaId = musicDao.getArtistId(aiTina.getArtist());
+		Uri tinaUri = musicDao.getArtistUri(aiTina.getArtist());
 
 		dao.createArtistInfo(Arrays.asList(aiTina));
-		ArtistInfo artistInfo = dao.getDetailedArtistInfo(tinaId);
+		ArtistInfo artistInfo = dao.getDetailedArtistInfo(tinaUri);
 		
 		Assert.assertNotNull(artistInfo);
 		Assert.assertNotNull(artistInfo.getArtist());

@@ -10,9 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
 import com.github.hakko.musiccabinet.domain.model.music.AlbumInfo;
 import com.github.hakko.musiccabinet.exception.ApplicationException;
-import com.github.hakko.musiccabinet.service.lastfm.AlbumInfoService;
 
 /*
  * Doesn't actually do much testing, except invoking the service methods.
@@ -36,7 +36,7 @@ public class AlbumInfoServiceTest {
 	
 	@Test
 	public void canInvokeService() throws ApplicationException {
-		List<AlbumInfo> albums = aiService.getAlbumInfosForArtist(-1);
+		List<AlbumInfo> albums = aiService.getAlbumInfosForArtist(new SubsonicUri(-1));
 		
 		Assert.assertNotNull(albums);
 		Assert.assertEquals(0, albums.size());

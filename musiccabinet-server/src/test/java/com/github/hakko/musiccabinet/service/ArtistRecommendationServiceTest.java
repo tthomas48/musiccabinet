@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.LibraryAdditionDao;
 import com.github.hakko.musiccabinet.dao.MusicDao;
 import com.github.hakko.musiccabinet.domain.model.library.File;
@@ -34,14 +35,14 @@ public class ArtistRecommendationServiceTest {
 	@Autowired
 	private MusicDao musicDao;
 	
-	private int madonnaId;
+	private Uri madonnarUri;
 	
 	@Before
 	public void createArtistToSearchFor() {
 		File file = getFile("Madonna", null, null);
 		UnittestLibraryUtil.submitFile(additionDao, file);
 		
-		madonnaId = musicDao.getArtistId("Madonna");
+		madonnarUri = musicDao.getArtistUri("Madonna");
 	}
 	
 	@Test
@@ -52,12 +53,12 @@ public class ArtistRecommendationServiceTest {
 
 	@Test
 	public void canInvokeRelatedArtistsInLibrary() throws ApplicationException {
-		arService.getRelatedArtistsInLibrary(madonnaId, 20, true);
+		arService.getRelatedArtistsInLibrary(madonnarUri, 20, true);
 	}
 
 	@Test
 	public void canInvokeRelatedArtistsNotInLibrary() throws ApplicationException {
-		arService.getRelatedArtistsNotInLibrary(madonnaId, 20, true);
+		arService.getRelatedArtistsNotInLibrary(madonnarUri, 20, true);
 	}
 	
 	@Test

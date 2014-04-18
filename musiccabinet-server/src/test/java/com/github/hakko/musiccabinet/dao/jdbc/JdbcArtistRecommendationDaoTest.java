@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistInfoDao;
 import com.github.hakko.musiccabinet.dao.ArtistRelationDao;
 import com.github.hakko.musiccabinet.dao.ArtistTopTracksDao;
@@ -68,7 +69,7 @@ public class JdbcArtistRecommendationDaoTest {
 	celine = new Artist("Céline Dion"), 
 	kylie = new Artist("Kylie Minogue");
 
-	private int cherId;
+	private Uri cherUri;
 	
 	@Before
 	public void createTestData() throws ApplicationException {
@@ -105,7 +106,7 @@ public class JdbcArtistRecommendationDaoTest {
 		
 		playlistGeneratorService.updateSearchIndex();
 
-		cherId = musicDao.getArtistId(cher);
+		musicDao.getArtistUri(cher);
 
 		List<ArtistInfo> artistInfos = new ArrayList<>();
 		for (Artist artist : Arrays.asList(madonna, cyndi, celine, kylie)) {
@@ -117,7 +118,7 @@ public class JdbcArtistRecommendationDaoTest {
 	@Test
 	public void validateRelatedArtistsInLibrary() {
 		List<ArtistRecommendation> relatedArtists = 
-			artistRecommendationDao.getRelatedArtistsInLibrary(cherId, 10, true);
+			artistRecommendationDao.getRelatedArtistsInLibrary(cherUri, 10, true);
 		
 		Assert.assertNotNull(relatedArtists);
 		Assert.assertEquals(2, relatedArtists.size());
@@ -137,7 +138,7 @@ public class JdbcArtistRecommendationDaoTest {
 	@Test
 	public void validateRelatedArtistsNotInLibrary() {
 		List<String> relatedArtistNames = 
-			artistRecommendationDao.getRelatedArtistsNotInLibrary(cherId, 10, true);
+			artistRecommendationDao.getRelatedArtistsNotInLibrary(cherUri, 10, true);
 		
 		Assert.assertNotNull(relatedArtistNames);
 		Assert.assertEquals(2, relatedArtistNames.size());

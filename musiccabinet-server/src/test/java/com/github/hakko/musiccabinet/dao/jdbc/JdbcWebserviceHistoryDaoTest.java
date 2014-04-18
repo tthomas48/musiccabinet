@@ -2,9 +2,9 @@ package com.github.hakko.musiccabinet.dao.jdbc;
 
 import static com.github.hakko.musiccabinet.dao.util.PostgreSQLFunction.BLOCK_WEBSERVICE;
 import static com.github.hakko.musiccabinet.dao.util.PostgreSQLFunction.GET_ARTIST_ID;
-import static com.github.hakko.musiccabinet.dao.util.PostgreSQLFunction.GET_TRACK_ID;
-import static com.github.hakko.musiccabinet.dao.util.PostgreSQLFunction.GET_LASTFMUSER_ID;
 import static com.github.hakko.musiccabinet.dao.util.PostgreSQLFunction.GET_LASTFMGROUP_ID;
+import static com.github.hakko.musiccabinet.dao.util.PostgreSQLFunction.GET_LASTFMUSER_ID;
+import static com.github.hakko.musiccabinet.dao.util.PostgreSQLFunction.GET_TRACK_ID;
 import static com.github.hakko.musiccabinet.domain.model.library.Period.OVERALL;
 import static com.github.hakko.musiccabinet.domain.model.library.Period.SIX_MONTHS;
 import static com.github.hakko.musiccabinet.domain.model.library.WebserviceInvocation.Calltype.ARTIST_GET_INFO;
@@ -28,6 +28,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil;
 import com.github.hakko.musiccabinet.domain.model.library.File;
 import com.github.hakko.musiccabinet.domain.model.library.LastFmGroup;
@@ -419,12 +420,13 @@ public class JdbcWebserviceHistoryDaoTest {
 	public void blockLogsInvocationTimeInAnInfiniteFuture() {
 		Calltype TOP = Calltype.ARTIST_GET_TOP_TRACKS;
 		Artist artist = new Artist("Björn Olsson");
-		int artistId = musicDao.getArtistId(artist);
+		Uri artistUri = musicDao.getArtistUri(artist);
+		int artistId = artistUri.getId();
 
 		WebserviceInvocation wi = new WebserviceInvocation(TOP, artist);
 		assertTrue(dao.isWebserviceInvocationAllowed(wi));
 
-		dao.blockWebserviceInvocation(artistId, TOP);
+		dao.blockWebserviceInvocation(artistUri, TOP);
 		assertFalse(dao.isWebserviceInvocationAllowed(wi));
 
 		dao.getJdbcTemplate().queryForObject(

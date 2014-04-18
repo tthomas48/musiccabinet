@@ -12,8 +12,9 @@ import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import com.github.hakko.musiccabinet.dao.MusicDao;
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.LastFmDao;
+import com.github.hakko.musiccabinet.dao.MusicDao;
 import com.github.hakko.musiccabinet.dao.WebserviceHistoryDao;
 import com.github.hakko.musiccabinet.domain.model.library.LastFmGroup;
 import com.github.hakko.musiccabinet.domain.model.library.LastFmUser;
@@ -42,9 +43,9 @@ public class JdbcWebserviceHistoryDao implements JdbcTemplateDao, WebserviceHist
 	}
 	
 	@Override
-	public void blockWebserviceInvocation(int artistId, WebserviceInvocation.Calltype callType) {
+	public void blockWebserviceInvocation(Uri artistUri, WebserviceInvocation.Calltype callType) {
 		jdbcTemplate.execute(format("select library.block_webservice(%d, %d)", 
-				artistId, callType.getDatabaseId()));
+				artistUri, callType.getDatabaseId()));
 	}
 
 	private void logWebserviceInvocation(WebserviceInvocation wi, Date invocationTime) {
@@ -55,11 +56,11 @@ public class JdbcWebserviceHistoryDao implements JdbcTemplateDao, WebserviceHist
 		Integer artistId = null, trackId = null, albumId = null, 
 				userId = null, groupId = null, tagId = null;
 		if (wi.getTrack() != null) {
-			sql.append(" and track_id = " + (trackId = musicDao.getTrackId(wi.getTrack())));
+			sql.append(" and track_id = " + (trackId = musicDao.getTrackUri(wi.getTrack()).getId()));
 		} else if (wi.getAlbum() != null) {
-			sql.append(" and album_id = " + (albumId = musicDao.getAlbumId(wi.getAlbum())));
+			sql.append(" and album_id = " + (albumId = musicDao.getAlbumUri(wi.getAlbum()).getId()));
 		} else if (wi.getArtist() != null) {
-			sql.append(" and artist_id = " + (artistId = musicDao.getArtistId(wi.getArtist())));
+			sql.append(" and artist_id = " + (artistId = musicDao.getArtistUri(wi.getArtist()).getId()));
 		} else if (wi.getUser() != null) {
 			sql.append(" and lastfmuser_id = " + (userId = lastFmDao.getLastFmUserId(wi.getUser().getLastFmUsername())));
 		} else if (wi.getGroup() != null) {

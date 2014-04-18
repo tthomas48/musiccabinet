@@ -2,6 +2,7 @@ package com.github.hakko.musiccabinet.service;
 
 import java.util.List;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.domain.model.aggr.NameSearchResult;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
@@ -18,7 +19,7 @@ public interface INameSearchService {
 	public NameSearchResult<Track> getTracks(String userQuery, int offset,
 			int limit);
 
-	public List<Integer> getTracks(SearchCriteria searchCriteria, int offset,
+	public List<? extends Uri> getTracks(SearchCriteria searchCriteria, int offset,
 			int limit);
 
 	public List<String> getFileTypes();

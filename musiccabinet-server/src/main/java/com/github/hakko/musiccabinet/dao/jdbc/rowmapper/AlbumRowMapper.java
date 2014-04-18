@@ -1,14 +1,16 @@
 package com.github.hakko.musiccabinet.dao.jdbc.rowmapper;
 
 import static java.io.File.separatorChar;
-import static java.util.Arrays.asList;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.jdbc.core.RowMapper;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
 
 public class AlbumRowMapper implements RowMapper<Album> {
@@ -26,9 +28,13 @@ public class AlbumRowMapper implements RowMapper<Album> {
 			coverArtFile = getFileName(rs.getString(8), rs.getString(9));
 		}
 		String coverArtURL = rs.getString(10);
-		List<Integer> trackIds = asList((Integer[]) rs.getArray(11).getArray());
+		Integer[] trackIds = (Integer[])rs.getArray(11).getArray();
+		List<Uri> trackUris = new ArrayList<Uri>();
+		for(Integer trackId : trackIds) {
+			trackUris.add(new SubsonicUri(trackId));
+		}
 		return new Album(artistId, artistName, albumId, albumName, year, coverArtFile,
-				coverArtEmbedded, coverArtURL, trackIds);
+				coverArtEmbedded, coverArtURL, trackUris);
 	}
 
 	private String getFileName(String directory, String filename) {

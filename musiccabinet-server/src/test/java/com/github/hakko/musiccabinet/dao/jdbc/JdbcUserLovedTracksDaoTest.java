@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil;
 import com.github.hakko.musiccabinet.domain.model.aggr.UserLovedTracks;
 import com.github.hakko.musiccabinet.domain.model.aggr.UserStarredTrack;
@@ -77,11 +78,11 @@ public class JdbcUserLovedTracksDaoTest {
 
 		List<Artist> artists = browserDao.getArtists();
 		assertEquals(2, artists.size());
-		album1 = browserDao.getAlbums(artists.get(0).getId(), true).get(0);
-		album2 = browserDao.getAlbums(artists.get(1).getId(), true).get(0);
+		album1 = browserDao.getAlbums(artists.get(0).getUri(), true).get(0);
+		album2 = browserDao.getAlbums(artists.get(1).getUri(), true).get(0);
 		
-		track1 = browserDao.getTracks(album1.getTrackIds()).get(0);
-		track2 = browserDao.getTracks(album2.getTrackIds()).get(0);
+		track1 = browserDao.getTracks(album1.getTrackUris()).get(0);
+		track2 = browserDao.getTracks(album2.getTrackUris()).get(0);
 
 		deleteLovedAndStarredTracks();
 	}
@@ -139,22 +140,22 @@ public class JdbcUserLovedTracksDaoTest {
 
 	@Test
 	public void addsStarredTrackWhenImportingNewLovedTracks() {
-		starDao.starTrack(user1, track1.getId());
-		starDao.starTrack(user2, track2.getId());
+		starDao.starTrack(user1, track1.getUri());
+		starDao.starTrack(user2, track2.getUri());
 		
 		dao.createLovedTracks(asList(new UserLovedTracks(USERNAME1, asList(track2))));
 		
-		List<Integer> starred1 = starDao.getStarredTrackIds(user1, 0, 10, null);
-		List<Integer> starred2 = starDao.getStarredTrackIds(user2, 0, 10, null);
+		List<? extends Uri> starred1 = starDao.getStarredTrackUris(user1, 0, 10, null);
+		List<? extends Uri> starred2 = starDao.getStarredTrackUris(user2, 0, 10, null);
 		
-		assertEquals(Arrays.asList(track2.getId(), track1.getId()), starred1);
-		assertEquals(Arrays.asList(track2.getId()), starred2);
+		assertEquals(Arrays.asList(track2.getUri(), track1.getUri()), starred1);
+		assertEquals(Arrays.asList(track2.getUri()), starred2);
 	}
 
 	@Test
 	public void removesStarredTracksWhenPreviouslyLovedTrackIsMissingInImport() {
-		starDao.starTrack(user1, track1.getId());
-		starDao.starTrack(user2, track2.getId());
+		starDao.starTrack(user1, track1.getUri());
+		starDao.starTrack(user2, track2.getUri());
 
 		dao.createLovedTracks(asList(
 				new UserLovedTracks(USERNAME1, asList(track1, track2)),
@@ -163,8 +164,8 @@ public class JdbcUserLovedTracksDaoTest {
 				new UserLovedTracks(USERNAME1, asList(track2)),
 				new UserLovedTracks(USERNAME2, asList(track2))));
 
-		List<Integer> starred1 = starDao.getStarredTrackIds(user1, 0, 10, null);
-		List<Integer> starred2 = starDao.getStarredTrackIds(user2, 0, 10, null);
+		List<? extends Uri> starred1 = starDao.getStarredTrackUris(user1, 0, 10, null);
+		List<? extends Uri> starred2 = starDao.getStarredTrackUris(user2, 0, 10, null);
 
 		assertEquals(Arrays.asList(track2.getId()), starred1);
 		assertEquals(Arrays.asList(track2.getId()), starred2);
@@ -172,25 +173,25 @@ public class JdbcUserLovedTracksDaoTest {
 
 	@Test
 	public void starredTracksAreOnlyRemovedIfPreviouslyDefinedAsLovedTrack() {
-		starDao.starTrack(user1, track1.getId());
-		starDao.starTrack(user1, track2.getId());
+		starDao.starTrack(user1, track1.getUri());
+		starDao.starTrack(user1, track2.getUri());
 
 		dao.createLovedTracks(asList(
 				new UserLovedTracks(USERNAME1, asList(track2)),
 				new UserLovedTracks(USERNAME2, asList(track2))));
 		
-		List<Integer> starred1 = starDao.getStarredTrackIds(user1, 0, 10, null);
-		List<Integer> starred2 = starDao.getStarredTrackIds(user2, 0, 10, null);
+		List<? extends Uri> starred1 = starDao.getStarredTrackUris(user1, 0, 10, null);
+		List<? extends Uri> starred2 = starDao.getStarredTrackUris(user2, 0, 10, null);
 
-		assertEquals(asList(track2.getId(), track1.getId()), starred1);
-		assertEquals(asList(track2.getId()), starred2);
+		assertEquals(asList(track2.getUri(), track1.getUri()), starred1);
+		assertEquals(asList(track2.getUri()), starred2);
 
 		dao.createLovedTracks(asList(
 				new UserLovedTracks(USERNAME1, asList(track1)),
 				new UserLovedTracks(USERNAME2, asList(track2))));
 
-		starred1 = starDao.getStarredTrackIds(user1, 0, 10, null);
-		starred2 = starDao.getStarredTrackIds(user2, 0, 10, null);
+		starred1 = starDao.getStarredTrackUris(user1, 0, 10, null);
+		starred2 = starDao.getStarredTrackUris(user2, 0, 10, null);
 
 		assertEquals(asList(track1.getId()), starred1);
 		assertEquals(asList(track2.getId()), starred2);
@@ -198,8 +199,8 @@ public class JdbcUserLovedTracksDaoTest {
 
 	@Test
 	public void identifiesStarredButNotLovedTracks() {
-		starDao.starTrack(user1, track1.getId());
-		starDao.starTrack(user2, track1.getId());
+		starDao.starTrack(user1, track1.getUri());
+		starDao.starTrack(user2, track1.getUri());
 
 		dao.createLovedTracks(asList(new UserLovedTracks(USERNAME1, asList(track1, track2))));
 
@@ -225,14 +226,14 @@ public class JdbcUserLovedTracksDaoTest {
 				new UserLovedTracks(USERNAME1, asList(new Track(artistName1, trackName1))),
 				new UserLovedTracks(USERNAME2, asList(new Track(artistName2, trackName2)))));
 
-		assertFalse(browserDao.getTrackId(f1) == browserDao.getTrackId(f2));
-		assertFalse(browserDao.getTrackId(f3) == browserDao.getTrackId(f4));
-		assertFalse(browserDao.getTrackId(f3) == browserDao.getTrackId(f5));
+		assertFalse(browserDao.getTrackUri(f1) == browserDao.getTrackUri(f2));
+		assertFalse(browserDao.getTrackUri(f3) == browserDao.getTrackUri(f4));
+		assertFalse(browserDao.getTrackUri(f3) == browserDao.getTrackUri(f5));
 
-		assertEquals(asList(browserDao.getTrackId(f2)),
-				starDao.getStarredTrackIds(lastFmDao.getLastFmUser(USERNAME1)));
-		assertEquals(asList(browserDao.getTrackId(f3)),
-				starDao.getStarredTrackIds(lastFmDao.getLastFmUser(USERNAME2)));
+		assertEquals(asList(browserDao.getTrackUri(f2)),
+				starDao.getStarredTrackUris(lastFmDao.getLastFmUser(USERNAME1)));
+		assertEquals(asList(browserDao.getTrackUri(f3)),
+				starDao.getStarredTrackUris(lastFmDao.getLastFmUser(USERNAME2)));
 	}
 
 	private void deleteLovedAndStarredTracks() {

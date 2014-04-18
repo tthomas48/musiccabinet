@@ -1,17 +1,17 @@
 package com.github.hakko.musiccabinet.domain.model.music;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
+import com.github.hakko.musiccabinet.configuration.Uri;
+import com.github.hakko.musiccabinet.dao.util.URIUtil;
+
 public class Artist implements Comparable<Artist> {
 
-	private int id;
 	private String name;
 	private String sortName;
-	private URI uri;
+	private Uri uri;
 
 	public Artist() {
 
@@ -22,36 +22,28 @@ public class Artist implements Comparable<Artist> {
 	}
 
 	public Artist(int id, String name) {
-		this.id = id;
 		this.name = name;
-		try {
-			this.uri = new URI("subsonic:" + id);
-		} catch (URISyntaxException e) {
-			
-		}
+		this.uri = new SubsonicUri(id);
+	}
+
+	public Artist(String uri, String name) {
+		this.uri = URIUtil.parseURI(uri);
+		this.name = name;
 	}
 	
-	public Artist(String uri, String name) {
-		this.id = -1;
-		if(uri != null) {
-			try {
-				this.uri = new URI(uri);
-			} catch (Exception e) {
-			}
-		} else {
-			System.err.println("URI is null");
-		}
+	public Artist(Uri uri, String name) {
+		this.uri = uri;
 		this.name = name;
 	}
+
 
 	@Deprecated
 	public int getId() {
-		return id;
+		return uri.getId();
 	}
 
-	@Deprecated
 	public void setId(int id) {
-		this.id = id;
+		this.uri = new SubsonicUri(id);
 	}
 
 	public final String getName() {
@@ -73,12 +65,12 @@ public class Artist implements Comparable<Artist> {
 	public void setSortName(String sortName) {
 		this.sortName = sortName;
 	}
-	
-	public URI getUri() {
+
+	public Uri getUri() {
 		return uri;
 	}
 
-	public void setUri(URI uri) {
+	public void setUri(Uri uri) {
 		this.uri = uri;
 	}
 

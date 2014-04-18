@@ -12,11 +12,15 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.object.BatchSqlUpdate;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistInfoDao;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
 import com.github.hakko.musiccabinet.domain.model.music.ArtistInfo;
+import com.github.hakko.musiccabinet.log.Logger;
 
 public class JdbcArtistInfoDao implements ArtistInfoDao, JdbcTemplateDao {
+	
+	private static final Logger LOG = Logger.getLogger(JdbcArtistInfoDao.class);
 
 	private JdbcTemplate jdbcTemplate;
 	
@@ -62,7 +66,9 @@ public class JdbcArtistInfoDao implements ArtistInfoDao, JdbcTemplateDao {
 	}
 
 	@Override
-	public ArtistInfo getArtistInfo(final int artistId) {
+	public ArtistInfo getArtistInfo(final Uri artistUri) {
+		final Integer artistId = artistUri.getId();
+		
 		String sql = 
 				"select a.artist_name_capitalization, ai.largeimageurl, ai.biosummary,"
 				+ " exists(select 1 from library.artisttoptrackplaycount where artist_id = a.id)"
@@ -87,7 +93,9 @@ public class JdbcArtistInfoDao implements ArtistInfoDao, JdbcTemplateDao {
 	}
 
 	@Override
-	public ArtistInfo getDetailedArtistInfo(final int artistId) {
+	public ArtistInfo getDetailedArtistInfo(Uri artistUri) {
+		final Integer artistId = artistUri.getId();
+		
 		String sql = "select a.artist_name_capitalization, ai.largeimageurl, ai.biocontent"
 				+ " from music.artist a"
 				+ " left outer join music.artistinfo ai on ai.artist_id = a.id"
@@ -140,7 +148,8 @@ public class JdbcArtistInfoDao implements ArtistInfoDao, JdbcTemplateDao {
 	}
 
 	@Override
-	public void setBioSummary(int artistId, String biography) {
+	public void setBioSummary(Uri artistUri, String biography) {
+		final Integer artistId = artistUri.getId();
 		String sql = "update music.artistinfo set biosummary = ? where artist_id = ?";
 		jdbcTemplate.update(sql, biography, artistId);
 	}

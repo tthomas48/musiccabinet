@@ -59,11 +59,11 @@ public class JdbcStarDaoTest {
 
 		List<Artist> artists = browserDao.getArtists();
 		Assert.assertEquals(2, artists.size());
-		album1 = browserDao.getAlbums((artist1 = artists.get(0)).getId(), true).get(0);
-		album2 = browserDao.getAlbums((artist2 = artists.get(1)).getId(), true).get(0);
+		album1 = browserDao.getAlbums((artist1 = artists.get(0)).getUri(), true).get(0);
+		album2 = browserDao.getAlbums((artist2 = artists.get(1)).getUri(), true).get(0);
 		
-		track1 = browserDao.getTracks(album1.getTrackIds()).get(0);
-		track2 = browserDao.getTracks(album2.getTrackIds()).get(0);
+		track1 = browserDao.getTracks(album1.getTrackUris()).get(0);
+		track2 = browserDao.getTracks(album2.getTrackUris()).get(0);
 
 		lastFmUser1 = new LastFmUser(user1);
 		lastFmDao.createOrUpdateLastFmUser(lastFmUser1);
@@ -73,111 +73,111 @@ public class JdbcStarDaoTest {
 
 	@Test
 	public void nothingIsStarredInitially() {
-		Assert.assertEquals(0, starDao.getStarredArtistIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(0, starDao.getStarredArtistIds(lastFmUser1, 0, 10, artistName1).size());
+		Assert.assertEquals(0, starDao.getStarredArtistUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredArtistUris(lastFmUser1, 0, 10, artistName1).size());
 
-		Assert.assertEquals(0, starDao.getStarredAlbumIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(0, starDao.getStarredAlbumIds(lastFmUser1, 0, 10, albumName1).size());
+		Assert.assertEquals(0, starDao.getStarredAlbumUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredAlbumUris(lastFmUser1, 0, 10, albumName1).size());
 
-		Assert.assertEquals(0, starDao.getStarredTrackIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(0, starDao.getStarredTrackIds(lastFmUser1, 0, 10, trackName1).size());
+		Assert.assertEquals(0, starDao.getStarredTrackUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredTrackUris(lastFmUser1, 0, 10, trackName1).size());
 	}
 	
 	@Test
 	public void canStarTrack() {
-		starDao.starTrack(lastFmUser1, track1.getId());
+		starDao.starTrack(lastFmUser1, track1.getUri());
 		
-		Assert.assertEquals(1, starDao.getStarredTrackIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(1, starDao.getStarredTrackIds(lastFmUser1, 0, 10, trackName1).size());
-		Assert.assertEquals(0, starDao.getStarredTrackIds(lastFmUser1, 0, 10, trackName2).size());
-		Assert.assertEquals(track1.getId(), starDao.getStarredTrackIds(lastFmUser1, 0, 10, null).get(0).intValue());
+		Assert.assertEquals(1, starDao.getStarredTrackUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(1, starDao.getStarredTrackUris(lastFmUser1, 0, 10, trackName1).size());
+		Assert.assertEquals(0, starDao.getStarredTrackUris(lastFmUser1, 0, 10, trackName2).size());
+		Assert.assertEquals(track1.getUri(), starDao.getStarredTrackUris(lastFmUser1, 0, 10, null).get(0).getUri());
 
-		Assert.assertEquals(0, starDao.getStarredTrackIds(lastFmUser2, 0, 10, null).size());
-		Assert.assertEquals(0, starDao.getStarredTrackIds(lastFmUser2, 0, 10, trackName1).size());
+		Assert.assertEquals(0, starDao.getStarredTrackUris(lastFmUser2, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredTrackUris(lastFmUser2, 0, 10, trackName1).size());
 
-		starDao.starTrack(lastFmUser1, track2.getId());
+		starDao.starTrack(lastFmUser1, track2.getUri());
 
-		Assert.assertEquals(2, starDao.getStarredTrackIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(track2.getId(), starDao.getStarredTrackIds(lastFmUser1, 0, 1, null).get(0).intValue());
-		Assert.assertEquals(track1.getId(), starDao.getStarredTrackIds(lastFmUser1, 1, 1, null).get(0).intValue());
+		Assert.assertEquals(2, starDao.getStarredTrackUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(track2.getUri(), starDao.getStarredTrackUris(lastFmUser1, 0, 1, null).get(0).getUri());
+		Assert.assertEquals(track1.getUri(), starDao.getStarredTrackUris(lastFmUser1, 1, 1, null).get(0).getUri());
 
-		starDao.starTrack(lastFmUser2, track2.getId());
-		Assert.assertEquals(1, starDao.getStarredTrackIds(lastFmUser2, 0, 10, null).size());
+		starDao.starTrack(lastFmUser2, track2.getUri());
+		Assert.assertEquals(1, starDao.getStarredTrackUris(lastFmUser2, 0, 10, null).size());
 
-		starDao.unstarTrack(lastFmUser1, track1.getId());
-		starDao.unstarTrack(lastFmUser1, track2.getId());
+		starDao.unstarTrack(lastFmUser1, track1.getUri());
+		starDao.unstarTrack(lastFmUser1, track2.getUri());
 
-		Assert.assertEquals(1, starDao.getStarredTrackIds(lastFmUser2, 0, 10, null).size());
+		Assert.assertEquals(1, starDao.getStarredTrackUris(lastFmUser2, 0, 10, null).size());
 
-		starDao.unstarTrack(lastFmUser2, track2.getId());
+		starDao.unstarTrack(lastFmUser2, track2.getUri());
 
-		Assert.assertEquals(0, starDao.getStarredTrackIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(0, starDao.getStarredTrackIds(lastFmUser2, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredTrackUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredTrackUris(lastFmUser2, 0, 10, null).size());
 	}
 
 	@Test
 	public void canStarAlbum() {
-		starDao.starAlbum(lastFmUser1, album1.getId());
+		starDao.starAlbum(lastFmUser1, album1.getUri());
 		
-		Assert.assertEquals(1, starDao.getStarredAlbumIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(1, starDao.getStarredAlbumIds(lastFmUser1, 0, 10, albumName1).size());
-		Assert.assertEquals(0, starDao.getStarredAlbumIds(lastFmUser1, 0, 10, albumName2).size());
-		Assert.assertEquals(album1.getId(), starDao.getStarredAlbumIds(lastFmUser1, 0, 10, null).get(0).intValue());
+		Assert.assertEquals(1, starDao.getStarredAlbumUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(1, starDao.getStarredAlbumUris(lastFmUser1, 0, 10, albumName1).size());
+		Assert.assertEquals(0, starDao.getStarredAlbumUris(lastFmUser1, 0, 10, albumName2).size());
+		Assert.assertEquals(album1.getUri(), starDao.getStarredAlbumUris(lastFmUser1, 0, 10, null).get(0).getUri());
 
-		Assert.assertEquals(0, starDao.getStarredAlbumIds(lastFmUser2, 0, 10, null).size());
-		Assert.assertEquals(0, starDao.getStarredAlbumIds(lastFmUser2, 0, 10, albumName1).size());
+		Assert.assertEquals(0, starDao.getStarredAlbumUris(lastFmUser2, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredAlbumUris(lastFmUser2, 0, 10, albumName1).size());
 
-		starDao.starAlbum(lastFmUser1, album2.getId());
+		starDao.starAlbum(lastFmUser1, album2.getUri());
 
-		Assert.assertEquals(2, starDao.getStarredAlbumIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(album2.getId(), starDao.getStarredAlbumIds(lastFmUser1, 0, 1, null).get(0).intValue());
-		Assert.assertEquals(album1.getId(), starDao.getStarredAlbumIds(lastFmUser1, 1, 1, null).get(0).intValue());
+		Assert.assertEquals(2, starDao.getStarredAlbumUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(album2.getUri(), starDao.getStarredAlbumUris(lastFmUser1, 0, 1, null).get(0).getUri());
+		Assert.assertEquals(album1.getUri(), starDao.getStarredAlbumUris(lastFmUser1, 1, 1, null).get(0).getUri());
 
-		starDao.starAlbum(lastFmUser2, album2.getId());
-		Assert.assertEquals(1, starDao.getStarredAlbumIds(lastFmUser2, 0, 10, null).size());
+		starDao.starAlbum(lastFmUser2, album2.getUri());
+		Assert.assertEquals(1, starDao.getStarredAlbumUris(lastFmUser2, 0, 10, null).size());
 
-		starDao.unstarAlbum(lastFmUser1, album1.getId());
-		starDao.unstarAlbum(lastFmUser1, album2.getId());
+		starDao.unstarAlbum(lastFmUser1, album1.getUri());
+		starDao.unstarAlbum(lastFmUser1, album2.getUri());
 
-		Assert.assertEquals(1, starDao.getStarredAlbumIds(lastFmUser2, 0, 10, null).size());
+		Assert.assertEquals(1, starDao.getStarredAlbumUris(lastFmUser2, 0, 10, null).size());
 
-		starDao.unstarAlbum(lastFmUser2, album2.getId());
+		starDao.unstarAlbum(lastFmUser2, album2.getUri());
 
-		Assert.assertEquals(0, starDao.getStarredAlbumIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(0, starDao.getStarredAlbumIds(lastFmUser2, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredAlbumUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredAlbumUris(lastFmUser2, 0, 10, null).size());
 		
 	}
 	
 	@Test
 	public void canStarArtist() {
-		starDao.starArtist(lastFmUser1, artist1.getId());
+		starDao.starArtist(lastFmUser1, artist1.getUri());
 		
-		Assert.assertEquals(1, starDao.getStarredArtistIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(1, starDao.getStarredArtistIds(lastFmUser1, 0, 10, artistName1).size());
-		Assert.assertEquals(0, starDao.getStarredArtistIds(lastFmUser1, 0, 10, artistName2).size());
-		Assert.assertEquals(artist1.getId(), starDao.getStarredArtistIds(lastFmUser1, 0, 10, null).get(0).intValue());
+		Assert.assertEquals(1, starDao.getStarredArtistUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(1, starDao.getStarredArtistUris(lastFmUser1, 0, 10, artistName1).size());
+		Assert.assertEquals(0, starDao.getStarredArtistUris(lastFmUser1, 0, 10, artistName2).size());
+		Assert.assertEquals(artist1.getUri(), starDao.getStarredArtistUris(lastFmUser1, 0, 10, null).get(0).getUri());
 
-		Assert.assertEquals(0, starDao.getStarredArtistIds(lastFmUser2, 0, 10, null).size());
-		Assert.assertEquals(0, starDao.getStarredArtistIds(lastFmUser2, 0, 10, artistName1).size());
+		Assert.assertEquals(0, starDao.getStarredArtistUris(lastFmUser2, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredArtistUris(lastFmUser2, 0, 10, artistName1).size());
 
-		starDao.starArtist(lastFmUser1, artist2.getId());
+		starDao.starArtist(lastFmUser1, artist2.getUri());
 
-		Assert.assertEquals(2, starDao.getStarredArtistIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(artist2.getId(), starDao.getStarredArtistIds(lastFmUser1, 0, 1, null).get(0).intValue());
-		Assert.assertEquals(artist1.getId(), starDao.getStarredArtistIds(lastFmUser1, 1, 1, null).get(0).intValue());
+		Assert.assertEquals(2, starDao.getStarredArtistUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(artist2.getUri(), starDao.getStarredArtistUris(lastFmUser1, 0, 1, null).get(0).getUri());
+		Assert.assertEquals(artist1.getUri(), starDao.getStarredArtistUris(lastFmUser1, 1, 1, null).get(0).getUri());
 
-		starDao.starArtist(lastFmUser2, artist2.getId());
-		Assert.assertEquals(1, starDao.getStarredArtistIds(lastFmUser2, 0, 10, null).size());
+		starDao.starArtist(lastFmUser2, artist2.getUri());
+		Assert.assertEquals(1, starDao.getStarredArtistUris(lastFmUser2, 0, 10, null).size());
 
-		starDao.unstarArtist(lastFmUser1, artist1.getId());
-		starDao.unstarArtist(lastFmUser1, artist2.getId());
+		starDao.unstarArtist(lastFmUser1, artist1.getUri());
+		starDao.unstarArtist(lastFmUser1, artist2.getUri());
 
-		Assert.assertEquals(1, starDao.getStarredArtistIds(lastFmUser2, 0, 10, null).size());
+		Assert.assertEquals(1, starDao.getStarredArtistUris(lastFmUser2, 0, 10, null).size());
 
-		starDao.unstarArtist(lastFmUser2, artist2.getId());
+		starDao.unstarArtist(lastFmUser2, artist2.getUri());
 
-		Assert.assertEquals(0, starDao.getStarredArtistIds(lastFmUser1, 0, 10, null).size());
-		Assert.assertEquals(0, starDao.getStarredArtistIds(lastFmUser2, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredArtistUris(lastFmUser1, 0, 10, null).size());
+		Assert.assertEquals(0, starDao.getStarredArtistUris(lastFmUser2, 0, 10, null).size());
 		
 	}
 

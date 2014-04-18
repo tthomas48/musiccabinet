@@ -5,6 +5,7 @@ import static com.github.hakko.musiccabinet.domain.model.library.WebserviceInvoc
 import java.util.List;
 import java.util.Set;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistTopTracksDao;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
 import com.github.hakko.musiccabinet.domain.model.music.Track;
@@ -27,8 +28,8 @@ public class ArtistTopTracksService extends SearchIndexUpdateService {
 
 	private static final Logger LOG = Logger.getLogger(ArtistTopTracksService.class);
 
-	public List<Track> getTopTracks(int artistId) {
-		return artistTopTracksDao.getTopTracks(artistId);
+	public List<Track> getTopTracks(Uri artistUri) {
+		return artistTopTracksDao.getTopTracks(artistUri);
 	}
 	
 	@Override

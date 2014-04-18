@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistTopTracksDao;
 import com.github.hakko.musiccabinet.dao.LibraryAdditionDao;
 import com.github.hakko.musiccabinet.dao.MusicDao;
@@ -49,7 +50,7 @@ public class PlaylistGeneratorServiceTest {
 	
 	private String artistName = "Helios", trackName = "Bless This Morning Year";
 	private Artist artist = new Artist(artistName);
-	private int artistId;
+	private Uri artistUri;
 	
 	@Before
 	public void prepareTestData() throws ApplicationException {
@@ -59,7 +60,7 @@ public class PlaylistGeneratorServiceTest {
 		
 		UnittestLibraryUtil.submitFile(additionDao, getFile(track));
 
-		artistId = musicDao.getArtistId(artist);
+		artistUri = musicDao.getArtistUri(artist);
 		
 		artistTopPlaylistItemsDao.createTopTracks(artist, Arrays.asList(track));
 		
@@ -79,8 +80,8 @@ public class PlaylistGeneratorServiceTest {
 	
 	@Test
 	public void invokeGetPlaylistForArtist() throws ApplicationException {
-		List<Integer> playlist = 
-			playlistGeneratorService.getPlaylistForArtist(artistId, 3, 20);
+		List<? extends Uri> playlist = 
+			playlistGeneratorService.getPlaylistForArtist(artistUri, 3, 20);
 		
 		Assert.assertNotNull(playlist);
 		Assert.assertEquals(1, playlist.size());
@@ -88,8 +89,8 @@ public class PlaylistGeneratorServiceTest {
 
 	@Test
 	public void invokeGetTopPlaylistItemsForArtist() throws ApplicationException {
-		List<Integer> playlist = 
-			playlistGeneratorService.getTopTracksForArtist(artistId, 25);
+		List<? extends Uri> playlist = 
+			playlistGeneratorService.getTopTracksForArtist(artistUri, 25);
 		
 		Assert.assertNotNull(playlist);
 		Assert.assertEquals(1, playlist.size());

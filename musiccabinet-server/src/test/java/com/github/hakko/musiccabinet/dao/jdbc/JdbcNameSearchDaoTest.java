@@ -109,7 +109,7 @@ public class JdbcNameSearchDaoTest {
 			}
 		}
 		
-		searchDao.getTrackIds(criteria, 0, 10);
+		searchDao.getTrackUris(criteria, 0, 10);
 	}
 
 	/*
@@ -126,7 +126,7 @@ public class JdbcNameSearchDaoTest {
 					&& method.getName().startsWith("set")) {
 				SearchCriteria criteria = new SearchCriteria();
 				method.invoke(criteria, getParameter(method));
-				searchDao.getTrackIds(criteria, 0, 10);
+				searchDao.getTrackUris(criteria, 0, 10);
 			}
 		}
 	}

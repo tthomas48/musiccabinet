@@ -90,8 +90,8 @@ public class TagUpdateServiceTest {
 
 		// tag updates and web service blocking are instantaneous
 		verify(historyService, times(3)).blockWebserviceInvocation(
-				artist1.getId(), ARTIST_GET_TOP_TAGS);
-		verify(artistTopTagsDao, times(3)).updateTopTag(artist1.getId(), 
+				artist1.getUri(), ARTIST_GET_TOP_TAGS);
+		verify(artistTopTagsDao, times(3)).updateTopTag(artist1.getUri(), 
 				artist1Addition.getTagName(), artist1Addition.getTagCount());
 		
 		// dupes removed, one item updated and put on fail queue

@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.object.BatchSqlUpdate;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.MusicBrainzArtistDao;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.ArtistRowMapper;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.MBArtistRowMapper;
@@ -57,12 +58,12 @@ public class JdbcMusicBrainzArtistDao implements MusicBrainzArtistDao, JdbcTempl
 	}
 	
 	@Override
-	public MBArtist getArtist(int artistId) {
+	public MBArtist getArtist(Uri artistUri) {
 		return jdbcTemplate.queryForObject(
 			"select a.id, a.artist_name_capitalization, mba.mbid, mba.country_code,"
 			+ " mba.start_year, mba.active from music.mb_artist mba"
 			+ " inner join music.artist a on mba.artist_id = a.id"
-			+ " where a.id = " + artistId, new MBArtistRowMapper());
+			+ " where a.id = " + artistUri.getId(), new MBArtistRowMapper());
 	}
 	
 	@Override

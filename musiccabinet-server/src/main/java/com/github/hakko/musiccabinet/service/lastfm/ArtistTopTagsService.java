@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistTopTagsDao;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
 import com.github.hakko.musiccabinet.domain.model.music.Tag;
@@ -28,8 +29,8 @@ public class ArtistTopTagsService extends SearchIndexUpdateService {
 
 	private static final Logger LOG = Logger.getLogger(ArtistTopTagsService.class);
 	
-	public List<Tag> getTopTags(int artistId, int limit) throws ApplicationException {
-		return artistTopTagsDao.getTopTags(artistId, limit);
+	public List<Tag> getTopTags(Uri artistUri, int limit) throws ApplicationException {
+		return artistTopTagsDao.getTopTags(artistUri, limit);
 	}
 
 	@Override

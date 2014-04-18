@@ -1,5 +1,7 @@
 package com.github.hakko.musiccabinet.domain.model.music;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
+
 /*
  * Artist representation from MusicBrainz.
  * 
@@ -8,7 +10,7 @@ package com.github.hakko.musiccabinet.domain.model.music;
 public class MBArtist {
 
 	private String name;
-	private int id;
+	private Uri uri;
 	private String mbid;
 	private String countryCode;
 	private short startYear;
@@ -27,14 +29,14 @@ public class MBArtist {
 		this.active = active;
 	}
 
-	public MBArtist(int id, String name, String mbid, String countryCode,
+	public MBArtist(Uri uri, String name, String mbid, String countryCode,
 			short startYear, boolean active) {
 		this(name, mbid, countryCode, startYear, active);
-		this.id = id;
+		this.uri = uri;
 	}
 	
-	public int getId() {
-		return id;
+	public Uri getUri() {
+		return uri;
 	}
 
 	public String getName() {

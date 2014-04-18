@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.LastFmDao;
 import com.github.hakko.musiccabinet.dao.LibraryAdditionDao;
 import com.github.hakko.musiccabinet.dao.LibraryBrowserDao;
@@ -79,19 +80,19 @@ public class JdbcPlayCountDaoTest {
 		artist1 = artists.get(0);
 		artist2 = artists.get(1);
 		
-		List<Album> albums1 = browserDao.getAlbums(artist1.getId(), true);
+		List<Album> albums1 = browserDao.getAlbums(artist1.getUri(), true);
 		assertEquals(1, albums1.size());
 		album1 = albums1.get(0);
-		List<Album> albums2 = browserDao.getAlbums(artist2.getId(), true);
+		List<Album> albums2 = browserDao.getAlbums(artist2.getUri(), true);
 		assertEquals(1, albums2.size());
 		album2 = albums2.get(0);
 
-		List<Track> tracks1 = browserDao.getTracks(album1.getTrackIds());
+		List<Track> tracks1 = browserDao.getTracks(album1.getTrackUris());
 		Collections.sort(tracks1, trackComparator);
 		assertEquals(2, tracks1.size());
 		track1a = tracks1.get(0);
 		track1b = tracks1.get(1);
-		List<Track> tracks2 = browserDao.getTracks(album2.getTrackIds());
+		List<Track> tracks2 = browserDao.getTracks(album2.getTrackUris());
 		assertEquals(1, tracks2.size());
 		track2 = tracks2.get(0);
 	}
@@ -100,9 +101,9 @@ public class JdbcPlayCountDaoTest {
 	public void addsPlayCount() {
 		dao.addPlayCount(user1, track1a);
 		
-		List<Integer> artists = dao.getRecentArtists(username1, 0, 10);
-		List<Integer> albums = dao.getRecentAlbums(username1, 0, 10);
-		List<Integer> tracks = dao.getRecentTracks(username1, 0, 10);
+		List<? extends Uri> artists = dao.getRecentArtists(username1, 0, 10);
+		List<? extends Uri> albums = dao.getRecentAlbums(username1, 0, 10);
+		List<? extends Uri> tracks = dao.getRecentTracks(username1, 0, 10);
 		
 		assertNotNull(artists);
 		assertNotNull(albums);
@@ -112,9 +113,9 @@ public class JdbcPlayCountDaoTest {
 		assertEquals(1, albums.size());
 		assertEquals(1, tracks.size());
 		
-		assertEquals(artist1.getId(), artists.get(0).intValue());
-		assertEquals(album1.getId(), albums.get(0).intValue());
-		assertEquals(track1a.getId(), tracks.get(0).intValue());
+		assertEquals(artist1.getUri(), artists.get(0));
+		assertEquals(album1.getUri(), albums.get(0));
+		assertEquals(track1a.getUri(), tracks.get(0));
 	}
 
 	@Test
@@ -136,9 +137,9 @@ public class JdbcPlayCountDaoTest {
 		Thread.sleep(1);
 		dao.addPlayCount(user1, track1a);
 		
-		List<Integer> tracks = dao.getRecentTracks(username1, 0, 10);
-		assertEquals(track1a.getId(), tracks.get(0).intValue());
-		assertEquals(track1b.getId(), tracks.get(1).intValue());
+		List<? extends Uri> tracks = dao.getRecentTracks(username1, 0, 10);
+		assertEquals(track1a.getUri(), tracks.get(0));
+		assertEquals(track1b.getUri(), tracks.get(1));
 	}
 	
 	@Test
@@ -171,13 +172,13 @@ public class JdbcPlayCountDaoTest {
 		assertEquals(1, dao.getRecentAlbums(username1, 1, 1).size());
 		assertEquals(1, dao.getRecentTracks(username1, 1, 1).size());
 
-		assertEquals(artist2.getId(), dao.getRecentArtists(username1, 0, 1).get(0).intValue());
-		assertEquals(album2.getId(), dao.getRecentAlbums(username1, 0, 1).get(0).intValue());
-		assertEquals(track2.getId(), dao.getRecentTracks(username1, 0, 1).get(0).intValue());
+		assertEquals(artist2.getUri(), dao.getRecentArtists(username1, 0, 1).get(0));
+		assertEquals(album2.getUri(), dao.getRecentAlbums(username1, 0, 1).get(0));
+		assertEquals(track2.getUri(), dao.getRecentTracks(username1, 0, 1).get(0));
 
-		assertEquals(artist1.getId(), dao.getRecentArtists(username1, 1, 1).get(0).intValue());
-		assertEquals(album1.getId(), dao.getRecentAlbums(username1, 1, 1).get(0).intValue());
-		assertEquals(track1b.getId(), dao.getRecentTracks(username1, 1, 1).get(0).intValue());
+		assertEquals(artist1.getUri(), dao.getRecentArtists(username1, 1, 1).get(0));
+		assertEquals(album1.getUri(), dao.getRecentAlbums(username1, 1, 1).get(0));
+		assertEquals(track1b.getUri(), dao.getRecentTracks(username1, 1, 1).get(0));
 	}
 	
 	@Test
@@ -188,18 +189,18 @@ public class JdbcPlayCountDaoTest {
 
 		Assert.assertEquals(0, dao.getMostPlayedArtists(username2, 0, 10).size());
 		Assert.assertEquals(1, dao.getMostPlayedArtists(username1, 0, 10).size());
-		Assert.assertEquals(artist1.getId(), dao.getMostPlayedArtists(username1, 0, 10).get(0).intValue());
+		Assert.assertEquals(artist1.getUri(), dao.getMostPlayedArtists(username1, 0, 10).get(0));
 
 		dao.addPlayCount(user1, track2);
 		dao.addPlayCount(user1, track2);
 
-		Assert.assertEquals(artist2.getId(), dao.getMostPlayedArtists(username1, 0, 10).get(0).intValue());
-		Assert.assertEquals(artist1.getId(), dao.getMostPlayedArtists(username1, 1, 10).get(0).intValue());
+		Assert.assertEquals(artist2.getUri(), dao.getMostPlayedArtists(username1, 0, 10).get(0));
+		Assert.assertEquals(artist1.getUri(), dao.getMostPlayedArtists(username1, 1, 10).get(0));
 
 		dao.addPlayCount(user1, track1b);
 		dao.addPlayCount(user1, track1b);
 
-		Assert.assertEquals(artist1.getId(), dao.getMostPlayedArtists(username1, 0, 10).get(0).intValue());
+		Assert.assertEquals(artist1.getUri(), dao.getMostPlayedArtists(username1, 0, 10).get(0));
 	}
 
 	@Test
@@ -210,18 +211,18 @@ public class JdbcPlayCountDaoTest {
 
 		Assert.assertEquals(0, dao.getMostPlayedAlbums(username2, 0, 10).size());
 		Assert.assertEquals(1, dao.getMostPlayedAlbums(username1, 0, 10).size());
-		Assert.assertEquals(album1.getId(), dao.getMostPlayedAlbums(username1, 0, 10).get(0).intValue());
+		Assert.assertEquals(album1.getUri(), dao.getMostPlayedAlbums(username1, 0, 10).get(0));
 
 		dao.addPlayCount(user1, track2);
 		dao.addPlayCount(user1, track2);
 
-		Assert.assertEquals(album2.getId(), dao.getMostPlayedAlbums(username1, 0, 10).get(0).intValue());
-		Assert.assertEquals(album1.getId(), dao.getMostPlayedAlbums(username1, 1, 10).get(0).intValue());
+		Assert.assertEquals(album2.getUri(), dao.getMostPlayedAlbums(username1, 0, 10).get(0));
+		Assert.assertEquals(album1.getUri(), dao.getMostPlayedAlbums(username1, 1, 10).get(0));
 
 		dao.addPlayCount(user1, track1b);
 		dao.addPlayCount(user1, track1b);
 
-		Assert.assertEquals(album1.getId(), dao.getMostPlayedAlbums(username1, 0, 10).get(0).intValue());
+		Assert.assertEquals(album1.getUri(), dao.getMostPlayedAlbums(username1, 0, 10).get(0));
 	}
 
 	@Test

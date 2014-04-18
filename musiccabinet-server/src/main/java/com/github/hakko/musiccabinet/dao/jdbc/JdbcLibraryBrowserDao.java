@@ -1,7 +1,7 @@
 package com.github.hakko.musiccabinet.dao.jdbc;
 
 import static com.github.hakko.musiccabinet.dao.jdbc.JdbcNameSearchDao.getNameQuery;
-import static com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil.getIdParameters;
+import static com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil.getUriParameters;
 import static java.io.File.separatorChar;
 
 import java.sql.ResultSet;
@@ -20,6 +20,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
 
+import com.github.hakko.musiccabinet.configuration.SpotifyUri;
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.LibraryBrowserDao;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.AlbumNameRowMapper;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.AlbumRowMapper;
@@ -28,6 +31,7 @@ import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.ArtistRowMapper;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.FilenameRowMapper;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.TrackWithArtistRowMapper;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.TrackWithMetadataRowMapper;
+import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.UriRowMapper;
 import com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil;
 import com.github.hakko.musiccabinet.domain.model.aggr.ArtistRecommendation;
 import com.github.hakko.musiccabinet.domain.model.aggr.LibraryStatistics;
@@ -193,7 +197,13 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 	}
 
 	@Override
-	public Album getAlbum(int albumId) {
+	public Album getAlbum(Uri albumUri) {
+		if(albumUri instanceof SubsonicUri == false) {
+			return null;
+		}
+		
+		final Integer albumId = albumUri.getId();
+
 		String sql = "select ma.artist_id, null, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, lt.track_ids"
 				+ " from music.album ma"
@@ -215,12 +225,14 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 	}
 
 	@Override
-	public List<Album> getAlbums(int artistId, boolean sortAscending) {
-		return getAlbums(artistId, true, sortAscending);
+	public List<Album> getAlbums(Uri artistUri, boolean sortAscending) {
+		return getAlbums(artistUri, true, sortAscending);
 	}
 
 	@Override
-	public List<Album> getAlbums(int artistId, boolean sortByYear, boolean sortAscending) {
+	public List<Album> getAlbums(Uri artistUri, boolean sortByYear, boolean sortAscending) {
+		final Integer artistId = artistUri.getId();
+		
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
@@ -435,7 +447,9 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 	}
 
 	@Override
-	public Track getTrack(int trackId) {
+	public Track getTrack(Uri trackUri) {
+		Integer trackId = trackUri.getId();
+		
 		String sql = "select ma.artist_name_capitalization,"
 				+ " mt.track_name_capitalization from library.track lt"
 				+ " inner join music.track mt on lt.track_id = mt.id"
@@ -446,8 +460,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 	}
 
 	@Override
-	public List<Track> getTracks(List<Integer> trackIds) {
-		if (trackIds == null || trackIds.size() == 0) {
+	public List<Track> getTracks(List<? extends Uri> trackUris) {
+		if (trackUris == null || trackUris.size() == 0) {
 			return new ArrayList<>();
 		}
 
@@ -470,13 +484,13 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 				+ " left outer join music.artist albart on ft.album_artist_id = albart.id"
 				+ " left outer join music.artist comp on ft.composer_id = comp.id"
 				+ " inner join music.album alb on lt.album_id = alb.id"
-				+ " where lt.id in (" + getIdParameters(trackIds) + ")";
+				+ " where lt.id in (" + getUriParameters(trackUris) + ")";
 
 		return jdbcTemplate.query(sql, new TrackWithMetadataRowMapper());
 	}
 
 	@Override
-	public List<Integer> getRecentlyPlayedTrackIds(String lastFmUsername, int offset, int limit, String query) {
+	public List<? extends Uri> getRecentlyPlayedTrackUris(String lastFmUsername, int offset, int limit, String query) {
 		String userCriteria = "", trackNameCriteria = "";
 		List<Object> args = new ArrayList<>();
 		if (lastFmUsername != null) {
@@ -500,11 +514,11 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 				+ trackNameCriteria
 				+ " order by last_invocation_time desc offset ? limit ?";
 
-		return jdbcTemplate.queryForList(sql, args.toArray(), Integer.class);
+		return jdbcTemplate.query(sql, args.toArray(), new UriRowMapper());
 	}
-
+	
 	@Override
-	public List<Integer> getMostPlayedTrackIds(String lastFmUsername, int offset, int limit, String query) {
+	public List<? extends Uri> getMostPlayedTrackUris(String lastFmUsername, int offset, int limit, String query) {
 		String userCriteria = "", trackNameCriteria = "";
 		List<Object> args = new ArrayList<>();
 		if (lastFmUsername != null) {
@@ -528,11 +542,11 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 				+ trackNameCriteria
 				+ " order by cnt desc offset ? limit ?";
 
-		return jdbcTemplate.queryForList(sql, args.toArray(), Integer.class);
+		return jdbcTemplate.query(sql, args.toArray(), new UriRowMapper());
 	}
 
 	@Override
-	public List<Integer> getStarredTrackIds(String lastFmUsername, int offset, int limit, String query) {
+	public List<? extends Uri> getStarredTrackUris(String lastFmUsername, int offset, int limit, String query) {
 		String userTable = "", userCriteria = "", trackNameCriteria = "";
 		List<Object> args = new ArrayList<>();
 		if (lastFmUsername != null) {
@@ -552,18 +566,18 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 				+ userTable + " where true" + userCriteria + trackNameCriteria
 				+ " order by added desc offset ? limit ?";
 
-		return jdbcTemplate.queryForList(sql, args.toArray(), Integer.class);
+		return jdbcTemplate.query(sql, args.toArray(), new UriRowMapper());
 	}
 
 	@Override
-	public List<Integer> getRandomTrackIds(int limit) {
+	public List<? extends Uri> getRandomTrackUris(int limit) {
 		String sql = "select id from library.track order by random() limit " + limit;
 
-		return jdbcTemplate.queryForList(sql, Integer.class);
+		return jdbcTemplate.query(sql, new UriRowMapper());
 	}
 
 	@Override
-	public List<Integer> getRandomTrackIds(int limit, Integer fromYear, Integer toYear, String genre) {
+	public List<? extends Uri> getRandomTrackUris(int limit, Integer fromYear, Integer toYear, String genre) {
 		String topTagsTable = settingsService.getArtistTopTagsTable();
 		StringBuilder sb = new StringBuilder("select lt.id from library.track lt"
 				+ " inner join music.track mt on lt.track_id = mt.id"
@@ -582,32 +596,32 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 		}
 		sb.append(" order by random() limit " + limit);
 
-		return genre == null ? jdbcTemplate.queryForList(sb.toString(), Integer.class) :
-			jdbcTemplate.queryForList(sb.toString(), new Object[]{genre}, Integer.class);
+		return genre == null ? jdbcTemplate.query(sb.toString(), new UriRowMapper()) :
+			jdbcTemplate.query(sb.toString(), new Object[]{genre}, new UriRowMapper());
 	}
 
 	@Override
-	public String getCoverArtFileForTrack(int trackId) {
-		return getCoverArtFileForTrackIds(Arrays.asList(trackId)).get(trackId);
+	public String getCoverArtFileForTrack(Uri trackUri) {
+		return getCoverArtFileForTrackIds(Arrays.asList(trackUri)).get(trackUri.getId());
 	}
 
 	@Override
 	public void addArtwork(List<Track> tracks) {
-		Map<Integer, String> map = getCoverArtFileForTrackIds(getTrackIds(tracks));
+		Map<Integer, String> map = getCoverArtFileForTrackIds(getTrackUris(tracks));
 		for (Track track : tracks) {
 			track.getMetaData().setArtworkPath(map.get(track.getId()));
 		}
 	}
 
-	private List<Integer> getTrackIds(List<Track> tracks) {
-		List<Integer> trackIds = new ArrayList<>();
+	private List<Uri> getTrackUris(List<Track> tracks) {
+		List<Uri> trackIds = new ArrayList<>();
 		for (Track track : tracks) {
-			trackIds.add(track.getId());
+			trackIds.add(track.getUri());
 		}
 		return trackIds;
 	}
 
-	private Map<Integer, String> getCoverArtFileForTrackIds(List<Integer> trackIds) {
+	private Map<Integer, String> getCoverArtFileForTrackIds(List<Uri> trackUris) {
 		String sql = "select lt.id, d1.path, f1.filename, d2.path, f2.filename"
 				+ " from library.track lt"
 				+ " inner join library.album la on la.album_id = lt.album_id"
@@ -615,11 +629,11 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 				+ " left outer join library.directory d1 on f1.directory_id = d1.id"
 				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
 				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
-				+ " where lt.id in (" + PostgreSQLUtil.getIdParameters(trackIds) + ")";
+				+ " where lt.id in (" + PostgreSQLUtil.getUriParameters(trackUris) + ")";
 
 		final Map<Integer, String> map = new HashMap<>();
 
-		if (!trackIds.isEmpty()) {
+		if (!trackUris.isEmpty()) {
 			jdbcTemplate.query(sql, new RowCallbackHandler() {
 				@Override
 				public void processRow(ResultSet rs) throws SQLException {
@@ -636,10 +650,10 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 	}
 
 	@Override
-	public String getLyricsForTrack(int trackId) {
+	public String getLyricsForTrack(Uri trackUri) {
 		String sql = "select ft.lyrics from library.track lt"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
-				+ " where lt.id = " + trackId;
+				+ " where lt.id = " + trackUri.getId();
 
 		return jdbcTemplate.queryForObject(sql, String.class);
 	}
@@ -684,34 +698,34 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 	}
 
 	@Override
-	public int getTrackId(String absolutePath) {
+	public Uri getTrackUri(String absolutePath) {
 		String directory = FilenameUtils.getFullPathNoEndSeparator(absolutePath);
 		String filename = FilenameUtils.getName(absolutePath);
 		try {
-			return getTrackId(directory, filename);
+			return getTrackUri(directory, filename);
 		} catch (DataAccessException e) {
 			return getCaseInsensitiveTrackId(absolutePath);
 		}
 	}
 
 	@Override
-	public int getTrackId(File file) {
-		return getTrackId(file.getDirectory(), file.getFilename());
+	public Uri getTrackUri(File file) {
+		return getTrackUri(file.getDirectory(), file.getFilename());
 	}
 
-	private int getTrackId(String directory, String filename) {
+	private Uri getTrackUri(String directory, String filename) {
 		String sql = "select lt.id from library.file f"
 		+ " inner join library.directory d on f.directory_id = d.id"
 		+ " inner join library.track lt on lt.file_id = f.id"
 		+ " where d.path = ? and f.filename = ?";
 
-		return jdbcTemplate.queryForInt(sql, directory, filename);
+		return new SubsonicUri(jdbcTemplate.queryForInt(sql, directory, filename));
 	}
 
 	/*
 	 * Fix for platforms like Windows, that alternates between using C: and c:.
 	 */
-	private int getCaseInsensitiveTrackId(String absolutePath) {
+	private Uri getCaseInsensitiveTrackId(String absolutePath) {
 		String sql = "select lt.id from library.file f"
 		+ " inner join library.directory d on f.directory_id = d.id"
 		+ " inner join library.track lt on lt.file_id = f.id"
@@ -721,9 +735,9 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 		String filename = FilenameUtils.getName(absolutePath.toLowerCase());
 
 		try {
-			return jdbcTemplate.queryForInt(sql, directory, filename);
+			return new SubsonicUri(jdbcTemplate.queryForInt(sql, directory, filename));
 		} catch (DataAccessException e) {
-			return -1;
+			return new SubsonicUri(-1);
 		}
 	}
 

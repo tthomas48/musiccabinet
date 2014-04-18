@@ -25,7 +25,7 @@
 			<value>classpath:local.jdbc.properties</value>
 		</property>
 	</bean>
-
+	
 	<!-- TASK EXECUTOR -->
 
 	<task:executor id="taskExecutor" pool-size="4"/>

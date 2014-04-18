@@ -17,9 +17,12 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.NameSearchDao;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.AlbumRowMapper;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.ArtistRowMapper;
+import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.UriRowMapper;
 import com.github.hakko.musiccabinet.domain.model.aggr.NameSearchResult;
 import com.github.hakko.musiccabinet.domain.model.library.MetaData;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
@@ -83,9 +86,9 @@ public class JdbcNameSearchDao implements NameSearchDao, JdbcTemplateDao {
 			@Override
 			public Track mapRow(ResultSet rs, int rowNum) throws SQLException {
 				MetaData metaData = new MetaData();
-				metaData.setArtistId(rs.getInt(1));
+				metaData.setArtistUri(new SubsonicUri(rs.getInt(1)));
 				metaData.setArtist(rs.getString(2));
-				metaData.setAlbumId(rs.getInt(3));
+				metaData.setAlbumUri(new SubsonicUri(rs.getInt(3)));
 				metaData.setAlbum(rs.getString(4));
 				return new Track(rs.getInt(5), rs.getString(6), metaData);
 			}
@@ -122,7 +125,7 @@ public class JdbcNameSearchDao implements NameSearchDao, JdbcTemplateDao {
 	}
 
 	@Override
-	public List<Integer> getTrackIds(SearchCriteria searchCriteria, int offset, int limit) {
+	public List<? extends Uri> getTrackUris(SearchCriteria searchCriteria, int offset, int limit) {
 		StringBuilder select = new StringBuilder("select lt.id from library.track lt"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id");
 		StringBuilder where = new StringBuilder(" where true");
@@ -136,7 +139,7 @@ public class JdbcNameSearchDao implements NameSearchDao, JdbcTemplateDao {
 		select.append(" order by ft.album_id desc, ft.disc_nr, ft.track_nr");
 		select.append(format(" offset %d limit %d", offset, limit));
 
-		return jdbcTemplate.queryForList(select.toString(), args.toArray(), Integer.class);
+		return jdbcTemplate.query(select.toString(), args.toArray(), new UriRowMapper());
 	}
 
 	private void addFileTagCriteria(StringBuilder select, StringBuilder where,

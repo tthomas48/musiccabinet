@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.domain.model.aggr.NameSearchResult;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
@@ -77,19 +78,19 @@ public class CompositeNameSearchService implements INameSearchService {
 	}
 
 	@Override
-	public List<Integer> getTracks(SearchCriteria searchCriteria, int offset,
+	public List<Uri> getTracks(SearchCriteria searchCriteria, int offset,
 			int limit) {
-		Set<Integer> results = new HashSet<Integer>();
+		Set<Uri> results = new HashSet<Uri>();
 		for (INameSearchService service : services) {
-			List<Integer> searchResult = service.getTracks(searchCriteria,
+			List<? extends Uri> searchResult = service.getTracks(searchCriteria,
 					offset, limit);
-			for (Integer trackId : searchResult) {
-				if (!results.contains(trackId)) {
-					results.add(trackId);
+			for (Uri trackUri : searchResult) {
+				if (!results.contains(trackUri)) {
+					results.add(trackUri);
 				}
 			}
 		}
-		return new ArrayList<Integer>(results);
+		return new ArrayList<Uri>(results);
 	}
 
 	@Override

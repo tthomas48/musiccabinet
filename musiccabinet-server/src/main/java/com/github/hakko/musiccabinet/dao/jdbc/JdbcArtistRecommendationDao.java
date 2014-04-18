@@ -6,6 +6,7 @@ import javax.sql.DataSource;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistRecommendationDao;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.ArtistRecommendationRowMapper;
 import com.github.hakko.musiccabinet.domain.model.aggr.ArtistRecommendation;
@@ -18,13 +19,14 @@ public class JdbcArtistRecommendationDao implements ArtistRecommendationDao, Jdb
 
 	@Override
 	public List<ArtistRecommendation> getRelatedArtistsInLibrary(
-			int artistId, int amount, boolean onlyAlbumArtists) {
+			Uri artistUri, int amount, boolean onlyAlbumArtists) {
+
 		String sql = "select ma.id, ma.artist_name_capitalization, ai.largeimageurl"
 			+ " from music.artistinfo ai"
 			+ " inner join music.artist ma on ai.artist_id = ma.id"
 			+ " inner join library.artist la on la.artist_id = ma.id "
 			+ " inner join music.artistrelation ar on ar.target_id = ma.id"
-			+ " where ar.source_id = " + artistId
+			+ " where ar.source_id = " + artistUri.getId()
 			+ (onlyAlbumArtists ? " and la.hasalbums" : "")
 			+ " order by weight desc limit " + amount;
 
@@ -33,10 +35,11 @@ public class JdbcArtistRecommendationDao implements ArtistRecommendationDao, Jdb
 
 	@Override
 	public List<String> getRelatedArtistsNotInLibrary(
-			int artistId, int amount, boolean onlyAlbumArtists) {
+			Uri artistUri, int amount, boolean onlyAlbumArtists) {
+		
 		String sql = "select a.artist_name_capitalization from music.artistrelation ar"
 			+ " inner join music.artist a on ar.target_id = a.id"
-			+ " where ar.source_id = " + artistId + " and not exists"
+			+ " where ar.source_id = " + artistUri.getId() + " and not exists"
 			+ " (select 1 from library.artist where artist_id = ar.target_id"
 			+ (onlyAlbumArtists ? " and hasalbums" : "")
 			+ " ) order by ar.weight desc limit " + amount;

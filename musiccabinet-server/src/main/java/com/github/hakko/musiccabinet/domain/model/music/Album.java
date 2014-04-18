@@ -5,16 +5,19 @@ import java.util.List;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
+import com.github.hakko.musiccabinet.configuration.Uri;
+
 public class Album {
 
 	private Artist artist;
-	private int id;
 	private String name;
 	private short year;
 	private String coverArtPath;
 	private boolean coverArtEmbedded;
 	private String coverArtURL;
-	private List<Integer> trackIds;
+	private List<Uri> trackUris;
+	private Uri uri;
 	
 	public Album() {
 		setArtist(new Artist());
@@ -36,22 +39,35 @@ public class Album {
 	}
 	
 	public Album(int artistId, String artistName, int id, String name, short year, String coverArtFile,
-			boolean coverArtEmbedded, String coverArtURL, List<Integer> trackIds) {
-		this.artist = new Artist(artistId, artistName);
-		this.id = id;
+			boolean coverArtEmbedded, String coverArtURL, List<Uri> trackUris) {
+		this(new SubsonicUri(artistId), artistName, new SubsonicUri(id), name, year, coverArtFile, coverArtEmbedded, coverArtURL, trackUris);
+	}
+	
+	public Album(Uri artistUri, String artistName, Uri albumUri, String name, short year, String coverArtFile,
+			boolean coverArtEmbedded, String coverArtURL, List<Uri> trackUris) {
+		this.artist = new Artist(artistUri, artistName);
+		this.uri = albumUri;
 		this.name = name;
 		this.year = year;
 		this.coverArtPath = coverArtFile;
 		this.coverArtEmbedded = coverArtEmbedded;
 		this.coverArtURL = coverArtURL;
-		this.trackIds = trackIds;
+		this.trackUris = trackUris;
 	}
 	
-	public Album(Artist artist, int id, String name) {
+	
+	public Album(Artist artist, int albumId, String name) {
 		this.artist = artist;
-		this.id = id;
+		this.uri = new SubsonicUri(albumId);
 		this.name = name;
 	}
+	
+	public Album(Artist artist, Uri albumUri, String name) {
+		this.artist = artist;
+		this.uri = albumUri;
+		this.name = name;
+	}
+	
 	
 	public Artist getArtist() {
 		return artist;
@@ -64,8 +80,9 @@ public class Album {
 		this.artist = artist;
 	}
 	
+	@Deprecated
 	public int getId() {
-		return id;
+		return uri.getId();
 	}
 	
 	public short getYear() {
@@ -92,8 +109,8 @@ public class Album {
 		this.coverArtURL = coverArtURL;
 	}
 
-	public List<Integer> getTrackIds() {
-		return trackIds;
+	public List<Uri> getTrackUris() {
+		return trackUris;
 	}
 	
 	public String getName() {
@@ -131,6 +148,18 @@ public class Album {
 	@Override
 	public String toString() {
 		return "album " + name + " by " + artist;
+	}
+	
+	public Uri getUri() {
+		return uri;
+	}
+
+	public void setUri(Uri uri) {
+		this.uri = uri;
+	}
+	
+	public Uri getArtistUri() {
+		return artist.getUri();
 	}
 
 }

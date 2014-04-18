@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLastFmDao;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLibraryAdditionDao;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLibraryBrowserDao;
@@ -57,8 +58,8 @@ public class StarServiceTest {
 		submitFile(additionDao, getFile("artist", "album", "title"));
 		
 		artist = browserDao.getArtists().get(0);
-		album = browserDao.getAlbums(artist.getId(), true).get(0);
-		track = browserDao.getTracks(album.getTrackIds()).get(0);
+		album = browserDao.getAlbums(artist.getUri(), true).get(0);
+		track = browserDao.getTracks(album.getTrackUris()).get(0);
 		
 		lastFmDao.getLastFmUserId(user1);
 		lastFmDao.getLastFmUserId(user2);
@@ -68,56 +69,56 @@ public class StarServiceTest {
 
 	@Test
 	public void serviceCachesStarredArtistsAndUsers() {
-		Assert.assertFalse(starService.isArtistStarred(user1, artist.getId()));
+		Assert.assertFalse(starService.isArtistStarred(user1, artist.getUri()));
 		
-		starService.starArtist(user1, artist.getId());
+		starService.starArtist(user1, artist.getUri());
 		
-		Assert.assertTrue(starService.isArtistStarred(user1, artist.getId()));
-		Assert.assertFalse(starService.isArtistStarred(user2, artist.getId()));
-		Assert.assertFalse(starService.isArtistStarred(user1, artist.getId() + 1));
+		Assert.assertTrue(starService.isArtistStarred(user1, artist.getUri()));
+		Assert.assertFalse(starService.isArtistStarred(user2, artist.getUri()));
+		Assert.assertFalse(starService.isArtistStarred(user1, new SubsonicUri(artist.getUri().getId() + 1)));
 	}
 
 	@Test
 	public void serviceCachesStarredAlbumsAndUsers() {
-		boolean[] mask = starService.getStarredAlbumsMask(user1, Arrays.asList(album.getId()));
+		boolean[] mask = starService.getStarredAlbumsMask(user1, Arrays.asList(album.getUri()));
 		Assert.assertEquals(1, mask.length);
 		Assert.assertEquals(false, mask[0]);
 		
-		starService.starAlbum(user1, album.getId());
-		mask = starService.getStarredAlbumsMask(user1, Arrays.asList(album.getId()));
+		starService.starAlbum(user1, album.getUri());
+		mask = starService.getStarredAlbumsMask(user1, Arrays.asList(album.getUri()));
 		Assert.assertEquals(true, mask[0]);
 
-		mask = starService.getStarredAlbumsMask(user1, Arrays.asList(album.getId()+1));
+		mask = starService.getStarredAlbumsMask(user1, Arrays.asList(new SubsonicUri(album.getId()+1)));
 		Assert.assertEquals(false, mask[0]);
 
-		mask = starService.getStarredAlbumsMask(user2, Arrays.asList(album.getId()));
+		mask = starService.getStarredAlbumsMask(user2, Arrays.asList(album.getUri()));
 		Assert.assertEquals(false, mask[0]);
 		
-		starService.unstarAlbum(user1, album.getId());
+		starService.unstarAlbum(user1, album.getUri());
 
-		mask = starService.getStarredAlbumsMask(user1, Arrays.asList(album.getId()));
+		mask = starService.getStarredAlbumsMask(user1, Arrays.asList(album.getUri()));
 		Assert.assertEquals(false, mask[0]);
 	}
 
 	@Test
 	public void serviceCachesStarredTracksAndUsers() throws ApplicationException {
-		boolean[] mask = starService.getStarredTracksMask(user1, Arrays.asList(track.getId()));
+		boolean[] mask = starService.getStarredTracksMask(user1, Arrays.asList(track.getUri()));
 		Assert.assertEquals(1, mask.length);
 		Assert.assertEquals(false, mask[0]);
 		
-		starService.starTrack(user1, track.getId());
-		mask = starService.getStarredTracksMask(user1, Arrays.asList(track.getId()));
+		starService.starTrack(user1, track.getUri());
+		mask = starService.getStarredTracksMask(user1, Arrays.asList(track.getUri()));
 		Assert.assertEquals(true, mask[0]);
 
-		mask = starService.getStarredTracksMask(user1, Arrays.asList(track.getId()+1));
+		mask = starService.getStarredTracksMask(user1, Arrays.asList(new SubsonicUri(track.getId()+1)));
 		Assert.assertEquals(false, mask[0]);
 
-		mask = starService.getStarredTracksMask(user2, Arrays.asList(track.getId()));
+		mask = starService.getStarredTracksMask(user2, Arrays.asList(track.getUri()));
 		Assert.assertEquals(false, mask[0]);
 		
-		starService.unstarTrack(user1, track.getId());
+		starService.unstarTrack(user1, track.getUri());
 
-		mask = starService.getStarredTracksMask(user1, Arrays.asList(track.getId()));
+		mask = starService.getStarredTracksMask(user1, Arrays.asList(track.getUri()));
 		Assert.assertEquals(false, mask[0]);
 	}
 
@@ -127,14 +128,14 @@ public class StarServiceTest {
 		Assert.assertNotNull(artists);
 		Assert.assertEquals(0, artists.size());
 		
-		starService.starArtist(user1, artist.getId());
+		starService.starArtist(user1, artist.getUri());
 
 		artists = starService.getStarredArtists(user1);
 		Assert.assertNotNull(artists);
 		Assert.assertEquals(1, artists.size());
 		Assert.assertEquals(artist, artists.get(0));
 		
-		starService.unstarArtist(user1, artist.getId());
+		starService.unstarArtist(user1, artist.getUri());
 
 		artists = starService.getStarredArtists(user1);
 		Assert.assertNotNull(artists);

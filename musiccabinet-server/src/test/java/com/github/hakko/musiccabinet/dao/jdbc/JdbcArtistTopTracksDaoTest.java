@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
 import com.github.hakko.musiccabinet.domain.model.music.Track;
@@ -133,8 +134,8 @@ public class JdbcArtistTopTracksDaoTest {
 
 		playlistGeneratorDao.updateSearchIndex();
 
-		int rihannaId = musicDao.getArtistId("Rihanna");
-		List<Track> topTracks = dao.getTopTracks(rihannaId);
+		Uri rihannaUri = musicDao.getArtistUri("Rihanna");
+		List<Track> topTracks = dao.getTopTracks(rihannaUri);
 
 		Assert.assertNotNull(topTracks);
 		Assert.assertEquals(20, topTracks.size());

@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLastFmDao;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLibraryAdditionDao;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLibraryBrowserDao;
@@ -93,10 +94,10 @@ public class UserLovedTracksServiceTest {
 		deleteLovedAndStarredTracks();
 		submitFile(additionDao, asList(f1 = getFile(track1), f2 = getFile(track2),
 				f3 = getFile(track3), f4 = getFile(track4)));
-		int track1Id = browserDao.getTrackId(f1),
-				track2Id = browserDao.getTrackId(f2),
-				track3Id = browserDao.getTrackId(f3),
-				track4Id = browserDao.getTrackId(f4);
+		Uri track1Id = browserDao.getTrackUri(f1),
+				track2Id = browserDao.getTrackUri(f2),
+				track3Id = browserDao.getTrackUri(f3),
+				track4Id = browserDao.getTrackUri(f4);
 
 		LastFmSettingsService lastFmSettingsService = mock(LastFmSettingsService.class);
 		when(lastFmSettingsService.getLastFmUsers()).thenReturn(asList(user1, user2));
@@ -120,11 +121,11 @@ public class UserLovedTracksServiceTest {
 		starDao.starTrack(user2, track4Id);
 		userLovedTracksService.updateSearchIndex();
 
-		assertEquals(sort(asList(track1Id, track2Id)), sort(starDao.getStarredTrackIds(user1)));
-		assertEquals(sort(asList(track3Id, track4Id)), sort(starDao.getStarredTrackIds(user2)));
+		assertEquals(sort(asList(track1Id, track2Id)), sort(starDao.getStarredTrackUris(user1)));
+		assertEquals(sort(asList(track3Id, track4Id)), sort(starDao.getStarredTrackUris(user2)));
 	}
 
-	private List<Integer> sort(List<Integer> trackIds) {
+	private List<? extends Uri> sort(List<? extends Uri> trackIds) {
 		Collections.sort(trackIds);
 		return trackIds;
 	}

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.AlbumInfoDao;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
 import com.github.hakko.musiccabinet.domain.model.music.AlbumInfo;
@@ -30,13 +31,13 @@ public class AlbumInfoService extends SearchIndexUpdateService {
 	
 	private static final Logger LOG = Logger.getLogger(AlbumInfoService.class);
 	
-	public List<AlbumInfo> getAlbumInfosForArtist(int artistId) {
-		return albumInfoDao.getAlbumInfosForArtist(artistId);
+	public List<AlbumInfo> getAlbumInfosForArtist(Uri artistUri) {
+		return albumInfoDao.getAlbumInfosForArtist(artistUri);
 	}
 	
-	public Map<Integer, AlbumInfo> getAlbumInfosForAlbumIds(List<Integer> ids) {
-		return ids.isEmpty() ? new HashMap<Integer, AlbumInfo>() :
-			albumInfoDao.getAlbumInfosForIds(ids);
+	public Map<Uri, AlbumInfo> getAlbumInfosForAlbumIds(List<Uri> uris) {
+		return uris.isEmpty() ? new HashMap<Uri, AlbumInfo>() :
+			albumInfoDao.getAlbumInfosForUris(uris);
 	}
 	
 	@Override

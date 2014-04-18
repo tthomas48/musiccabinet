@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistInfoDao;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
 import com.github.hakko.musiccabinet.domain.model.music.ArtistInfo;
@@ -32,21 +33,21 @@ public class ArtistInfoService extends SearchIndexUpdateService {
 	
 	private static final Logger LOG = Logger.getLogger(ArtistInfoService.class);
 	
-	public ArtistInfo getArtistInfo(int artistId) {
-		ArtistInfo artistInfo = artistInfoDao.getArtistInfo(artistId);
+	public ArtistInfo getArtistInfo(Uri artistUri) {
+		ArtistInfo artistInfo = artistInfoDao.getArtistInfo(artistUri);
 		if (artistInfo == null) {
-			LOG.info("No artist info found for id " + artistId);
+			LOG.info("No artist info found for id " + artistUri);
 		}
 		return artistInfo;
 	}
 	
-	public ArtistInfo getDetailedArtistInfo(int artistId) {
-		return artistInfoDao.getDetailedArtistInfo(artistId);
+	public ArtistInfo getDetailedArtistInfo(Uri artistUri) {
+		return artistInfoDao.getDetailedArtistInfo(artistUri);
 	}
 	
-	public void setBioSummary(int artistId, String biosummary) throws ApplicationException {
-		webserviceHistoryService.blockWebserviceInvocation(artistId, ARTIST_GET_INFO);
-		artistInfoDao.setBioSummary(artistId, biosummary);
+	public void setBioSummary(Uri artistUri, String biosummary) throws ApplicationException {
+		webserviceHistoryService.blockWebserviceInvocation(artistUri, ARTIST_GET_INFO);
+		artistInfoDao.setBioSummary(artistUri, biosummary);
 	}
 	
 	@Override

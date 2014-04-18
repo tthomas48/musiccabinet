@@ -67,7 +67,7 @@ public class JdbcMusicBrainzArtistDaoTest {
 		artistDao.createArtists(Arrays.asList(new MBArtist(artist1.getName(), 
 				MBID, COUNTRY_CODE, START_YEAR, ACTIVE)));
 		
-		MBArtist artist = artistDao.getArtist(artist1.getId());
+		MBArtist artist = artistDao.getArtist(artist1.getUri());
 		
 		assertEquals(artist1.getName(), artist.getName());
 		assertEquals(MBID, artist.getMbid());

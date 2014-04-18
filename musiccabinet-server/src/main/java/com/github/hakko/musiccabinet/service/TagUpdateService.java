@@ -87,8 +87,8 @@ public class TagUpdateService {
 		}
 		artistUserTags.add(submission);
 		webserviceHistoryService.blockWebserviceInvocation(submission
-				.getArtist().getId(), ARTIST_GET_TOP_TAGS);
-		artistTopTagsDao.updateTopTag(submission.getArtist().getId(),
+				.getArtist().getUri(), ARTIST_GET_TOP_TAGS);
+		artistTopTagsDao.updateTopTag(submission.getArtist().getUri(),
 				submission.getTagName(), submission.getTagCount());
 	}
 

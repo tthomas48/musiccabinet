@@ -2,12 +2,15 @@ package com.github.hakko.musiccabinet.dao.util;
 
 import static com.github.hakko.musiccabinet.dao.util.PostgreSQLFunction.DROP_FUNCTION;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcTemplateDao;
 import com.github.hakko.musiccabinet.exception.ApplicationException;
 import com.github.hakko.musiccabinet.util.ResourceUtil;
@@ -82,6 +85,14 @@ public class PostgreSQLUtil {
 			chars[i * 2 - 1] = ',';
 		}
 		return new String(chars);
+	}
+	
+	public static String getUriParameters(Collection<? extends Uri> uris) {
+		List<Integer> integers = new ArrayList<Integer>();
+		for(Uri uri : uris) {
+			integers.add(uri.getId());
+		}
+		return getIdParameters(integers);
 	}
 	
 	/*

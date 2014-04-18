@@ -47,7 +47,7 @@ public class UpdateNowPlayingClientTest extends AbstractWSImplementationTest {
 	@Test
 	public void validateParameters() throws ApplicationException {
 
-		final Track track = browserDao.getTracks(browserDao.getRandomTrackIds(1)).get(0);
+		final Track track = browserDao.getTracks(browserDao.getRandomTrackUris(1)).get(0);
 		final LastFmUser user = new LastFmUser("lastFmUser", "sessionKey");
 		final Scrobble scrobble = new Scrobble(user, track, false);
 

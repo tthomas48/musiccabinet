@@ -19,6 +19,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.object.BatchSqlUpdate;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.AlbumInfoDao;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
 import com.github.hakko.musiccabinet.domain.model.music.AlbumInfo;
@@ -69,10 +71,10 @@ public class JdbcAlbumInfoDao implements AlbumInfoDao, JdbcTemplateDao {
 	}
 
 	@Override
-	public AlbumInfo getAlbumInfo(int albumId) {
+	public AlbumInfo getAlbumInfo(Uri albumId) {
 		String sql = 
 				"select ai.largeimageurl, ai.extralargeimageurl from music.albuminfo ai" + 
-				" where ai.album_id = " + albumId;
+				" where ai.album_id = " + albumId.getId();
 		AlbumInfo albumInfo = null;
 		
 		try {
@@ -126,14 +128,14 @@ public class JdbcAlbumInfoDao implements AlbumInfoDao, JdbcTemplateDao {
 	}
 	
 	@Override
-	public List<AlbumInfo> getAlbumInfosForArtist(final int artistId) {
+	public List<AlbumInfo> getAlbumInfosForArtist(final Uri artistUri) {
 		String sql = 
 				"select alb.album_name_capitalization, ai.mediumimageurl, "
 				+ " ai.largeimageurl, ai.extralargeimageurl, art.artist_name_capitalization"
 				+ " from music.albuminfo ai"
 				+ " inner join music.album alb on ai.album_id = alb.id"
 				+ " inner join music.artist art on alb.artist_id = art.id"
-				+ " where art.id = " + artistId;
+				+ " where art.id = " + artistUri.getId();
 
 		List<AlbumInfo> albums = jdbcTemplate.query(sql, 
 				new RowMapper<AlbumInfo>() {
@@ -155,14 +157,14 @@ public class JdbcAlbumInfoDao implements AlbumInfoDao, JdbcTemplateDao {
 	}
 
 	@Override
-	public Map<Integer, AlbumInfo> getAlbumInfosForIds(List<Integer> paths) {
+	public Map<Uri, AlbumInfo> getAlbumInfosForUris(List<Uri> paths) {
 		String sql = 
 				"select alb.album_name_capitalization, ai.mediumimageurl,"
 				+ " ai.largeimageurl, ai.extralargeimageurl, alb.id from music.albuminfo ai"
 				+ " inner join music.album alb on ai.album_id = alb.id"
 				+ " where alb.id in (" + getParameters(paths.size()) + ")";
 
-		final Map<Integer, AlbumInfo> albumInfos = new HashMap<>();
+		final Map<Uri, AlbumInfo> albumInfos = new HashMap<>();
 		try {
 			jdbcTemplate.query(sql, paths.toArray(), new RowCallbackHandler() {
 				@Override
@@ -174,7 +176,7 @@ public class JdbcAlbumInfoDao implements AlbumInfoDao, JdbcTemplateDao {
 					ai.setExtraLargeImageUrl(rs.getString(4));
 					int albumId = rs.getInt(5);
 					ai.setAlbum(new Album(albumName));
-					albumInfos.put(albumId, ai);
+					albumInfos.put(new SubsonicUri(albumId), ai);
 				}
 			});
 		} catch (DataAccessException e) {

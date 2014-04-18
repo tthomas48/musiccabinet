@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.object.BatchSqlUpdate;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistTopTracksDao;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.TrackRowMapper;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.TrackWithArtistRowMapper;
@@ -70,11 +71,12 @@ public class JdbcArtistTopTracksDao implements ArtistTopTracksDao, JdbcTemplateD
 	}
 
 	@Override
-	public List<Track> getTopTracks(int artistId) {
-		return getTopTracks(artistId, 20);
+	public List<Track> getTopTracks(Uri artistUri) {
+		return getTopTracks(artistUri, 20);
 	}
 	
-	protected List<Track> getTopTracks(int artistId, int limit) {
+	protected List<Track> getTopTracks(Uri artistUri, int limit) {
+		
 		String sql = "select coalesce(attpc.track_id, -1), t.track_name_capitalization"
 				+ " from music.artisttoptrack att"
 				+ " inner join music.track t on att.track_id = t.id"
@@ -82,7 +84,7 @@ public class JdbcArtistTopTracksDao implements ArtistTopTracksDao, JdbcTemplateD
 				+ " on attpc.artist_id = att.artist_id and attpc.rank = att.rank"
 				+ " where att.artist_id = ? order by att.rank limit ?";
 		
-		return jdbcTemplate.query(sql, new Object[]{artistId, limit}, 
+		return jdbcTemplate.query(sql, new Object[]{artistUri.getId(), limit}, 
 				new TrackRowMapper());
 	}
 	

@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistRelationDao;
 import com.github.hakko.musiccabinet.dao.ArtistTopTracksDao;
 import com.github.hakko.musiccabinet.dao.LibraryAdditionDao;
@@ -81,9 +82,9 @@ public class JdbcPlaylistGeneratorDaoTest {
 	
 	@Test
 	public void addCherRelationsAndTopTracksAndGetPlaylist() throws ApplicationException {
-		int artistId = prepareTestdataForArtist();
+		Uri artistUri = prepareTestdataForArtist();
 		
-		List<PlaylistItem> ts = playlistGeneratorDao.getPlaylistForArtist(artistId, 3, 20);
+		List<PlaylistItem> ts = playlistGeneratorDao.getPlaylistForArtist(artistUri, 3, 20);
 		
 		Assert.assertNotNull(ts);
 		Assert.assertEquals(3, ts.size());
@@ -91,9 +92,9 @@ public class JdbcPlaylistGeneratorDaoTest {
 	
 	@Test
 	public void getTopTracks() throws ApplicationException {
-		int artistId = prepareTestdataForArtist();
+		Uri artistUri = prepareTestdataForArtist();
 		
-		List<Integer> ts = playlistGeneratorDao.getTopTracksForArtist(artistId, 20);
+		List<? extends Uri> ts = playlistGeneratorDao.getTopTracksForArtist(artistUri, 20);
 		
 		Assert.assertNotNull(ts);
 		Assert.assertEquals(20, ts.size());
@@ -101,9 +102,9 @@ public class JdbcPlaylistGeneratorDaoTest {
 
 	@Test
 	public void getRelatedArtists() throws ApplicationException {
-		int artistId = prepareTestdataForArtist();
+		Uri artistUri = prepareTestdataForArtist();
 		
-		List<Integer> ts = playlistGeneratorDao.getPlaylistForRelatedArtists(artistId, 3, 20);
+		List<? extends Uri> ts = playlistGeneratorDao.getPlaylistForRelatedArtists(artistUri, 3, 20);
 		
 		Assert.assertNotNull(ts);
 	}
@@ -124,7 +125,7 @@ public class JdbcPlaylistGeneratorDaoTest {
 		}
 		UnittestLibraryUtil.submitFile(additionDao, files);
 		
-		int trackId = musicDao.getTrackId(tsParser.getTrack().getArtist().getName(), 
+		Uri trackId = musicDao.getTrackUri(tsParser.getTrack().getArtist().getName(), 
 				tsParser.getTrack().getName());
 		
 		playlistGeneratorDao.updateSearchIndex();
@@ -141,7 +142,7 @@ public class JdbcPlaylistGeneratorDaoTest {
 		Assert.assertNotNull(ts);
 	}
 	
-	private int prepareTestdataForArtist() throws ApplicationException {
+	private Uri prepareTestdataForArtist() throws ApplicationException {
 		ArtistSimilarityParser asParser = new ArtistSimilarityParserImpl(
 				new ResourceUtil(CHER_SIMILAR_ARTISTS).getInputStream());
 		artistRelationDao.createArtistRelations(
@@ -158,11 +159,11 @@ public class JdbcPlaylistGeneratorDaoTest {
 		}
 		UnittestLibraryUtil.submitFile(additionDao, files);
 
-		int artistId = musicDao.getArtistId(asParser.getArtist());
+		Uri artistUri = musicDao.getArtistUri(asParser.getArtist());
 		
 		playlistGeneratorDao.updateSearchIndex();
 
-		return artistId;
+		return artistUri;
 	}
 
 }

@@ -13,6 +13,8 @@ import org.springframework.integration.Message;
 import org.springframework.integration.core.PollableChannel;
 import org.springframework.integration.message.GenericMessage;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.PlayCountDao;
 import com.github.hakko.musiccabinet.domain.model.aggr.Scrobble;
 import com.github.hakko.musiccabinet.domain.model.library.LastFmUser;
@@ -30,9 +32,9 @@ public class ScrobbleServiceTest {
 	private String username1 = "user1", username2 = "user2";
 	private String sessionKey1 = "sessionKey1", sessionKey2 = "sessionKey2";
 	private LastFmUser user1, user2;
-	private int artist1Id = 1;
-	private int album1Id = 1;
-	private int track1Id = 1, track2Id;
+	private Uri artist1Id = new SubsonicUri(1);
+	private Uri album1Id = new SubsonicUri(1);
+	private Uri track1Id = new SubsonicUri(1), track2Id;
 	private Track track1, track2;
 	
 	@Before
@@ -55,9 +57,9 @@ public class ScrobbleServiceTest {
 		
 		MetaData metaData1 = new MetaData();
 		metaData1.setArtist("artist 1");
-		metaData1.setArtistId(artist1Id);
+		metaData1.setArtistUri(artist1Id);
 		metaData1.setAlbum("album 1");
-		metaData1.setAlbumId(album1Id);
+		metaData1.setAlbumUri(album1Id);
 		track1 = new Track(track1Id, "track 1", metaData1);
 		track2 = new Track(track2Id, "track 2", metaData1);
 		user1 = new LastFmUser(username1, sessionKey1);

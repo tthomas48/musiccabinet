@@ -3,6 +3,8 @@ package com.github.hakko.musiccabinet.domain.model.library;
 import static org.apache.commons.lang.math.NumberUtils.isDigits;
 import static org.apache.commons.lang.math.NumberUtils.toShort;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
+
 public class MetaData {
 
 	private Mediatype mediaType;
@@ -11,11 +13,11 @@ public class MetaData {
 	private short duration;
 	
 	private String artist;
-	private int artistId;
+	private Uri artistUri;
 	private String albumArtist;
 	private String composer;
 	private String album;
-	private int albumId;
+	private Uri albumUri;
 	private String title;
 	private Short trackNr;
 	private Short trackNrs;
@@ -74,12 +76,12 @@ public class MetaData {
 		this.artist = artist;
 	}
 
-	public int getArtistId() {
-		return artistId;
+	public Uri getArtistUri() {
+		return artistUri;
 	}
-
-	public void setArtistId(int artistId) {
-		this.artistId = artistId;
+	
+	public void setArtistUri(Uri artistUri) {
+		this.artistUri = artistUri;
 	}
 
 	public String getAlbumArtist() {
@@ -106,12 +108,12 @@ public class MetaData {
 		this.album = album;
 	}
 
-	public int getAlbumId() {
-		return albumId;
+	public void setAlbumUri(Uri albumUri) {
+		this.albumUri = albumUri;
 	}
-
-	public void setAlbumId(int albumId) {
-		this.albumId = albumId;
+	
+	public Uri getAlbumUri() {
+		return this.albumUri;
 	}
 
 	public String getTitle() {

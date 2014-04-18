@@ -3,6 +3,7 @@ package com.github.hakko.musiccabinet.service.lastfm;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.WebserviceHistoryDao;
 import com.github.hakko.musiccabinet.domain.model.library.WebserviceInvocation;
 
@@ -29,8 +30,8 @@ public class WebserviceHistoryService {
 		historyDao.quarantineWebserviceInvocation(invocation);
 	}
 
-	public void blockWebserviceInvocation(int artistId, WebserviceInvocation.Calltype callType) {
-		historyDao.blockWebserviceInvocation(artistId, callType);
+	public void blockWebserviceInvocation(Uri artistUri, WebserviceInvocation.Calltype callType) {
+		historyDao.blockWebserviceInvocation(artistUri, callType);
 	}
 	
 	public boolean isWebserviceInvocationAllowed(WebserviceInvocation invocation) {

@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.SubsonicUri;
 import com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil;
 import com.github.hakko.musiccabinet.domain.model.library.LastFmUser;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
@@ -71,18 +72,18 @@ public class JdbcMusicBrainzAlbumDaoTest {
 		additionDao.getJdbcTemplate().execute("truncate library.file cascade");
 
 		artist = new Artist(ARTIST);
-		musicDao.setArtistId(artist);
+		musicDao.setArtistUri(artist);
 		
 		album1 = new MBRelease(MBID1, null, null, TITLE1, TYPE1, YEAR1, null);
 		album2 = new MBRelease(MBID2, null, null, TITLE2, TYPE2, YEAR2, null);
-		album1.setArtistId(artist.getId());
-		album2.setArtistId(artist.getId());
+		album1.setArtistUri(artist.getUri());
+		album2.setArtistUri(artist.getUri());
 		albumDao.createAlbums(Arrays.asList(album1, album2));
 	}
 
 	@Test
 	public void createsAndRetrievesAlbums() {
-		List<MBAlbum> albums = albumDao.getAlbums(artist.getId());
+		List<MBAlbum> albums = albumDao.getAlbums(artist.getUri());
 		assertEquals(2, albums.size());
 		assertEquals(album1.getTitle(), albums.get(0).getTitle());
 		assertEquals(album2.getTitle(), albums.get(1).getTitle());
@@ -126,7 +127,7 @@ public class JdbcMusicBrainzAlbumDaoTest {
 		lastFmDao.createOrUpdateLastFmUser(lastFmUser);
 
 		submitFile(additionDao, getFile(artist.getName(), UNKNOWN, UNKNOWN));
-		Track track = browserDao.getTracks(browserDao.getRandomTrackIds(1)).get(0);
+		Track track = browserDao.getTracks(browserDao.getRandomTrackUris(1)).get(0);
 		playCountDao.addPlayCount(lastFmUser, track);
 		
 		albums = albumDao.getMissingAlbums(null, null, USER, 10, 0);
@@ -167,7 +168,7 @@ public class JdbcMusicBrainzAlbumDaoTest {
 
 	@Test
 	public void musicBrainzReleasesAreReturnedInDiscography() {
-		List<Album> albums = albumDao.getDiscography(artist.getId(), true, true);
+		List<Album> albums = albumDao.getDiscography(artist.getUri(), true, true);
 		
 		Assert.assertNotNull(albums);
 		Assert.assertEquals(2, albums.size());
@@ -178,11 +179,11 @@ public class JdbcMusicBrainzAlbumDaoTest {
 		Assert.assertEquals(TITLE1, albums.get(0).getName());
 		Assert.assertEquals(TITLE2, albums.get(1).getName());
 
-		Assert.assertEquals(-1, albums.get(0).getId());
-		Assert.assertEquals(-1, albums.get(1).getId());
+		Assert.assertEquals(new SubsonicUri(-1), albums.get(0).getUri());
+		Assert.assertEquals(new SubsonicUri(-1), albums.get(1).getUri());
 
-		Assert.assertTrue(albums.get(0).getTrackIds().isEmpty());
-		Assert.assertTrue(albums.get(1).getTrackIds().isEmpty());
+		Assert.assertTrue(albums.get(0).getTrackUris().isEmpty());
+		Assert.assertTrue(albums.get(1).getTrackUris().isEmpty());
 	}
 	
 	@Test
@@ -192,7 +193,7 @@ public class JdbcMusicBrainzAlbumDaoTest {
 				UnittestLibraryUtil.getFile(ARTIST, TITLE2, TITLE2, YEAR2),
 				UnittestLibraryUtil.getFile(ARTIST, TITLE3, TITLE3, YEAR3)));
 		
-		List<Album> albums = albumDao.getDiscography(artist.getId(), true, false);
+		List<Album> albums = albumDao.getDiscography(artist.getUri(), true, false);
 
 		Assert.assertNotNull(albums);
 		Assert.assertEquals(3, albums.size());
@@ -205,13 +206,13 @@ public class JdbcMusicBrainzAlbumDaoTest {
 		Assert.assertEquals(TITLE2, albums.get(1).getName());
 		Assert.assertEquals(TITLE1, albums.get(2).getName());
 
-		Assert.assertFalse(-1 == albums.get(0).getId());
-		Assert.assertFalse(-1 == albums.get(1).getId());
-		Assert.assertTrue(-1 == albums.get(2).getId());
+		Assert.assertFalse(new SubsonicUri(-1).equals(albums.get(0).getUri()));
+		Assert.assertFalse(new SubsonicUri(-1).equals(albums.get(1).getUri()));
+		Assert.assertTrue(new SubsonicUri(-1).equals(albums.get(2).getUri()));
 
-		Assert.assertTrue(albums.get(0).getTrackIds().isEmpty());
-		Assert.assertTrue(albums.get(1).getTrackIds().isEmpty());
-		Assert.assertTrue(albums.get(2).getTrackIds().isEmpty());
+		Assert.assertTrue(albums.get(0).getTrackUris().isEmpty());
+		Assert.assertTrue(albums.get(1).getTrackUris().isEmpty());
+		Assert.assertTrue(albums.get(2).getTrackUris().isEmpty());
 	}
 
 }

@@ -2,6 +2,7 @@ package com.github.hakko.musiccabinet.service;
 
 import java.util.List;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.LibraryBrowserDao;
 import com.github.hakko.musiccabinet.domain.model.aggr.ArtistRecommendation;
 import com.github.hakko.musiccabinet.domain.model.aggr.LibraryStatistics;
@@ -47,16 +48,16 @@ public class LibraryBrowserService {
 		return libraryBrowserDao.getStarredArtists(lastFmUsername, offset, limit, query);
 	}
 
-	public Album getAlbum(int albumId) {
-		return libraryBrowserDao.getAlbum(albumId);
+	public Album getAlbum(Uri albumUri) {
+		return libraryBrowserDao.getAlbum(albumUri);
 	}
 
-	public List<Album> getAlbums(int artistId, boolean sortAscending) {
-		return getAlbums(artistId, true, sortAscending);
+	public List<Album> getAlbums(Uri artistUri, boolean sortAscending) {
+		return getAlbums(artistUri, true, sortAscending);
 	}
 
-	public List<Album> getAlbums(int artistId, boolean sortByYear, boolean sortAscending) {
-		return libraryBrowserDao.getAlbums(artistId, sortByYear, sortAscending);
+	public List<Album> getAlbums(Uri artistUri, boolean sortByYear, boolean sortAscending) {
+		return libraryBrowserDao.getAlbums(artistUri, sortByYear, sortAscending);
 	}
 
 	public List<Album> getVariousArtistsAlbums() {
@@ -83,40 +84,40 @@ public class LibraryBrowserService {
 		return libraryBrowserDao.getStarredAlbums(lastFmUsername, offset, limit, query);
 	}
 
-	public List<Track> getTracks(List<Integer> trackIds) {
-		return libraryBrowserDao.getTracks(trackIds);
+	public List<Track> getTracks(List<? extends Uri> trackUris) {
+		return libraryBrowserDao.getTracks(trackUris);
 	}
 	
-	public List<Integer> getRecentlyPlayedTrackIds(String lastFmUsername, int offset, int limit, String query) {
-		return libraryBrowserDao.getRecentlyPlayedTrackIds(lastFmUsername, offset, limit, query);
+	public List<? extends Uri> getRecentlyPlayedTrackUris(String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getRecentlyPlayedTrackUris(lastFmUsername, offset, limit, query);
 	}
 
-	public List<Integer> getMostPlayedTrackIds(String lastFmUsername, int offset, int limit, String query) {
-		return libraryBrowserDao.getMostPlayedTrackIds(lastFmUsername, offset, limit, query);
+	public List<? extends Uri> getMostPlayedTrackUris(String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getMostPlayedTrackUris(lastFmUsername, offset, limit, query);
 	}
 
-	public List<Integer> getStarredTrackIds(String lastFmUsername, int offset, int limit, String query) {
-		return libraryBrowserDao.getStarredTrackIds(lastFmUsername, offset, limit, query);
+	public List<? extends Uri> getStarredTrackUris(String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getStarredTrackUris(lastFmUsername, offset, limit, query);
 	}
 
-	public List<Integer> getRandomTrackIds(int limit) {
-		return libraryBrowserDao.getRandomTrackIds(limit);
+	public List<? extends Uri> getRandomTrackUris(int limit) {
+		return libraryBrowserDao.getRandomTrackUris(limit);
 	}
 
-	public List<Integer> getRandomTrackIds(int limit, Integer fromYear, Integer toYear, String genre) {
-		return libraryBrowserDao.getRandomTrackIds(limit, fromYear, toYear, genre);
+	public List<? extends Uri> getRandomTrackUris(int limit, Integer fromYear, Integer toYear, String genre) {
+		return libraryBrowserDao.getRandomTrackUris(limit, fromYear, toYear, genre);
 	}
 
-	public String getCoverArtFileForTrack(int trackId) {
-		return libraryBrowserDao.getCoverArtFileForTrack(trackId);
+	public String getCoverArtFileForTrack(Uri trackUri) {
+		return libraryBrowserDao.getCoverArtFileForTrack(trackUri);
 	}
 
 	public void addArtwork(List<Track> tracks) {
 		libraryBrowserDao.addArtwork(tracks);
 	}
 	
-	public String getLyricsForTrack(int trackId) {
-		return libraryBrowserDao.getLyricsForTrack(trackId);
+	public String getLyricsForTrack(Uri trackUri) {
+		return libraryBrowserDao.getLyricsForTrack(trackUri);
 	}
 
 	public String getLyricsForTrack(String artistName, String trackName) {
@@ -131,8 +132,8 @@ public class LibraryBrowserService {
 		return libraryBrowserDao.getStatistics();
 	}
 	
-	public int getTrackId(String filename) {
-		return libraryBrowserDao.getTrackId(filename);
+	public Uri getTrackUri(String filename) {
+		return libraryBrowserDao.getTrackUri(filename);
 	}
 
 	public void markAllFilesForFullRescan() {

@@ -17,6 +17,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.object.BatchSqlUpdate;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.MusicBrainzAlbumDao;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.AlbumRowMapper;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.MBAlbumRowMapper;
@@ -67,7 +68,7 @@ public class JdbcMusicBrainzAlbumDao implements MusicBrainzAlbumDao, JdbcTemplat
 		
 		for (MBRelease r : releases) {
 			if (r.isValid()) {
-				batchUpdate.update(new Object[]{r.getArtistId(), r.getTitle(),
+				batchUpdate.update(new Object[]{r.getArtistUri(), r.getTitle(),
 					r.getAlbumType().ordinal(), r.getReleaseYear(), r.getLabelName(), 
 					r.getLabelMbid(), r.getFormat(), r.getReleaseGroupMbid()});
 			} else {
@@ -83,14 +84,14 @@ public class JdbcMusicBrainzAlbumDao implements MusicBrainzAlbumDao, JdbcTemplat
 	}
 	
 	@Override
-	public List<MBAlbum> getAlbums(int artistId) {
+	public List<MBAlbum> getAlbums(Uri artistUri) {
 		return jdbcTemplate.query(
 				"select art.artist_name_capitalization, alb.album_name_capitalization,"
 				+ " mba.first_release_year, mba.type_id, f.description from music.mb_album mba"
 				+ " left outer join music.mb_format f on mba.format_id = f.id"
 				+ " inner join music.album alb on mba.album_id = alb.id"
 				+ " inner join music.artist art on alb.artist_id = art.id"
-				+ " where art.id = " + artistId + " order by mba.first_release_year", 
+				+ " where art.id = " + artistUri.getId() + " order by mba.first_release_year", 
 				new MBAlbumRowMapper());
 	}
 
@@ -133,7 +134,7 @@ public class JdbcMusicBrainzAlbumDao implements MusicBrainzAlbumDao, JdbcTemplat
 	}
 
 	@Override
-	public List<Album> getDiscography(int artistId, boolean sortByYear, boolean sortAscending) {
+	public List<Album> getDiscography(Uri artistUri, boolean sortByYear, boolean sortAscending) {
 		String sql = "select -1, null, case when la.id is null then -1 else ma.id end,"
 				+ " ma.album_name_capitalization, coalesce(mba.first_release_year, la.year),"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.smallimageurl,"
@@ -145,7 +146,7 @@ public class JdbcMusicBrainzAlbumDao implements MusicBrainzAlbumDao, JdbcTemplat
 				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
 				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
 				+ " left outer join music.albuminfo ai on ai.album_id = ma.id"
-				+ " where ma.artist_id = " + artistId + " and coalesce(mba.type_id, 1) > 0 order by"
+				+ " where ma.artist_id = " + artistUri.getId() + " and coalesce(mba.type_id, 1) > 0 order by"
 				+ (sortByYear ? " coalesce(mba.first_release_year, la.year) " : " ma.album_name ")  
 				+ (sortAscending ? "asc" : "desc");
 

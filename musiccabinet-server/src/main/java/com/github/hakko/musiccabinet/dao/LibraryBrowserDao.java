@@ -2,6 +2,7 @@ package com.github.hakko.musiccabinet.dao;
 
 import java.util.List;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.domain.model.aggr.ArtistRecommendation;
 import com.github.hakko.musiccabinet.domain.model.aggr.LibraryStatistics;
 import com.github.hakko.musiccabinet.domain.model.library.File;
@@ -14,15 +15,15 @@ public interface LibraryBrowserDao {
 	boolean hasArtists();
 	List<Artist> getArtists();
 	List<Artist> getArtists(int indexLetter);
-	List<Artist> getArtists(String tag, int treshold);
+	List<Artist> getArtists(String tag, int threshold);
 	List<ArtistRecommendation> getRecentlyPlayedArtists(String lastFmUsername, boolean onlyAlbumArtists, int offset, int limit, String query);
 	List<ArtistRecommendation> getMostPlayedArtists(String lastFmUsername, int offset, int limit, String query);
 	List<ArtistRecommendation> getRandomArtists(boolean onlyAlbumArtists, int limit);
 	List<ArtistRecommendation> getStarredArtists(String lastFmUsername, int offset, int limit, String query);
 
-	Album getAlbum(int albumId);
-	List<Album> getAlbums(int artistId, boolean sortAscending);
-	List<Album> getAlbums(int artistId, boolean sortByYear, boolean sortAscending);
+	Album getAlbum(Uri albumUri);
+	List<Album> getAlbums(Uri artistUri, boolean sortAscending);
+	List<Album> getAlbums(Uri artistUri, boolean sortByYear, boolean sortAscending);
 	List<Album> getVariousArtistsAlbums();
 	List<Album> getRecentlyAddedAlbums(int offset, int limit, String query);
 	List<Album> getRecentlyPlayedAlbums(String lastFmUsername, int offset, int limit, String query);
@@ -30,24 +31,24 @@ public interface LibraryBrowserDao {
 	List<Album> getRandomAlbums(int limit);
 	List<Album> getStarredAlbums(String lastFmUsername, int offset, int limit, String query);
 
-	Track getTrack(int trackId);
-	List<Track> getTracks(List<Integer> trackIds);
-	List<Integer> getRecentlyPlayedTrackIds(String lastFmUsername, int offset, int limit, String query);
-	List<Integer> getMostPlayedTrackIds(String lastFmUsername, int offset, int limit, String query);
-	List<Integer> getStarredTrackIds(String lastFmUsername, int offset, int limit, String query);
-	List<Integer> getRandomTrackIds(int limit);
-	List<Integer> getRandomTrackIds(int limit, Integer fromYear, Integer toYear, String genre);
+	Track getTrack(Uri trackUri);
+	List<Track> getTracks(List<? extends Uri> trackUris);
+	List<? extends Uri> getRecentlyPlayedTrackUris(String lastFmUsername, int offset, int limit, String query);
+	List<? extends Uri> getMostPlayedTrackUris(String lastFmUsername, int offset, int limit, String query);
+	List<? extends Uri> getStarredTrackUris(String lastFmUsername, int offset, int limit, String query);
+	List<? extends Uri> getRandomTrackUris(int limit);
+	List<? extends Uri> getRandomTrackUris(int limit, Integer fromYear, Integer toYear, String genre);
 	
-	String getCoverArtFileForTrack(int trackId);
+	String getCoverArtFileForTrack(Uri uri);
 	void addArtwork(List<Track> tracks);
-	String getLyricsForTrack(int trackId);
+	String getLyricsForTrack(Uri uri);
 	String getLyricsForTrack(String artistName, String trackName);
 
 	List<Integer> getArtistIndexes();
 	LibraryStatistics getStatistics();
 	
-	int getTrackId(String filename);
-	int getTrackId(File file);
+	Uri getTrackUri(String filename);
+	Uri getTrackUri(File file);
 	
 	void markAllFilesForFullRescan();
 	List<String> getFilesMissingMetadata();

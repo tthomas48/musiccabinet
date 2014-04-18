@@ -9,8 +9,10 @@ import javax.sql.DataSource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.PlaylistGeneratorDao;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.PlaylistItemRowMapper;
+import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.UriRowMapper;
 import com.github.hakko.musiccabinet.domain.model.aggr.PlaylistItem;
 import com.github.hakko.musiccabinet.service.lastfm.LastFmSettingsService;
 
@@ -23,13 +25,14 @@ public class JdbcPlaylistGeneratorDao implements PlaylistGeneratorDao, JdbcTempl
 	private int maxLength = Integer.MAX_VALUE;
 
 	@Override
-	public List<Integer> getTopTracksForArtist(int artistId, int totalCount) {
+	public List<? extends Uri> getTopTracksForArtist(Uri artistUri, int totalCount) {
+		
 		String sql = "select t.id from library.track t"
 			+ " inner join library.artisttoptrackplaycount att on att.track_id = t.id"
-			+ " where att.artist_id = " + artistId
+			+ " where att.artist_id = " + artistUri.getId()
 			+ " order by rank limit " + totalCount;
 
-		return jdbcTemplate.queryForList(sql, Integer.class);
+		return jdbcTemplate.query(sql, new UriRowMapper());
 	}
 
 	/*
@@ -44,13 +47,14 @@ public class JdbcPlaylistGeneratorDao implements PlaylistGeneratorDao, JdbcTempl
 	 *
 	 */
 	@Override
-	public List<PlaylistItem> getPlaylistForTrack(int trackId) {
+	public List<PlaylistItem> getPlaylistForTrack(Uri trackUri) {
+		
 		String sql = "select distinct on (t.id, tr.weight) a.id, lt.id"
 			+ " from music.trackrelation tr"
 			+ " inner join music.track t on t.id = tr.target_id"
 			+ " inner join music.artist a on a.id = t.artist_id"
 			+ " inner join library.track lt on lt.track_id = t.id"
-			+ " where tr.source_id = " + trackId
+			+ " where tr.source_id = " + trackUri.getId()
 			+ " order by tr.weight desc, t.id"
 			+ " limit 25";
 
@@ -88,12 +92,13 @@ public class JdbcPlaylistGeneratorDao implements PlaylistGeneratorDao, JdbcTempl
 	 *
 	 */
 	@Override
-	public List<PlaylistItem> getPlaylistForArtist(int artistId, int artistCount, int totalCount) {
+	public List<PlaylistItem> getPlaylistForArtist(Uri artistUri, int artistCount, int totalCount) {
+		
 		String sql = "select artist_id, track_id from ("
 			+ "  select att.track_id, att.artist_id, ar.weight as artist_weight, rank() over"
 			+ "  (partition by att.artist_id order by (random()*(110 - rank + (play_count/3))) desc) as artist_rank from library.artisttoptrackplaycount att"
-			+ "   inner join (select source_id, target_id, weight from music.artistrelation union all select " + artistId + ", " + artistId + ", 1) ar"
-			+ "	    on ar.target_id = att.artist_id and ar.source_id = " + artistId
+			+ "   inner join (select source_id, target_id, weight from music.artistrelation union all select " + artistUri.getId() + ", " + artistUri.getId() + ", 1) ar"
+			+ "	    on ar.target_id = att.artist_id and ar.source_id = " + artistUri.getId()
 			+ "  ) ranked_tracks"
 			+ "  where ranked_tracks.artist_rank <= " + artistCount
 			+ "  order by random() * ranked_tracks.artist_weight * ranked_tracks.artist_weight desc limit " + totalCount;
@@ -162,16 +167,17 @@ public class JdbcPlaylistGeneratorDao implements PlaylistGeneratorDao, JdbcTempl
 	 * Tracks are sorted by artist relevance and track rank.
 	 */
 	@Override
-	public List<Integer> getPlaylistForRelatedArtists(int artistId, int artistCount, int totalCount) {
+	public List<? extends Uri> getPlaylistForRelatedArtists(Uri artistUri, int artistCount, int totalCount) {
+		
 		String sql = "select track_id from ("
 			+ "  select att.track_id, att.artist_id, att.rank as track_rank, ar.weight as artist_weight, rank() over"
 			+ "  (partition by att.artist_id order by rank) as artist_rank from library.artisttoptrackplaycount att"
-			+ "   inner join music.artistrelation ar on ar.target_id = att.artist_id and ar.source_id = " + artistId
+			+ "   inner join music.artistrelation ar on ar.target_id = att.artist_id and ar.source_id = " + artistUri.getId()
 			+ "  ) ranked_tracks"
 			+ "  where ranked_tracks.artist_rank <= " + artistCount
 			+ "  order by ranked_tracks.artist_weight desc, track_rank limit " + (totalCount * artistCount);
 
-		return jdbcTemplate.queryForList(sql, Integer.class);
+		return jdbcTemplate.query(sql, new UriRowMapper());
 	}
 
 	@Override

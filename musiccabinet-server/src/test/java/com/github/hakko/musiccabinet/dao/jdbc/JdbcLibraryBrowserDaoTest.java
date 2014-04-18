@@ -76,9 +76,9 @@ public class JdbcLibraryBrowserDaoTest {
 		String filename = "filename.flac";
 		submitFile(additionDao, UnittestLibraryUtil.getFile(directory, filename));
 		
-		Assert.assertEquals(-1, browserDao.getTrackId(directory));
-		Assert.assertEquals(-1, browserDao.getTrackId(filename));
-		Assert.assertTrue(browserDao.getTrackId(directory + separatorChar + filename) != -1);
+		Assert.assertEquals(new Integer(-1), browserDao.getTrackUri(directory).getId());
+		Assert.assertEquals(new Integer(-1), browserDao.getTrackUri(filename).getId());
+		Assert.assertTrue(browserDao.getTrackUri(directory + separatorChar + filename).getId() != -1);
 	}
 	
 	@Test

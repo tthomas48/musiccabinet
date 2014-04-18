@@ -2,6 +2,7 @@ package com.github.hakko.musiccabinet.service;
 
 import java.util.List;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistRecommendationDao;
 import com.github.hakko.musiccabinet.domain.model.aggr.ArtistRecommendation;
 
@@ -13,13 +14,13 @@ public class ArtistRecommendationService {
 	protected ArtistRecommendationDao dao;
 	
 	public List<ArtistRecommendation> getRelatedArtistsInLibrary(
-			int artistId, int amount, boolean onlyAlbumArtists) {
-		return dao.getRelatedArtistsInLibrary(artistId, amount, onlyAlbumArtists);
+			Uri artistUri, int amount, boolean onlyAlbumArtists) {
+		return dao.getRelatedArtistsInLibrary(artistUri, amount, onlyAlbumArtists);
 	}
 	
 	public List<String> getRelatedArtistsNotInLibrary(
-			int artistId, int amount, boolean onlyAlbumArtists) {
-		return dao.getRelatedArtistsNotInLibrary(artistId, amount, onlyAlbumArtists);
+			Uri artistUri, int amount, boolean onlyAlbumArtists) {
+		return dao.getRelatedArtistsNotInLibrary(artistUri, amount, onlyAlbumArtists);
 	}
 
 	public List<ArtistRecommendation> getGenreArtistsInLibrary(

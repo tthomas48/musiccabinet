@@ -61,7 +61,7 @@ public class LibraryTagTest {
 
 	@Test
 	public void findsTopTagsForLocalGenres() throws Exception {
-		List<Tag> topTags = topTagsDao.getTopTags(musicDao.getArtistId(ARTIST));
+		List<Tag> topTags = topTagsDao.getTopTags(musicDao.getArtistUri(ARTIST));
 
 		Assert.assertNotNull(topTags);
 		Assert.assertEquals(2, topTags.size());

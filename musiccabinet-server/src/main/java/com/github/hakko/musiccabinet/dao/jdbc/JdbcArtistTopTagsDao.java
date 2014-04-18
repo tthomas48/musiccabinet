@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.object.BatchSqlUpdate;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.ArtistTopTagsDao;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.TagNameCountRowMapper;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
@@ -57,31 +58,34 @@ public class JdbcArtistTopTagsDao implements ArtistTopTagsDao, JdbcTemplateDao {
 	}
 
 	@Override
-	public List<Tag> getTopTags(int artistId) {
+	public List<Tag> getTopTags(Uri artistUri) {
 		String topTagsTable = settingsService.getArtistTopTagsTable();
 		String sql = "select tag_name, tag_count"
 			+ " from " + topTagsTable + " att"
 			+ " inner join music.tag tag on att.tag_id = tag.id"
-			+ " where att.artist_id = " + artistId + " order by att.tag_count desc";
+			+ " where att.artist_id = " + artistUri.getId() + " order by att.tag_count desc";
 
 		return jdbcTemplate.query(sql, new TagNameCountRowMapper());
 	}
 
 	@Override
-	public List<Tag> getTopTags(int artistId, int limit) {
+	public List<Tag> getTopTags(Uri artistUri, int limit) {
+		
 		String topTagsTable = settingsService.getArtistTopTagsTable();
 		String sql = "select t.tag_name, att.tag_count"
 				+ " from " + topTagsTable + " att"
 				+ " inner join music.tag t on att.tag_id = t.id"
 				+ " inner join library.toptag tt on tt.tag_id = t.id"
-				+ " where att.artist_id = " + artistId + " and tag_count > 0"
+				+ " where att.artist_id = " + artistUri.getId() + " and tag_count > 0"
 				+ " order by att.tag_count desc limit " + limit;
 
 		return jdbcTemplate.query(sql, new TagNameCountRowMapper());
 	}
 
 	@Override
-	public void updateTopTag(int artistId, String tagName, int tagCount) {
+	public void updateTopTag(Uri artistUri, String tagName, int tagCount) {
+		
+		int artistId = artistUri.getId();
 		int tagId = jdbcTemplate.queryForInt(
 				"select id from music.tag where tag_name = ?", tagName);
 

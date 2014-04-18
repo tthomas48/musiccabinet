@@ -2,6 +2,7 @@ package com.github.hakko.musiccabinet.domain.model.music;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.domain.model.music.MBAlbum.AlbumType;
 
 /*
@@ -9,7 +10,7 @@ import com.github.hakko.musiccabinet.domain.model.music.MBAlbum.AlbumType;
  */
 public class MBRelease {
 
-	private int artistId; // database id for artist
+	private Uri artistUri; // database id for artist
 	private String title;
 	private AlbumType type; // Album/EP/Single
 	private short releaseYear;
@@ -33,12 +34,12 @@ public class MBRelease {
 		this.format = format;
 	}
 
-	public int getArtistId() {
-		return artistId;
+	public Uri getArtistUri() {
+		return artistUri;
 	}
 
-	public void setArtistId(int artistId) {
-		this.artistId = artistId;
+	public void setArtistUri(Uri artistUri) {
+		this.artistUri = artistUri;
 	}
 
 	public String getTitle() {

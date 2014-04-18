@@ -1,5 +1,7 @@
 package com.github.hakko.musiccabinet.domain.model.aggr;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
+
 /*
  * ArtistRecommendation doesn't map to a single database table but is rather aggregated
  * from music.artist and music.artistinfo.
@@ -8,16 +10,16 @@ public class ArtistRecommendation {
 
 	private String artistName;
 	private String imageUrl;
-	private int artistId;
+	private Uri artistUri;
 	
-	public ArtistRecommendation(String artistName, int artistId) {
-		this(artistName, null, artistId);
+	public ArtistRecommendation(String artistName, Uri artistUri) {
+		this(artistName, null, artistUri);
 	}
 
-	public ArtistRecommendation(String artistName, String imageUrl, int artistId) {
+	public ArtistRecommendation(String artistName, String imageUrl, Uri artistUri) {
 		this.artistName = artistName;
 		this.imageUrl = imageUrl;
-		this.artistId = artistId;
+		this.artistUri = artistUri;
 	}
 
 	public String getArtistName() {
@@ -36,12 +38,12 @@ public class ArtistRecommendation {
 		this.imageUrl = imageUrl;
 	}
 
-	public int getArtistId() {
-		return artistId;
+	public Uri getUri() {
+		return artistUri;
 	}
 
-	public void setArtistId(int artistId) {
-		this.artistId = artistId;
+	public void setUri(Uri artistUri) {
+		this.artistUri = artistUri;
 	}
 	
 }

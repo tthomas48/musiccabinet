@@ -9,7 +9,9 @@ import javax.sql.DataSource;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.StarDao;
+import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.UriRowMapper;
 import com.github.hakko.musiccabinet.domain.model.library.LastFmUser;
 
 public class JdbcStarDao implements StarDao, JdbcTemplateDao {
@@ -17,23 +19,23 @@ public class JdbcStarDao implements StarDao, JdbcTemplateDao {
 	private JdbcTemplate jdbcTemplate;
 
 	@Override
-	public void starArtist(LastFmUser lastFmUser, int artistId) {
+	public void starArtist(LastFmUser lastFmUser, Uri artistUri) {
 		String sql = "insert into library.starredartist (lastfmuser_id, artist_id)"
 				+ " select ?,? where not exists (select 1 from library.starredartist"
 				+ " where lastfmuser_id = ? and artist_id = ?)";
 
-		jdbcTemplate.update(sql, lastFmUser.getId(), artistId, lastFmUser.getId(), artistId);
+		jdbcTemplate.update(sql, lastFmUser.getId(), artistUri.getId(), lastFmUser.getId(), artistUri.getId());
 	}
 
 	@Override
-	public void unstarArtist(LastFmUser lastFmUser, int artistId) {
+	public void unstarArtist(LastFmUser lastFmUser, Uri artistUri) {
 		String sql = "delete from library.starredartist where lastfmuser_id = ? and artist_id = ?";
 		
-		jdbcTemplate.update(sql, lastFmUser.getId(), artistId);
+		jdbcTemplate.update(sql, lastFmUser.getId(), artistUri.getId());
 	}
 
 	@Override
-	public List<Integer> getStarredArtistIds(LastFmUser lastFmUser, int offset, int limit, String query) {
+	public List<? extends Uri> getStarredArtistUris(LastFmUser lastFmUser, int offset, int limit, String query) {
 		String sql = "select sa.artist_id from library.starredartist sa"
 				+ " inner join library.artist la on sa.artist_id = la.artist_id"
 				+ " where sa.lastfmuser_id = ?"
@@ -43,27 +45,27 @@ public class JdbcStarDao implements StarDao, JdbcTemplateDao {
 		Object[] params = query == null ? 
 				new Object[]{lastFmUser.getId(), offset, limit} : 
 				new Object[]{lastFmUser.getId(), getNameQuery(query), offset, limit};
-		return jdbcTemplate.queryForList(sql, params, Integer.class);
+		return jdbcTemplate.query(sql, params, new UriRowMapper());
 	}
 
 	@Override
-	public void starAlbum(LastFmUser lastFmUser, int albumId) {
+	public void starAlbum(LastFmUser lastFmUser, Uri albumUri) {
 		String sql = "insert into library.starredalbum (lastfmuser_id, album_id)"
 				+ " select ?,? where not exists (select 1 from library.starredalbum"
 				+ " where lastfmuser_id = ? and album_id = ?)";
 
-		jdbcTemplate.update(sql, lastFmUser.getId(), albumId, lastFmUser.getId(), albumId);
+		jdbcTemplate.update(sql, lastFmUser.getId(), albumUri.getId(), lastFmUser.getId(), albumUri.getId());
 	}
 
 	@Override
-	public void unstarAlbum(LastFmUser lastFmUser, int albumId) {
+	public void unstarAlbum(LastFmUser lastFmUser, Uri albumUri) {
 		String sql = "delete from library.starredalbum where lastfmuser_id = ? and album_id = ?";
 		
-		jdbcTemplate.update(sql, lastFmUser.getId(), albumId);
+		jdbcTemplate.update(sql, lastFmUser.getId(), albumUri.getId());
 	}
 
 	@Override
-	public List<Integer> getStarredAlbumIds(LastFmUser lastFmUser, int offset, int limit, String query) {
+	public List<? extends Uri> getStarredAlbumUris(LastFmUser lastFmUser, int offset, int limit, String query) {
 		String sql = "select sa.album_id from library.starredalbum sa"
 				+ " inner join library.album la on sa.album_id = la.album_id"
 				+ " where sa.lastfmuser_id = ?"
@@ -73,11 +75,11 @@ public class JdbcStarDao implements StarDao, JdbcTemplateDao {
 		Object[] params = query == null ? 
 				new Object[]{lastFmUser.getId(), offset, limit} : 
 				new Object[]{lastFmUser.getId(), getNameQuery(query), offset, limit};
-		return jdbcTemplate.queryForList(sql, params, Integer.class);
+		return jdbcTemplate.query(sql, params, new UriRowMapper());
 	}
 
 	@Override
-	public void starTrack(LastFmUser lastFmUser, int trackId) {
+	public void starTrack(LastFmUser lastFmUser, Uri trackUri) {
 		String sql = "insert into library.starredtrack (lastfmuser_id, album_id, track_id)"
 				+ " select ?, lt.album_id, lt.track_id from library.track lt"
 				+ " where lt.id = ? and not exists ("
@@ -86,25 +88,25 @@ public class JdbcStarDao implements StarDao, JdbcTemplateDao {
 				+ "  on st.album_id = lt.album_id and st.track_id = lt.track_id"
 				+ "  where st.lastfmuser_id = ? and lt.id = ?)";
 
-		jdbcTemplate.update(sql, lastFmUser.getId(), trackId, lastFmUser.getId(), trackId);
+		jdbcTemplate.update(sql, lastFmUser.getId(), trackUri.getId(), lastFmUser.getId(), trackUri.getId());
 	}
 
 	@Override
-	public void unstarTrack(LastFmUser lastFmUser, int trackId) {
+	public void unstarTrack(LastFmUser lastFmUser, Uri trackUri) {
 		String sql = "delete from library.starredtrack st"
 				+ " using library.track lt"
 				+ " where lt.album_id = st.album_id and lt.track_id = st.track_id"
-				+ " and lt.id = " + trackId + " and lastfmuser_id = " + lastFmUser.getId();
+				+ " and lt.id = " + trackUri.getId() + " and lastfmuser_id = " + lastFmUser.getId();
 		
 		jdbcTemplate.update(sql);
 	}
 
-	public List<Integer> getStarredTrackIds(LastFmUser lastFmUser) {
-		return getStarredTrackIds(lastFmUser, 0, MAX_VALUE, null);
+	public List<? extends Uri> getStarredTrackUris(LastFmUser lastFmUser) {
+		return getStarredTrackUris(lastFmUser, 0, MAX_VALUE, null);
 	}
 
 	@Override
-	public List<Integer> getStarredTrackIds(LastFmUser lastFmUser, int offset, int limit, String query) {
+	public List<? extends Uri> getStarredTrackUris(LastFmUser lastFmUser, int offset, int limit, String query) {
 		String sql = "select lt.id from library.starredtrack st"
 				+ " inner join library.track lt on st.album_id = lt.album_id"
 				+ "  and st.track_id = lt.track_id"
@@ -115,7 +117,7 @@ public class JdbcStarDao implements StarDao, JdbcTemplateDao {
 		Object[] params = query == null ? 
 				new Object[]{lastFmUser.getId(), offset, limit} : 
 				new Object[]{lastFmUser.getId(), getNameQuery(query), offset, limit};
-		return jdbcTemplate.queryForList(sql, params, Integer.class);
+		return jdbcTemplate.query(sql, params, new UriRowMapper());
 	}
 
 	@Override

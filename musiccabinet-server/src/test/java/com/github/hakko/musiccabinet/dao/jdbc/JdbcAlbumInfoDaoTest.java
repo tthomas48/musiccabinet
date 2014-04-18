@@ -77,8 +77,8 @@ public class JdbcAlbumInfoDaoTest {
 		createLibraryTracks(aiNirvana, aiNirvana2, aiNirvana3, aiHurts, aiSchuller);
 		
 		for (AlbumInfo ai : asList(aiNirvana, aiHurts, aiSchuller)) {
-			ai.getAlbum().getArtist().setId(
-					musicDao.getArtistId(ai.getAlbum().getArtist()));
+			ai.getAlbum().getArtist().setUri(
+					musicDao.getArtistUri(ai.getAlbum().getArtist()));
 		}
 	}
 	
@@ -146,7 +146,7 @@ public class JdbcAlbumInfoDaoTest {
 		
 		for (AlbumInfo ai : Arrays.asList(aiHurts, aiSchuller)) {
 			List<AlbumInfo> dbInfos = dao.getAlbumInfosForArtist(
-					ai.getAlbum().getArtist().getId());
+					ai.getAlbum().getArtist().getUri());
 			Assert.assertNotNull(dbInfos);
 			Assert.assertEquals(1, dbInfos.size());
 			AlbumInfo dbInfo = dbInfos.get(0);
@@ -163,7 +163,7 @@ public class JdbcAlbumInfoDaoTest {
 		dao.createAlbumInfo(Arrays.asList(aiNirvana, aiNirvana2, aiNirvana3));
 		
 		List<AlbumInfo> dbInfos = dao.getAlbumInfosForArtist(
-				aiNirvana.getAlbum().getArtist().getId());
+				aiNirvana.getAlbum().getArtist().getUri());
 		assertNotNull(dbInfos);
 		assertEquals(3, dbInfos.size());
 

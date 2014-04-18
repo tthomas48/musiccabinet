@@ -8,10 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.MusicDao;
 import com.github.hakko.musiccabinet.domain.model.music.ArtistInfo;
 import com.github.hakko.musiccabinet.exception.ApplicationException;
-import com.github.hakko.musiccabinet.service.lastfm.ArtistInfoService;
 
 /*
  * Doesn't actually do much testing, except invoking the service methods.
@@ -40,9 +40,9 @@ public class ArtistInfoServiceTest {
 	@Test
 	public void canInvokeService() throws ApplicationException {
 		String artistName = "A Previously Unknown Artist";
-		int artistId = musicDao.getArtistId(artistName);
+		Uri artistUri = musicDao.getArtistUri(artistName);
 		
-		ArtistInfo artistInfo = aiService.getArtistInfo(artistId);
+		ArtistInfo artistInfo = aiService.getArtistInfo(artistUri);
 		
 		Assert.assertNotNull(artistInfo);
 		Assert.assertEquals(artistName, artistInfo.getArtist().getName());

@@ -41,7 +41,7 @@
       <groupId>jahspotify</groupId>
       <artifactId>jahspotify-api</artifactId>
       <version>0.0.1-SNAPSHOT</version>
-      <scope>runtime</scope>
+      <!--scope>runtime</scope-->
     </dependency>
     <dependency>
       <groupId>jahspotify</groupId>

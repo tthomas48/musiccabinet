@@ -3,6 +3,7 @@ package com.github.hakko.musiccabinet.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.MusicBrainzAlbumDao;
 import com.github.hakko.musiccabinet.dao.MusicBrainzArtistDao;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
@@ -58,8 +59,8 @@ public class MusicBrainzService {
 				lastFmUsername, playedWithinLastDays, offset);
 	}
 	
-	public List<Album> getDiscography(int artistId, boolean sortByYear, boolean sortAscending) {
-		return albumDao.getDiscography(artistId, sortByYear, sortAscending);
+	public List<Album> getDiscography(Uri artistUri, boolean sortByYear, boolean sortAscending) {
+		return albumDao.getDiscography(artistUri, sortByYear, sortAscending);
 	}
 
 	public void updateDiscography() {
@@ -110,7 +111,7 @@ public class MusicBrainzService {
 						artist.getName(), artist.getMbid(), offset));
 					parser = new ReleaseParserImpl(response.getInputStream());
 					for (MBRelease album : parser.getReleases()) {
-						album.setArtistId(artist.getId());
+						album.setArtistUri(artist.getUri());
 					}
 					mbReleases.addAll(parser.getReleases());
 					offset += 100;
