@@ -14,12 +14,14 @@ import com.github.hakko.musiccabinet.dao.LibraryBrowserDao;
 import com.github.hakko.musiccabinet.dao.util.URIUtil;
 import com.github.hakko.musiccabinet.domain.model.aggr.ArtistRecommendation;
 import com.github.hakko.musiccabinet.domain.model.aggr.LibraryStatistics;
+import com.github.hakko.musiccabinet.domain.model.aggr.NameSearchResult;
 import com.github.hakko.musiccabinet.domain.model.library.File;
 import com.github.hakko.musiccabinet.domain.model.library.MetaData;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
 import com.github.hakko.musiccabinet.domain.model.music.Track;
 import com.github.hakko.musiccabinet.log.Logger;
+import com.github.hakko.musiccabinet.service.INameSearchService;
 import com.github.hakko.musiccabinet.service.spotify.SpotifyService;
 
 public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
@@ -28,6 +30,8 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 			.getLogger(SpotifyLibraryBrowserDao.class);
 
 	private SpotifyService spotifyService;
+    private INameSearchService nameSearchService;
+
 
 
 	@Override
@@ -91,61 +95,73 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 			tracks.add(new SpotifyUri(track));
 		}
 		return new Album(new SpotifyUri(spotifyAlbum.getArtist().getUri()), spotifyAlbum.getArtist().getId(), 
-				albumUri, spotifyAlbum.getName(), (short) spotifyAlbum.getYear(), 
+				albumUri, spotifyAlbum.getName(), spotifyAlbum.getYear(), 
 				spotifyAlbum.getCover().asString(),
 				false, 
 				spotifyAlbum.getCover().asString(), tracks);
 	}
 
 	@Override
-	public List<Album> getAlbums(Uri artistUri, boolean sortAscending) {
+	public void getAlbums(List<Album> albums, Artist artist, boolean sortAscending) {
+		Uri artistUri = artist.getUri();
+		
+		Date start = new Date();
 		if(artistUri instanceof SpotifyUri == false) {
-			System.err.println("Not spotify URI");
-				return new ArrayList<Album>();
+			Artist foundArtist = null;
+			NameSearchResult<Artist> artists = nameSearchService.getArtists(artist.getName(), 0, 5);
+			for(Artist a : artists.getResults()) {
+				if(a.getName().toLowerCase().equals(artist.getName().toLowerCase())) {
+					foundArtist = a;
+				}
+			}
+			if(foundArtist == null) {
+				return;
+			}
+			artist = foundArtist;
+			artistUri = artist.getUri();
 		}
-		System.err.println("Attempting to get Albums");
-		List<Album> albums = new ArrayList<Album>();
 		
 		jahspotify.media.Artist spotifyArtist = spotifyService.getSpotify().readArtist(((SpotifyUri)artistUri).getLink(), true);
 		if(!MediaHelper.waitFor(spotifyArtist, 60)) {
-			return new ArrayList<Album>();
+			return;
 		}
 		
 		List<Link> albumLinks = spotifyArtist.getAlbums();
-		System.err.println(albumLinks);
-		for(Link albumLink : albumLinks) {
+		ALBUMS: for(Link albumLink : albumLinks) {
 			jahspotify.media.Album spotifyAlbum = spotifyService.getSpotify().readAlbum(albumLink, true);
 			if(!MediaHelper.waitFor(spotifyAlbum, 60)) {
-				continue;
+				continue ALBUMS;
+			}
+			for(Album album : albums) {
+				if(spotifyAlbum.getName().toLowerCase().equals(album.getName().toLowerCase())) {
+					continue ALBUMS;
+				}
 			}
 			
-			
-			spotifyService.getSpotify().readArtist(spotifyAlbum.getArtist());
 			List<Link> trackLinks = spotifyAlbum.getTracks();
 			List<Uri> tracks = new ArrayList<Uri>();
 			for(Link track : trackLinks) {
 				tracks.add(new SpotifyUri(track));
 			}
-			Image image = spotifyService.getSpotify().readImage(spotifyAlbum.getCover());
-			System.err.println(image.getId());
-			albums.add(new Album(new SpotifyUri(spotifyArtist.getId()), spotifyArtist.getName(), 
-					new SpotifyUri(albumLink), spotifyAlbum.getName(), (short) spotifyAlbum.getYear(), 
-					spotifyAlbum.getCover().asString(),
+			//Image image = spotifyService.getSpotify().readImage(spotifyAlbum.getCover());
+			Link artistId = spotifyArtist.getId();
+			String artistName = spotifyArtist.getName();
+			String albumName = spotifyAlbum.getName();
+			Integer year = spotifyAlbum.getYear();
+			Link cover = spotifyAlbum.getCover();
+			albums.add(new Album(new SpotifyUri(artistId), artistName, 
+					new SpotifyUri(albumLink), albumName, year, 
+					cover.asString(),
 					false, 
-					spotifyAlbum.getCover().asString(), tracks));
-			
+					cover.asString(), tracks));
 		}
-		
-		return albums;
-		
-		
 	}
 
 	@Override
-	public List<Album> getAlbums(Uri artistUri, boolean sortByYear,
+	public void getAlbums(List<Album> albums, Artist artist, boolean sortByYear,
 			boolean sortAscending) {
 		// TODO how do we do sorting?
-		return getAlbums(artistUri, sortAscending);
+		getAlbums(albums, artist, sortAscending);
 	}
 
 	@Override
@@ -210,7 +226,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 				md.setTrackNr((short) spotifyTrack.getTrackNumber());
 				md.setDiscNr((short)1);
 				md.setDuration((short) spotifyTrack.getLength());
-				md.setYear((short) album.getYear());
+				md.setYear(album.getYear());
 				md.setAlbumUri(new SpotifyUri(spotifyTrack.getAlbum()));
 				md.setArtistUri(new SpotifyUri(spotifyTrack.getArtists().get(0)));
 				md.setModified(new Date().getTime());
@@ -306,5 +322,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 		this.spotifyService = spotifyService;
 	}
 	
-
+	public void setNameSearchService(INameSearchService nameSearchService) {
+		this.nameSearchService = nameSearchService;
+	}
 }

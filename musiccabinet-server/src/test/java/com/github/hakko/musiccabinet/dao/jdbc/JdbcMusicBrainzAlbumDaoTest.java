@@ -57,7 +57,7 @@ public class JdbcMusicBrainzAlbumDaoTest {
 	TITLE1 = "The Beyond", MBID1 = "236316f7-c919-3986-918b-25e135ba8000", TYPE1 = "Album",
 	TITLE2 = "Bodies / Recluse", MBID2 = "5484925b-884c-31d8-9c3e-2ef3824e6a5f", TYPE2 = "EP",
 	TITLE3 = "Eternal Kingdom";
-	private static final short YEAR1 = 2003, YEAR2 = 2006, YEAR3 = 2008;
+	private static final Integer YEAR1 = 2003, YEAR2 = 2006, YEAR3 = 2008;
 	private static final String UNKNOWN = "[unknown]";
 	private static final String USER = "User";
 	

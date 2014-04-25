@@ -90,7 +90,9 @@ public class PostgreSQLUtil {
 	public static String getUriParameters(Collection<? extends Uri> uris) {
 		List<Integer> integers = new ArrayList<Integer>();
 		for(Uri uri : uris) {
-			integers.add(uri.getId());
+			if(uri != null) {
+				integers.add(uri.getId());
+			}
 		}
 		return getIdParameters(integers);
 	}

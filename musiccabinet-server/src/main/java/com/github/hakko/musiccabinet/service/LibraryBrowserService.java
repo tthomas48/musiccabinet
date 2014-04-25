@@ -1,5 +1,6 @@
 package com.github.hakko.musiccabinet.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.github.hakko.musiccabinet.configuration.Uri;
@@ -52,12 +53,14 @@ public class LibraryBrowserService {
 		return libraryBrowserDao.getAlbum(albumUri);
 	}
 
-	public List<Album> getAlbums(Uri artistUri, boolean sortAscending) {
-		return getAlbums(artistUri, true, sortAscending);
+	public List<Album> getAlbums(Artist artist, boolean sortAscending) {
+		return getAlbums(artist, true, sortAscending);
 	}
 
-	public List<Album> getAlbums(Uri artistUri, boolean sortByYear, boolean sortAscending) {
-		return libraryBrowserDao.getAlbums(artistUri, sortByYear, sortAscending);
+	public List<Album> getAlbums(Artist artist, boolean sortByYear, boolean sortAscending) {
+		List<Album> albums = new ArrayList<Album>();
+		libraryBrowserDao.getAlbums(albums, artist, sortByYear, sortAscending);
+		return albums;
 	}
 
 	public List<Album> getVariousArtistsAlbums() {

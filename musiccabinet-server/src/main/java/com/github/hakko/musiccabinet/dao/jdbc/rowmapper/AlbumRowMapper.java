@@ -21,7 +21,7 @@ public class AlbumRowMapper implements RowMapper<Album> {
 		String artistName = rs.getString(2);
 		int albumId = rs.getInt(3);
 		String albumName = rs.getString(4);
-		short year = rs.getShort(5);
+		int year = rs.getInt(5);
 		String coverArtFile = getFileName(rs.getString(6), rs.getString(7));
 		boolean coverArtEmbedded = coverArtFile != null;
 		if (!coverArtEmbedded) {

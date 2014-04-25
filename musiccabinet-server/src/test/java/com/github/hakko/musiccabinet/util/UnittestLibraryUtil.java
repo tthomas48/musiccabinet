@@ -26,7 +26,7 @@ public class UnittestLibraryUtil {
 		md.setBitrate((short) 144);
 		md.setVbr(false);
 		md.setDuration((short) 90);
-		md.setYear((short) 1900);
+		md.setYear(1900);
 		md.setMediaType(Mediatype.OGG);
 		file.setMetaData(md);
 		return file;
@@ -48,7 +48,7 @@ public class UnittestLibraryUtil {
 		return file;
 	}
 
-	public static File getFile(String artist, String album, String title, short year) {
+	public static File getFile(String artist, String album, String title, Integer year) {
 		File file = getFile(artist, album, title);
 		file.getMetadata().setYear(year);
 		return file;

@@ -7,6 +7,7 @@ import static java.util.Arrays.asList;
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -78,8 +79,14 @@ public class JdbcUserLovedTracksDaoTest {
 
 		List<Artist> artists = browserDao.getArtists();
 		assertEquals(2, artists.size());
-		album1 = browserDao.getAlbums(artists.get(0).getUri(), true).get(0);
-		album2 = browserDao.getAlbums(artists.get(1).getUri(), true).get(0);
+		
+		List<Album> albums = new ArrayList<Album>();
+		browserDao.getAlbums(albums, artists.get(0), true);
+		album1 = albums.get(0);
+		albums.clear();
+		
+		browserDao.getAlbums(albums, artists.get(1), true);
+		album2 = albums.get(0);
 		
 		track1 = browserDao.getTracks(album1.getTrackUris()).get(0);
 		track2 = browserDao.getTracks(album2.getTrackUris()).get(0);
@@ -216,11 +223,11 @@ public class JdbcUserLovedTracksDaoTest {
 		deleteLovedAndStarredTracks();
 		additionDao.getJdbcTemplate().execute("truncate library.directory cascade");
 		submitFile(additionDao, asList(
-				f1 = getFile(artistName1, albumName1, trackName1, (short) 2006),
-				f2 = getFile(artistName1, albumName2, trackName1, (short) 1999),
-				f3 = getFile(artistName2, albumName1, trackName2, (short) 2010),
-				f4 = getFile(artistName2, albumName2, trackName2, (short) 2011),
-				f5 = getFile(artistName2, albumName3, trackName2, (short) 2012)));
+				f1 = getFile(artistName1, albumName1, trackName1, (int) 2006),
+				f2 = getFile(artistName1, albumName2, trackName1, (int) 1999),
+				f3 = getFile(artistName2, albumName1, trackName2, (int) 2010),
+				f4 = getFile(artistName2, albumName2, trackName2, (int) 2011),
+				f5 = getFile(artistName2, albumName3, trackName2, (int) 2012)));
 
 		dao.createLovedTracks(asList(
 				new UserLovedTracks(USERNAME1, asList(new Track(artistName1, trackName1))),

@@ -5,6 +5,7 @@ import static com.github.hakko.musiccabinet.util.UnittestLibraryUtil.submitFile;
 import static java.util.Arrays.asList;
 import static junit.framework.Assert.assertEquals;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -79,7 +80,8 @@ public class JdbcLibraryBrowserDaoAggregationTest {
 		Assert.assertEquals(1, artists.size());
 		artist1 = artists.get(0);
 		
-		List<Album> albums = browserDao.getAlbums(artists.get(0).getUri(), true);
+		List<Album> albums = new ArrayList<Album>();
+		browserDao.getAlbums(albums, artists.get(0), true);
 		Assert.assertEquals(2, albums.size());
 		Assert.assertEquals(1, albums.get(0).getTrackUris().size());
 		Assert.assertEquals(1, albums.get(1).getTrackUris().size());

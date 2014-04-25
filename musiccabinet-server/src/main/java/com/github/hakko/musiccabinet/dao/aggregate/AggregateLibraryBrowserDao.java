@@ -113,22 +113,18 @@ public class AggregateLibraryBrowserDao implements LibraryBrowserDao {
 	}
 
 	@Override
-	public List<Album> getAlbums(Uri artistUri, boolean sortAscending) {
-		List<Album> albums = new ArrayList<Album>();
+	public void getAlbums(List<Album> albums, Artist artist, boolean sortAscending) {
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getAlbums(artistUri, sortAscending));
+			dao.getAlbums(albums, artist, sortAscending);
 		}
-		return albums;
 	}
 
 	@Override
-	public List<Album> getAlbums(Uri artistUri, boolean sortByYear,
+	public void getAlbums(List<Album> albums, Artist artist, boolean sortByYear,
 			boolean sortAscending) {
-		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getAlbums(artistUri, sortByYear, sortAscending));
+			dao.getAlbums(albums, artist, sortByYear, sortAscending);
 		}
-		return albums;
 	}
 
 	@Override

@@ -42,7 +42,7 @@ public class JdbcLibraryAdditionDaoTest {
 		int fileNr = 0;
 
 		List<File> files = new ArrayList<>();
-		for (short year : new short[]{2000, 2002, 2004, 2001, 2003}) {
+		for (int year : new int[]{2000, 2002, 2004, 2001, 2003}) {
 			File file = new File(DIR, FILE + ++fileNr, parse(format("%d-01-01", year)), 0);
 			MetaData md = new MetaData();
 			md.setArtist("artist");
@@ -65,11 +65,11 @@ public class JdbcLibraryAdditionDaoTest {
 		
 		Assert.assertEquals(5, albums.size());
 		
-		Assert.assertEquals(2004, albums.get(0).getYear());
-		Assert.assertEquals(2003, albums.get(1).getYear());
-		Assert.assertEquals(2002, albums.get(2).getYear());
-		Assert.assertEquals(2001, albums.get(3).getYear());
-		Assert.assertEquals(2000, albums.get(4).getYear());
+		Assert.assertEquals(new Integer(2004), albums.get(0).getYear());
+		Assert.assertEquals(new Integer(2003), albums.get(1).getYear());
+		Assert.assertEquals(new Integer(2002), albums.get(2).getYear());
+		Assert.assertEquals(new Integer(2001), albums.get(3).getYear());
+		Assert.assertEquals(new Integer(2000), albums.get(4).getYear());
 	}
 		
 }

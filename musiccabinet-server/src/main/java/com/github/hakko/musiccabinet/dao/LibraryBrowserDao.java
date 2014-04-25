@@ -22,8 +22,8 @@ public interface LibraryBrowserDao {
 	List<ArtistRecommendation> getStarredArtists(String lastFmUsername, int offset, int limit, String query);
 
 	Album getAlbum(Uri albumUri);
-	List<Album> getAlbums(Uri artistUri, boolean sortAscending);
-	List<Album> getAlbums(Uri artistUri, boolean sortByYear, boolean sortAscending);
+	void getAlbums(List<Album> albums, Artist artist, boolean sortAscending);
+	void getAlbums(List<Album> albums, Artist artist, boolean sortByYear, boolean sortAscending);
 	List<Album> getVariousArtistsAlbums();
 	List<Album> getRecentlyAddedAlbums(int offset, int limit, String query);
 	List<Album> getRecentlyPlayedAlbums(String lastFmUsername, int offset, int limit, String query);

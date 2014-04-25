@@ -3,6 +3,7 @@ package com.github.hakko.musiccabinet.dao.jdbc;
 import static com.github.hakko.musiccabinet.dao.util.PostgreSQLFunction.ADD_TO_LIBRARY;
 import static com.github.hakko.musiccabinet.util.UnittestLibraryUtil.submitFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -59,8 +60,13 @@ public class JdbcStarDaoTest {
 
 		List<Artist> artists = browserDao.getArtists();
 		Assert.assertEquals(2, artists.size());
-		album1 = browserDao.getAlbums((artist1 = artists.get(0)).getUri(), true).get(0);
-		album2 = browserDao.getAlbums((artist2 = artists.get(1)).getUri(), true).get(0);
+		List<Album> albums = new ArrayList<Album>();
+		browserDao.getAlbums(albums, (artist1 = artists.get(0)), true);
+		album1 = albums.get(0);
+		albums.clear();
+		
+		browserDao.getAlbums(albums, (artist2 = artists.get(1)), true);
+		album2 = albums.get(0);
 		
 		track1 = browserDao.getTracks(album1.getTrackUris()).get(0);
 		track2 = browserDao.getTracks(album2.getTrackUris()).get(0);

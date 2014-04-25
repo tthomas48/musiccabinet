@@ -4,7 +4,9 @@ import static com.github.hakko.musiccabinet.service.library.LibraryUtil.FINISHED
 import static com.github.hakko.musiccabinet.service.library.LibraryUtil.msg;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +19,8 @@ import java.util.concurrent.CountDownLatch;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.integration.core.PollableChannel;
 
+import com.github.hakko.musiccabinet.dao.LibraryPresenceDao;
+import com.github.hakko.musiccabinet.domain.model.aggr.DirectoryContent;
 import com.github.hakko.musiccabinet.domain.model.aggr.SearchIndexUpdateProgress;
 import com.github.hakko.musiccabinet.domain.model.library.File;
 import com.github.hakko.musiccabinet.exception.ApplicationException;
@@ -34,7 +38,6 @@ import com.github.hakko.musiccabinet.log.Logger;
 public class LibraryScannerService {
 
 	private PollableChannel libraryPresenceChannel; // producer of
-	
 	private TaskExecutor taskExecutor;
 	private CountDownLatch workerThreads = new CountDownLatch(0);
 	
@@ -62,6 +65,9 @@ public class LibraryScannerService {
 			for (String path : rootPaths) {
 				Files.walkFileTree(Paths.get(path), new LibraryScanner(libraryPresenceChannel));
 			}
+			
+			// then do something with a 
+			
 			if (isRootPaths) {
 				libraryPresenceChannel.send(msg(null, rootPaths, new HashSet<File>()));
 			}
@@ -87,16 +93,27 @@ public class LibraryScannerService {
 	protected Set<String> getRootPaths(Set<String> paths) {
 		List<String> list = new ArrayList<>(paths);
 		Collections.sort(list);
-		Iterator<String> it = list.iterator();
-		for (String prev = null; it.hasNext(); ) {
-			String path = it.next();
+
+		String prev = null;
+		Set<String> result = new HashSet<>();
+		for(String path : list) {
 			if (prev != null && path.startsWith(prev)) {
-				it.remove();
+				continue;
 			} else {
+				Path p = FileSystems.getDefault().getPath(path);
+				if(Files.isSymbolicLink(p)) {
+					try {
+						path = Files.readSymbolicLink(p).toAbsolutePath().toString();
+					} catch(IOException e) {
+						LOG.error("Could not read path " + path, e);
+						continue;
+					}
+				}
 				prev = path.endsWith(fileSeparator) ? path : (path + fileSeparator);
+				result.add(prev);
 			}
 		}
-		return new HashSet<>(list);
+		return result;
 	}
 	
 	public boolean isLibraryBeingScanned() {

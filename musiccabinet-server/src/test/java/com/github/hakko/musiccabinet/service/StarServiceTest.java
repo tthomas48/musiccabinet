@@ -3,6 +3,7 @@ package com.github.hakko.musiccabinet.service;
 import static com.github.hakko.musiccabinet.util.UnittestLibraryUtil.getFile;
 import static com.github.hakko.musiccabinet.util.UnittestLibraryUtil.submitFile;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -58,7 +59,9 @@ public class StarServiceTest {
 		submitFile(additionDao, getFile("artist", "album", "title"));
 		
 		artist = browserDao.getArtists().get(0);
-		album = browserDao.getAlbums(artist.getUri(), true).get(0);
+		List<Album> albums = new ArrayList<Album>();
+		browserDao.getAlbums(albums, artist, true);
+		album = albums.get(0);
 		track = browserDao.getTracks(album.getTrackUris()).get(0);
 		
 		lastFmDao.getLastFmUserId(user1);

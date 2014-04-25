@@ -10,14 +10,14 @@ import com.github.hakko.musiccabinet.configuration.Uri;
 
 public class Album {
 
-	private Artist artist;
-	private String name;
-	private short year;
-	private String coverArtPath;
-	private boolean coverArtEmbedded;
-	private String coverArtURL;
-	private List<Uri> trackUris;
-	private Uri uri;
+	protected Artist artist;
+	protected String name;
+	protected Integer year;
+	protected String coverArtPath;
+	protected boolean coverArtEmbedded;
+	protected String coverArtURL;
+	protected List<Uri> trackUris;
+	protected Uri uri;
 	
 	public Album() {
 		setArtist(new Artist());
@@ -38,12 +38,12 @@ public class Album {
 		setName(albumName);
 	}
 	
-	public Album(int artistId, String artistName, int id, String name, short year, String coverArtFile,
+	public Album(int artistId, String artistName, int id, String name, Integer year, String coverArtFile,
 			boolean coverArtEmbedded, String coverArtURL, List<Uri> trackUris) {
 		this(new SubsonicUri(artistId), artistName, new SubsonicUri(id), name, year, coverArtFile, coverArtEmbedded, coverArtURL, trackUris);
 	}
 	
-	public Album(Uri artistUri, String artistName, Uri albumUri, String name, short year, String coverArtFile,
+	public Album(Uri artistUri, String artistName, Uri albumUri, String name, Integer year, String coverArtFile,
 			boolean coverArtEmbedded, String coverArtURL, List<Uri> trackUris) {
 		this.artist = new Artist(artistUri, artistName);
 		this.uri = albumUri;
@@ -85,7 +85,7 @@ public class Album {
 		return uri.getId();
 	}
 	
-	public short getYear() {
+	public Integer getYear() {
 		return year;
 	}
 	

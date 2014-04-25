@@ -26,7 +26,7 @@ public class TrackWithMetadataRowMapper implements RowMapper<Track> {
 		md.setTrackNrs(rs.getShort(7));
 		md.setDiscNr(rs.getShort(8));
 		md.setDiscNrs(rs.getShort(9));
-		md.setYear(rs.getShort(10));
+		md.setYear(rs.getInt(10));
 		md.setHasLyrics(rs.getBoolean(11));
 		md.setBitrate(rs.getShort(12));
 		md.setVbr(rs.getBoolean(13));

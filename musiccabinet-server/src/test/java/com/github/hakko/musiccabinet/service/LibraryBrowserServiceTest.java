@@ -98,36 +98,34 @@ public class LibraryBrowserServiceTest {
 	
 	@Test
 	public void findsAlbums() throws Exception {
-		Artist theBeatles = new Artist("The Beatles");
-		Uri beatlesUri = musicDao.getArtistUri(theBeatles);
+		Artist theBeatles = new Artist(musicDao.getArtistUri("The Beatles"), "The Beatles");
 		
 		scannerService.add(set(media1));
-		assertAlbums(browserService.getAlbums(beatlesUri, true), theBeatles, "1962-1966", UNKNOWN_ALBUM);
+		assertAlbums(browserService.getAlbums(theBeatles, true), theBeatles, "1962-1966", UNKNOWN_ALBUM);
 
 		scannerService.add(set(media1)); // shouldn't change anything
-		assertAlbums(browserService.getAlbums(beatlesUri, true), theBeatles, "1962-1966", UNKNOWN_ALBUM);
+		assertAlbums(browserService.getAlbums(theBeatles, true), theBeatles, "1962-1966", UNKNOWN_ALBUM);
 
 		scannerService.add(set(media2));
-		assertAlbums(browserService.getAlbums(beatlesUri, true), theBeatles, "1962-1966", "1967-1970", UNKNOWN_ALBUM);
+		assertAlbums(browserService.getAlbums(theBeatles, true), theBeatles, "1962-1966", "1967-1970", UNKNOWN_ALBUM);
 
 		scannerService.delete(set(media1));
-		assertAlbums(browserService.getAlbums(beatlesUri, true), theBeatles, "1967-1970");
+		assertAlbums(browserService.getAlbums(theBeatles, true), theBeatles, "1967-1970");
 		
 		scannerService.delete(set(media1)); // shouldn't change anything
-		assertAlbums(browserService.getAlbums(beatlesUri, true), theBeatles, "1967-1970");
+		assertAlbums(browserService.getAlbums(theBeatles, true), theBeatles, "1967-1970");
 
 		scannerService.delete(set(media2));
-		assertAlbums(browserService.getAlbums(beatlesUri, true), theBeatles);
+		assertAlbums(browserService.getAlbums(theBeatles, true), theBeatles);
 	}
 
 	@Test
 	public void findsAlbum() throws Exception {
-		Artist theBeatles = new Artist("The Beatles");
-		Uri beatlesUri = musicDao.getArtistUri(theBeatles);
+		Artist theBeatles = new Artist(musicDao.getArtistUri("The Beatles"), "The Beatles");
 
 		scannerService.add(set(media2));
 
-		List<Album> albums = browserService.getAlbums(beatlesUri, true);
+		List<Album> albums = browserService.getAlbums(theBeatles, true);
 		assertAlbums(albums, theBeatles, "1967-1970");
 		
 		Uri albumUri = albums.get(0).getUri();
@@ -138,20 +136,20 @@ public class LibraryBrowserServiceTest {
 
 	@Test
 	public void sortsAlbumsByEitherYearOrName() throws Exception {
-		Uri artistUri = musicDao.getArtistUri("Artist");
+		Artist artist = new Artist(musicDao.getArtistUri("Artist"), "Artist");
 		
 
 		scannerService.add(set(media8));
 
-		Assert.assertEquals("ACB", getAlbumNames(artistUri, true, true));
-		Assert.assertEquals("BCA", getAlbumNames(artistUri, true, false));
+		Assert.assertEquals("ACB", getAlbumNames(artist, true, true));
+		Assert.assertEquals("BCA", getAlbumNames(artist, true, false));
 
-		Assert.assertEquals("ABC", getAlbumNames(artistUri, false, true));
-		Assert.assertEquals("CBA", getAlbumNames(artistUri, false, false));
+		Assert.assertEquals("ABC", getAlbumNames(artist, false, true));
+		Assert.assertEquals("CBA", getAlbumNames(artist, false, false));
 	}
 	
-	private String getAlbumNames(Uri artistUri, boolean sortByYear, boolean sortAscending) {
-		List<Album> albums = browserService.getAlbums(artistUri, sortByYear, sortAscending);
+	private String getAlbumNames(Artist artist, boolean sortByYear, boolean sortAscending) {
+		List<Album> albums = browserService.getAlbums(artist, sortByYear, sortAscending);
 		
 		StringBuilder sb = new StringBuilder();
 		for (Album album : albums) {
@@ -163,12 +161,10 @@ public class LibraryBrowserServiceTest {
 
 	@Test
 	public void findsArtwork() throws Exception {
-		Artist artist = new Artist("Artist Name");
-		Uri artistUri = musicDao.getArtistUri(artist);
-		
+		Artist artist = new Artist(musicDao.getArtistUri("Artist Name"), "Artist Name");
 		
 		scannerService.add(set(media3));
-		List<Album> albums = browserService.getAlbums(artistUri, true);
+		List<Album> albums = browserService.getAlbums(artist, true);
 		
 		assertAlbums(albums, artist, "Embedded artwork", "Folder artwork");
 
@@ -192,10 +188,10 @@ public class LibraryBrowserServiceTest {
 	@Test
 	public void findsTrack() throws Exception {
 		scannerService.add(set(aretha));
-		Artist artist = new Artist("Aretha Franklin");
-		Uri artistUri = musicDao.getArtistUri(artist);
 		
-		List<Album> albums = browserService.getAlbums(artistUri, true);
+		Artist artist = new Artist(musicDao.getArtistUri("Aretha Franklin"), "Aretha Franklin");
+		
+		List<Album> albums = browserService.getAlbums(artist, true);
 		assertAlbums(albums, artist, UNKNOWN_ALBUM);
 		
 		List<Track> tracks = browserService.getTracks(albums.get(0).getTrackUris());
@@ -206,11 +202,10 @@ public class LibraryBrowserServiceTest {
 	public void findsTracks() throws Exception {
 		scannerService.add(set(media1));
 		
-		Artist artist = new Artist("The Beatles");
-		Uri artistUri = musicDao.getArtistUri(artist);
+		Artist artist = new Artist(musicDao.getArtistUri("The Beatles"), "The Beatles");
 
 		
-		List<Album> albums = browserService.getAlbums(artistUri, true);
+		List<Album> albums = browserService.getAlbums(artist, true);
 		Album redAlbum = getAlbum(albums, "1962-1966");
 		
 		List<Track> tracks = browserService.getTracks(redAlbum.getTrackUris());
@@ -226,11 +221,9 @@ public class LibraryBrowserServiceTest {
 	public void findsVariousArtistsTracks() throws Exception {
 		scannerService.add(set(media5));
 		
-		Artist artist = new Artist("Various Artists");
-		Uri artistUri = musicDao.getArtistUri(artist);
-
+		Artist artist = new Artist(musicDao.getArtistUri("Various Artists"), "Various Artists");
 		
-		List<Album> albums = browserService.getAlbums(artistUri, true);
+		List<Album> albums = browserService.getAlbums(artist, true);
 		assertAlbums(albums, artist, "Music From Searching For Wrong-Eyed Jesus");
 		
 		Album album = albums.get(0);
@@ -317,13 +310,10 @@ public class LibraryBrowserServiceTest {
 	
 	@Test
 	public void findsCoverArtFileForTrack() throws Exception {
-		Artist artist = new Artist("Artist Name");
-		Uri artistUri = musicDao.getArtistUri(artist);
-		//int artistId = UriUtil.getSubsonicId(artistUri);
-
+		Artist artist = new Artist(musicDao.getArtistUri("Artist Name"), "Artist Name");
 		
 		scannerService.add(set(media3));
-		List<Album> albums = browserService.getAlbums(artistUri, false, true);
+		List<Album> albums = browserService.getAlbums(artist, false, true);
 		Uri trackUri = albums.get(1).getTrackUris().get(0);
 		
 		String coverArtPath = browserService.getCoverArtFileForTrack(trackUri);
@@ -335,12 +325,10 @@ public class LibraryBrowserServiceTest {
 	
 	@Test
 	public void addsCoverArtPathForTrack() throws Exception {
-		Artist artist = new Artist("Artist Name");
-		Uri artistUri = musicDao.getArtistUri(artist);
-
+		Artist artist = new Artist(musicDao.getArtistUri("Artist Name"), "Artist Name");
 		
 		scannerService.add(set(media3));
-		List<Album> albums = browserService.getAlbums(artistUri, false, true);
+		List<Album> albums = browserService.getAlbums(artist, false, true);
 		Uri trackUri = albums.get(0).getTrackUris().get(0);
 		List<Track> tracks = browserService.getTracks(asList(trackUri));
 

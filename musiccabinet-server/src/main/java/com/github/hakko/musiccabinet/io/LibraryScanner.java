@@ -43,6 +43,10 @@ public class LibraryScanner extends SimpleFileVisitor<Path> {
     @Override
     public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
     	DirectoryContent directoryContent = map.get(file.getParent());
+    	if(directoryContent == null) {
+    		return CONTINUE;
+    	}
+    	
     	if (attr.size() > Integer.MAX_VALUE) {
     		LOG.warn(file.getFileName() + " has actual file size " + attr.size());
     	}

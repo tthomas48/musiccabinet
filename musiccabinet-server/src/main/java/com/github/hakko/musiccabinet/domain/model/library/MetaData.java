@@ -1,7 +1,7 @@
 package com.github.hakko.musiccabinet.domain.model.library;
 
 import static org.apache.commons.lang.math.NumberUtils.isDigits;
-import static org.apache.commons.lang.math.NumberUtils.toShort;
+import static org.apache.commons.lang.math.NumberUtils.toInt;
 
 import com.github.hakko.musiccabinet.configuration.Uri;
 
@@ -23,7 +23,7 @@ public class MetaData {
 	private Short trackNrs;
 	private Short discNr;
 	private Short discNrs;
-	private Short year;
+	private Integer year;
 	private String genre;
 	private String lyrics;
 	private boolean hasLyrics;
@@ -156,7 +156,7 @@ public class MetaData {
 		this.discNrs = discNrs;
 	}
 
-	public Short getYear() {
+	public Integer getYear() {
 		return year;
 	}
 
@@ -164,11 +164,11 @@ public class MetaData {
 		if (year != null && year.length() > 4) {
 			year = year.substring(0, 4);
 		}
-		this.year = isDigits(year) && toShort(year) > 1500 
-				? toShort(year) : null;
+		this.year = isDigits(year) && toInt(year) > 1500 
+				? toInt(year) : null;
 	}
 	
-	public void setYear(Short year) {
+	public void setYear(Integer year) {
 		this.year = year;
 	}
 

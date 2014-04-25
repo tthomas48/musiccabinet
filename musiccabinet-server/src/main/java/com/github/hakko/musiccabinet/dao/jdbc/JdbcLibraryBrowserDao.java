@@ -225,13 +225,13 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 	}
 
 	@Override
-	public List<Album> getAlbums(Uri artistUri, boolean sortAscending) {
-		return getAlbums(artistUri, true, sortAscending);
+	public void getAlbums(List<Album> albums, Artist artist, boolean sortAscending) {
+		getAlbums(albums, artist, true, sortAscending);
 	}
 
 	@Override
-	public List<Album> getAlbums(Uri artistUri, boolean sortByYear, boolean sortAscending) {
-		final Integer artistId = artistUri.getId();
+	public void getAlbums(List<Album> albums, Artist artist, boolean sortByYear, boolean sortAscending) {
+		final Integer artistId = artist.getUri().getId();
 		
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids from"
@@ -253,7 +253,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 				+ (sortByYear ? " la.year " : " ma.album_name ")
 				+ (sortAscending ? "asc" : "desc");
 
-		return jdbcTemplate.query(sql, new AlbumRowMapper());
+		albums.addAll(jdbcTemplate.query(sql, new AlbumRowMapper()));
 	}
 
 	@Override

@@ -95,7 +95,7 @@ public class SpotifySearchService implements INameSearchService {
 		for (Link link : albums) {
 			jahspotify.media.Album album = spotifyService.getSpotify().readAlbum(link, true);
 			jahspotify.media.Artist artist = spotifyService.getSpotify().readArtist(album.getArtist(), true);
-			result.add(new Album(new Artist(link.asString(), artist.getName()), new SpotifyUri(link), album.getName()));
+			result.add(new Album(new Artist(artist.getId().toString(), artist.getName()), new SpotifyUri(link), album.getName()));
 		}
 		LOG.debug(result);
 		return new NameSearchResult(result, offset);

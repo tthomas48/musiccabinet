@@ -4,6 +4,7 @@ import static com.github.hakko.musiccabinet.util.UnittestLibraryUtil.submitFile;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -80,10 +81,13 @@ public class JdbcPlayCountDaoTest {
 		artist1 = artists.get(0);
 		artist2 = artists.get(1);
 		
-		List<Album> albums1 = browserDao.getAlbums(artist1.getUri(), true);
+		List<Album> albums1 = new ArrayList<Album>();
+		browserDao.getAlbums(albums1, artist1, true);
 		assertEquals(1, albums1.size());
 		album1 = albums1.get(0);
-		List<Album> albums2 = browserDao.getAlbums(artist2.getUri(), true);
+		
+		List<Album> albums2 = new ArrayList<Album>();
+		browserDao.getAlbums(albums2, artist2, true);
 		assertEquals(1, albums2.size());
 		album2 = albums2.get(0);
 

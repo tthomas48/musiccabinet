@@ -38,11 +38,11 @@ public class ArtistRecommendation {
 		this.imageUrl = imageUrl;
 	}
 
-	public Uri getUri() {
+	public Uri getArtistUri() {
 		return artistUri;
 	}
 
-	public void setUri(Uri artistUri) {
+	public void setArtistUri(Uri artistUri) {
 		this.artistUri = artistUri;
 	}
 	
