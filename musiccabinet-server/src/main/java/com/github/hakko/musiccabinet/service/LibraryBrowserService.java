@@ -1,6 +1,7 @@
 package com.github.hakko.musiccabinet.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.github.hakko.musiccabinet.configuration.Uri;
@@ -110,7 +111,7 @@ public class LibraryBrowserService {
 	public List<? extends Uri> getRandomTrackUris(int limit, Integer fromYear, Integer toYear, String genre) {
 		return libraryBrowserDao.getRandomTrackUris(limit, fromYear, toYear, genre);
 	}
-
+	
 	public String getCoverArtFileForTrack(Uri trackUri) {
 		return libraryBrowserDao.getCoverArtFileForTrack(trackUri);
 	}

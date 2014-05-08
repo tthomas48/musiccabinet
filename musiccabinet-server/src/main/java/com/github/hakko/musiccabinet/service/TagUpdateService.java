@@ -77,7 +77,7 @@ public class TagUpdateService {
 	protected void register(ArtistUserTag submission) {
 		for (Iterator<ArtistUserTag> it = artistUserTags.iterator(); it.hasNext();) {
 			ArtistUserTag aut = it.next();
-			if (aut.getArtist().getId() == submission.getArtist().getId()
+			if (aut.getArtist().getUri().equals(submission.getArtist().getUri())
 					&& aut.getTagName().equals(submission.getTagName())
 					&& aut.getLastFmUser().getId() == submission
 							.getLastFmUser().getId()) {

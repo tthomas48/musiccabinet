@@ -16,6 +16,7 @@ import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.LastFmDao;
 import com.github.hakko.musiccabinet.dao.MusicDao;
 import com.github.hakko.musiccabinet.dao.WebserviceHistoryDao;
+import com.github.hakko.musiccabinet.dao.util.URIUtil;
 import com.github.hakko.musiccabinet.domain.model.library.LastFmGroup;
 import com.github.hakko.musiccabinet.domain.model.library.LastFmUser;
 import com.github.hakko.musiccabinet.domain.model.library.WebserviceInvocation;
@@ -44,8 +45,11 @@ public class JdbcWebserviceHistoryDao implements JdbcTemplateDao, WebserviceHist
 	
 	@Override
 	public void blockWebserviceInvocation(Uri artistUri, WebserviceInvocation.Calltype callType) {
+		if(!URIUtil.isSubsonic(artistUri)) {
+			return;
+		}
 		jdbcTemplate.execute(format("select library.block_webservice(%d, %d)", 
-				artistUri, callType.getDatabaseId()));
+				artistUri.getId(), callType.getDatabaseId()));
 	}
 
 	private void logWebserviceInvocation(WebserviceInvocation wi, Date invocationTime) {

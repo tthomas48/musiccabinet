@@ -82,6 +82,10 @@ public class URIUtil {
 	public static boolean isSpotify(Uri uri) {
 		return uri instanceof SpotifyUri;
 	}
+	
+	public static boolean isSubsonic(Uri uri) {
+		return uri instanceof SubsonicUri;
+	}
 
 	public static boolean isSpotify(String uri) {
 		if (uri == null) {
