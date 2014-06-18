@@ -1,6 +1,9 @@
 package com.github.hakko.musiccabinet.dao.spotify;
 
-import jahspotify.media.Image;
+import jahspotify.Query;
+import jahspotify.Search;
+import jahspotify.SearchListener;
+import jahspotify.SearchResult;
 import jahspotify.media.Link;
 import jahspotify.services.MediaHelper;
 
@@ -23,6 +26,7 @@ import com.github.hakko.musiccabinet.domain.model.music.Track;
 import com.github.hakko.musiccabinet.log.Logger;
 import com.github.hakko.musiccabinet.service.INameSearchService;
 import com.github.hakko.musiccabinet.service.spotify.SpotifyService;
+import com.github.hakko.musiccabinet.util.BlockingRequest;
 
 public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	
@@ -94,7 +98,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 		for(Link track : trackLinks) {
 			tracks.add(new SpotifyUri(track));
 		}
-		return new Album(new SpotifyUri(spotifyAlbum.getArtist().getUri()), spotifyAlbum.getArtist().getId(), 
+		return new Album(new SpotifyUri(spotifyAlbum.getArtist()), spotifyAlbum.getArtist().getId(), 
 				albumUri, spotifyAlbum.getName(), spotifyAlbum.getYear(), 
 				spotifyAlbum.getCover().asString(),
 				false, 
@@ -195,6 +199,72 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	@Override
 	public List<Album> getStarredAlbums(String lastFmUsername, int offset,
 			int limit, String query) {
+		
+		
+		
+		/*
+		SearchResult searchResult = new BlockingRequest<SearchResult>() {
+			@Override
+			public void run() {
+				spotifyService.getSpotify().initiateSearch(
+						new Search(Query.token("spotify:starred")),
+						new SearchListener() {
+							@Override
+							public void searchComplete(SearchResult searchResult) {
+								finish(searchResult);
+							}
+						});
+
+			}
+		}.start();
+
+		List<Album> result = new ArrayList<Album>();
+		List<Link> albums = searchResult.getAlbumsFound();
+		LOG.debug("Got back " + albums.size());
+		for (Link link : albums) {
+			jahspotify.media.Album album = spotifyService.getSpotify().readAlbum(link, true);
+			
+			List<Link> trackLinks = album.getTracks();
+			List<Uri> tracks = new ArrayList<Uri>();
+			for(Link track : trackLinks) {
+				tracks.add(new SpotifyUri(track));
+			}
+			
+			jahspotify.media.Artist artist = spotifyService.getSpotify().readArtist(album.getArtist(), true);
+			Album albumModel = new Album(new Artist(artist.getId().toString(), artist.getName()), new SpotifyUri(link), album.getName());
+			albumModel.setTrackUris(tracks);
+			result.add(albumModel);
+		}
+		LOG.debug(result);
+		//return new NameSearchResult(result, offset);
+		 */
+		
+		/*
+		List<Album> result = new ArrayList<Album>();
+		if(spotifyService.isSpotifyAvailable()) {
+			SearchResult searchResult = spotifyService.getSpotify().f
+			if(!MediaHelper.waitFor(searchResult, 60)) {
+				return result;
+			}
+			List<Link> albums = searchResult.getAlbumsFound();
+			for (Link link : albums) {
+				jahspotify.media.Album album = spotifyService.getSpotify().readAlbum(link, true);
+				
+				List<Link> trackLinks = album.getTracks();
+				List<Uri> tracks = new ArrayList<Uri>();
+				for(Link track : trackLinks) {
+					tracks.add(new SpotifyUri(track));
+				}
+				
+				jahspotify.media.Artist artist = spotifyService.getSpotify().readArtist(album.getArtist(), true);
+				Album albumModel = new Album(new Artist(artist.getId().toString(), artist.getName()), new SpotifyUri(link), album.getName());
+				albumModel.setTrackUris(tracks);
+				result.add(albumModel);
+			}
+			LOG.debug(result);
+		}
+		*/
+		//return result;
 		return new ArrayList<Album>();
 	}
 
@@ -255,7 +325,16 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	@Override
 	public List<? extends Uri> getStarredTrackUris(String lastFmUsername,
 			int offset, int limit, String query) {
-		return new ArrayList<Uri>();
+		jahspotify.media.Playlist playlist = spotifyService.getSpotify().readPlaylist(Link.create("spotify:user:" + spotifyService.getSpotifyUser().getUserName() + ":starred"), 0, 1000);
+		if(!MediaHelper.waitFor(playlist, 60)) {
+			return null;
+		}
+		List<Link> trackLinks = playlist.getTracks();
+		List<Uri> uris = new ArrayList<Uri>();
+		for(Link trackLink : trackLinks) {
+			uris.add(new SpotifyUri(trackLink));
+		}
+		return uris;
 	}
 
 	@Override

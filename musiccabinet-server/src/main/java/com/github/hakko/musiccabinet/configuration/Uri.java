@@ -6,5 +6,6 @@ public interface Uri extends Comparable<Uri> {
 
 	public URI getUri();
 	
-	public Integer getId();	
+	public Integer getId();
+	
 }

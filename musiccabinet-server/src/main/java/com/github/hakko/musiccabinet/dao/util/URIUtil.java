@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import com.github.hakko.musiccabinet.configuration.SpotifyUri;
+import com.github.hakko.musiccabinet.configuration.StreamUri;
 import com.github.hakko.musiccabinet.configuration.SubsonicUri;
 import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.log.Logger;
@@ -14,6 +15,7 @@ import com.github.hakko.musiccabinet.log.Logger;
 public class URIUtil {
 	public static final String SUBSONIC_PREFIX = "subsonic:";
 	public static final String SPOTIFY_PREFIX = "spotify:";
+	public static final String STREAM_PREFIX = "http:";
 	private static final Logger LOG = Logger.getLogger(URIUtil.class);
 
 	public static Uri parseURI(String uri) {
@@ -22,6 +24,8 @@ public class URIUtil {
 				return new SubsonicUri(new URI(uri));
 			} else if (uri.startsWith(SPOTIFY_PREFIX)) {
 				return new SpotifyUri(new URI(uri));
+			} else if (uri.startsWith(STREAM_PREFIX)) {
+				return new StreamUri(new URI(uri));
 			}
 		} catch (Exception e) {
 			LOG.error("Unable to parse uri " + uri, e);
@@ -79,9 +83,14 @@ public class URIUtil {
 		return isSpotify(uri.toString());
 	}
 	
+	public static boolean isRemote(Uri uri) {
+		return uri instanceof SpotifyUri || uri instanceof StreamUri;
+	}
+	
 	public static boolean isSpotify(Uri uri) {
 		return uri instanceof SpotifyUri;
 	}
+	
 	
 	public static boolean isSubsonic(Uri uri) {
 		return uri instanceof SubsonicUri;

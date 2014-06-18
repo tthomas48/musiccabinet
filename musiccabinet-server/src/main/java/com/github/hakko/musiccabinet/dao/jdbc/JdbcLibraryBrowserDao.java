@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
 
-import com.github.hakko.musiccabinet.configuration.SpotifyUri;
 import com.github.hakko.musiccabinet.configuration.SubsonicUri;
 import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.LibraryBrowserDao;
@@ -33,6 +33,7 @@ import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.TrackWithArtistRowMapper
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.TrackWithMetadataRowMapper;
 import com.github.hakko.musiccabinet.dao.jdbc.rowmapper.UriRowMapper;
 import com.github.hakko.musiccabinet.dao.util.PostgreSQLUtil;
+import com.github.hakko.musiccabinet.dao.util.URIUtil;
 import com.github.hakko.musiccabinet.domain.model.aggr.ArtistRecommendation;
 import com.github.hakko.musiccabinet.domain.model.aggr.LibraryStatistics;
 import com.github.hakko.musiccabinet.domain.model.library.File;
@@ -461,7 +462,20 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 
 	@Override
 	public List<Track> getTracks(List<? extends Uri> trackUris) {
-		if (trackUris == null || trackUris.size() == 0) {
+		
+		if (trackUris == null) {
+			return new ArrayList<>();
+		}
+		
+		List<? extends Uri> tracks = new ArrayList<>(trackUris); 
+		Iterator<? extends Uri> i = tracks.iterator();
+		for (; i.hasNext(); ) {
+			if (!URIUtil.isSubsonic(i.next())) {
+			  i.remove();	
+			}
+		}
+		
+		if (tracks.size() == 0) {
 			return new ArrayList<>();
 		}
 
@@ -484,7 +498,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao, JdbcTemplateDao
 				+ " left outer join music.artist albart on ft.album_artist_id = albart.id"
 				+ " left outer join music.artist comp on ft.composer_id = comp.id"
 				+ " inner join music.album alb on lt.album_id = alb.id"
-				+ " where lt.id in (" + getUriParameters(trackUris) + ")";
+				+ " where lt.id in (" + getUriParameters(tracks) + ")";
 
 		return jdbcTemplate.query(sql, new TrackWithMetadataRowMapper());
 	}

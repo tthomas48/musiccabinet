@@ -47,5 +47,5 @@ public class SubsonicUri implements Uri {
 	@Override
 	public int compareTo(Uri arg0) {
 		return arg0.getId().compareTo(arg0.getId());
-	}
+	}	
 }

@@ -113,6 +113,10 @@ public class Album {
 		return trackUris;
 	}
 	
+	public void setTrackUris(List<Uri> trackUris) {
+		this.trackUris = trackUris;
+	}
+	
 	public String getName() {
 		return name;
 	}

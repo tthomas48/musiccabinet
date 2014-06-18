@@ -195,7 +195,7 @@ public class SpotifyService implements ConnectionListener {
 	public void loggedIn(boolean success) {
 		loggedIn = success;
 		if (loggedIn) {
-			SpotifyUser spotifyUser = new SpotifyUser(this.getSpotify()
+			spotifyUser = new SpotifyUser(this.getSpotify()
 					.getUser());
 			spotifyDao.createOrUpdateSpotifyUser(spotifyUser);
 		}
@@ -247,6 +247,10 @@ public class SpotifyService implements ConnectionListener {
 				listener.playTokenLost();
 			}
 		}
+	}
+	
+	public SpotifyUser getSpotifyUser() {
+		return spotifyUser;
 	}
 
 }

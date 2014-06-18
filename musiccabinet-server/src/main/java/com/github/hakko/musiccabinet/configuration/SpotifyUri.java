@@ -4,6 +4,8 @@ import jahspotify.media.Link;
 
 import java.net.URI;
 
+import org.apache.http.client.utils.URIUtils;
+
 import com.github.hakko.musiccabinet.dao.util.URIUtil;
 
 public class SpotifyUri implements Uri {
@@ -11,6 +13,7 @@ public class SpotifyUri implements Uri {
 	private URI uri;
 	
 	public SpotifyUri(String uri) {
+		this.uri = URIUtil.getURI(Link.create(uri));
 	}
 	
 	public SpotifyUri(Link link) {
@@ -61,4 +64,5 @@ public class SpotifyUri implements Uri {
 	public int compareTo(Uri o) {
 		return o.getId().compareTo(-1);
 	}
+	
 }
