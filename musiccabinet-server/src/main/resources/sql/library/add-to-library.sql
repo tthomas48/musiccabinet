@@ -1,4 +1,4 @@
-create function library.add_to_library() returns int as $$
+create or replace function library.add_to_library() returns int as $$
 begin
 
 	-- add missing parent directories
@@ -59,8 +59,8 @@ begin
 		where artist_name is null or track_name is null;
 	
 	-- create missing artist(s)
-	insert into music.artist (artist_name, artist_name_capitalization)
-	select distinct on (upper(artist_name)) upper(artist_name), artist_name 
+	insert into music.artist (artist_name, artist_name_capitalization, spotify_uri)
+	select distinct on (upper(artist_name)) upper(artist_name), artist_name, spotify_artist_uri 
 	from library.file_headertag_import fht
 		where not exists (select 1 from music.artist 
 			where artist_name = upper(fht.artist_name));
@@ -139,9 +139,9 @@ begin
 		artist_name_capitalization != fht.composer_name;
 
 	-- create missing album(s)
-	insert into music.album (artist_id, album_name, album_name_capitalization)
+	insert into music.album (artist_id, album_name, album_name_capitalization, spotify_uri)
 	select distinct on (coalesce(album_artist_id, artist_id), upper(album_name)) 
-		coalesce(album_artist_id, artist_id), upper(album_name), album_name 
+		coalesce(album_artist_id, artist_id), upper(album_name), album_name, spotify_album_uri 
 	from library.file_headertag_import fht
 		where fht.album_name is not null
 			and not exists (select 1 from music.album
@@ -156,8 +156,8 @@ begin
 		and a.artist_id = coalesce(fht.album_artist_id, fht.artist_id);
 
 	-- create missing track(s)
-	insert into music.track (artist_id, track_name, track_name_capitalization)
-	select distinct on (artist_id, upper(track_name)) artist_id, upper(track_name), track_name 
+	insert into music.track (artist_id, track_name, track_name_capitalization, spotify_uri)
+	select distinct on (artist_id, upper(track_name)) artist_id, upper(track_name), track_name, spotify_uri
 	from library.file_headertag_import fht
 		where not exists (select 1 from music.track
 			where artist_id = fht.artist_id and track_name = upper(fht.track_name));
@@ -192,8 +192,8 @@ begin
 		where not exists (select 1 from library.fileheader where file_id = fhti.file_id);
 
 	-- update file tag
-	insert into library.filetag (file_id, artist_id, album_artist_id, composer_id, album_id, track_id, track_nr, track_nrs, disc_nr, disc_nrs, year, tag_id, coverart, lyrics)
-	select file_id, artist_id, album_artist_id, composer_id, album_id, track_id, track_nr, track_nrs, disc_nr, disc_nrs, year, tag_id, coverart, lyrics
+	insert into library.filetag (file_id, artist_id, album_artist_id, composer_id, album_id, track_id, track_nr, track_nrs, disc_nr, disc_nrs, year, tag_id, coverart, lyrics, explicit)
+	select file_id, artist_id, album_artist_id, composer_id, album_id, track_id, track_nr, track_nrs, disc_nr, disc_nrs, year, tag_id, coverart, lyrics, explicit
 		from library.file_headertag_import;
 
 	insert into library.artist (artist_id)

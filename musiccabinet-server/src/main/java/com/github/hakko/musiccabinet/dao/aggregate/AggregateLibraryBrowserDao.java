@@ -29,6 +29,17 @@ public class AggregateLibraryBrowserDao implements LibraryBrowserDao {
 		}
 		return false;
 	}
+	
+	@Override
+	public Artist getArtist(String artistName) {
+		for (LibraryBrowserDao dao : daos) {
+			Artist artist = dao.getArtist(artistName);
+			if(artist != null) {
+				return artist;
+			}
+		}
+		return null;
+	}
 
 	@Override
 	public List<Artist> getArtists() {

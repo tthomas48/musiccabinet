@@ -2,6 +2,7 @@ package com.github.hakko.musiccabinet.util;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import com.github.hakko.musiccabinet.log.Logger;
 
@@ -20,7 +21,7 @@ public abstract class BlockingRequest<T> {
 	public T start() {
 		try {
 			run();
-			return blockingQueue.take();
+			return blockingQueue.poll(30, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			LOG.error("Interrupted while waiting on request.", e);
 		}

@@ -88,7 +88,8 @@ public class AudioTagService {
 				metaData.setAlbumArtist(toAlbumArtist(tag));
 				metaData.setAlbumArtistSort(getTagField(tag, ALBUM_ARTIST_SORT));
 				metaData.setAlbum(toAlbum(getTagField(tag, ALBUM)));
-				metaData.setTitle(getTagField(tag, TITLE));
+				String title = getTagField(tag, TITLE);
+				metaData.setTitle(title);
 				metaData.setYear(getTagField(tag, YEAR));
 				metaData.setGenre(toGenre(getTagField(tag, GENRE)));
 				metaData.setLyrics(getTagField(tag, LYRICS));
@@ -98,6 +99,16 @@ public class AudioTagService {
 				metaData.setTrackNr(toFirstNumber(getTagField(tag, TRACK)));
 				metaData.setTrackNrs(toShort(getTagField(tag, TRACK_TOTAL)));
 				metaData.setCoverArtEmbedded(tag.getFirstArtwork() != null);
+				int explicit = 0;
+				if(title != null) {
+					if(title.contains("[Explicit]")) {
+						explicit = 1;
+					}
+					else if(title.contains("[Clean]")) {
+						explicit = 2;
+					}
+				}
+				metaData.setExplicit(explicit);
 			}
 
 			AudioHeader audioHeader = audioFile.getAudioHeader();

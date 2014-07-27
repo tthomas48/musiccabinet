@@ -14,6 +14,7 @@ public interface LibraryBrowserDao {
 
 	boolean hasArtists();
 	List<Artist> getArtists();
+	Artist getArtist(String artistName);
 	List<Artist> getArtists(int indexLetter);
 	List<Artist> getArtists(String tag, int threshold);
 	List<ArtistRecommendation> getRecentlyPlayedArtists(String lastFmUsername, boolean onlyAlbumArtists, int offset, int limit, String query);

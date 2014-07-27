@@ -12,6 +12,7 @@ public class Artist implements Comparable<Artist> {
 	private String name;
 	private String sortName;
 	private Uri uri;
+	private Uri spotifyUri;
 
 	public Artist() {
 
@@ -100,6 +101,14 @@ public class Artist implements Comparable<Artist> {
 	@Override
 	public String toString() {
 		return "artist " + name;
+	}
+
+	public Uri getSpotifyUri() {
+		return spotifyUri;
+	}
+
+	public void setSpotifyUri(Uri spotifyUri) {
+		this.spotifyUri = spotifyUri;
 	}
 
 }

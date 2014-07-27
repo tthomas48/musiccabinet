@@ -230,7 +230,7 @@ public class JdbcWebserviceHistoryDao implements JdbcTemplateDao, WebserviceHist
 		String sql = "select a.artist_name_capitalization from ("
 			+ "  select artist_id, ntile(30) over (order by invocation_time) "
 			+ "   from library.webservice_history where calltype_id = " + callType.getDatabaseId()
-			+ "   and artist_id in (select artist_id from library.artist)"
+			+ "   and artist_id in (select la.artist_id from library.artist la where la.hasalbums)"
 			+ " ) ntile" 
 			+ " inner join music.artist a on ntile.artist_id = a.id"
 			+ " and ntile.ntile = 1"
@@ -247,12 +247,12 @@ public class JdbcWebserviceHistoryDao implements JdbcTemplateDao, WebserviceHist
 	 */
 	@Override
 	public List<String> getArtistNamesWithNoInvocations(Calltype callType) {
-		String sql = "select artist_name_capitalization from music.artist where id in ("
+		String sql = "select a.artist_name_capitalization from music.artist a, library.artist la where a.id = la.artist_id and la.hasalbums and a.id in ("
 				+ " select distinct mt.artist_id from library.track lt"
 				+ " inner join music.track mt on lt.track_id = mt.id"
 				+ " where not exists ("
-				+ " select 1 from library.webservice_history where artist_id = mt.artist_id "
-				+ " and calltype_id = " + callType.getDatabaseId() + ")"
+				+ " select 1 from library.webservice_history wh where wh.artist_id = mt.artist_id "
+				+ " and wh.calltype_id = " + callType.getDatabaseId() + ")"
 				+ " order by mt.artist_id limit 3000)";
 		
 		return jdbcTemplate.queryForList(sql, String.class);

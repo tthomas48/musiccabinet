@@ -33,11 +33,13 @@ public class TrackWithMetadataRowMapper implements RowMapper<Track> {
 		md.setDuration(rs.getShort(14));
 		md.setMediaType(Mediatype.values()[rs.getShort(15)]);
 		md.setPath(rs.getString(16) + separatorChar + rs.getString(17));
-		md.setSize(rs.getInt(18));
+		md.setSize(rs.getLong(18));
 		md.setModified(rs.getTimestamp(19).getTime());
 		int trackId = rs.getInt(20);
 		md.setAlbumUri(new SubsonicUri(rs.getInt(21)));
 		md.setArtistUri(new SubsonicUri(rs.getInt(22)));
+		md.setExplicit(rs.getInt(23));
+		md.setTitle(trackName);
 
 		return new Track(trackId, trackName, md);
 	}

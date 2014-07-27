@@ -138,7 +138,7 @@ public class JdbcMusicBrainzAlbumDao implements MusicBrainzAlbumDao, JdbcTemplat
 		String sql = "select -1, null, case when la.id is null then -1 else ma.id end,"
 				+ " ma.album_name_capitalization, coalesce(mba.first_release_year, la.year),"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.smallimageurl,"
-				+ " array[]::int[] from music.album ma"
+				+ " array[]::int[], ma.spotify_uri from music.album ma"
 				+ " left outer join music.mb_album mba on mba.album_id = ma.id"
 				+ " left outer join library.album la on la.album_id = ma.id"
 				+ " left outer join library.file f1 on f1.id = la.embeddedcoverartfile_id"

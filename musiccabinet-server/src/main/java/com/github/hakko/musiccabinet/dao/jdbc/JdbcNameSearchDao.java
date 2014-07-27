@@ -53,7 +53,7 @@ public class JdbcNameSearchDao implements NameSearchDao, JdbcTemplateDao {
 	public NameSearchResult<Album> getAlbums(String userQuery, int offset, int limit) {
 		String sql = "select mart.id, mart.artist_name_capitalization,"
 				+ " malb.id, malb.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, null, array[]::int[]"
+				+ " d1.path, f1.filename, d2.path, f2.filename, null, array[]::int[], malb.spotify_uri"
 				+ " from library.album la"
 				+ " inner join music.album malb on la.album_id = malb.id"
 				+ " inner join music.artist mart on malb.artist_id = mart.id"

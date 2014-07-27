@@ -71,7 +71,7 @@ public class AbstractSAXParserImplTest {
 	@SuppressWarnings("unchecked")
 	private InputStream getFailingInputStream() throws IOException {
 		InputStream inputStream = mock(InputStream.class);
-		when(inputStream.read()).thenThrow(IOException.class);
+		when(inputStream.read()).thenThrow(new IOException());
 		return inputStream;
 	}
 

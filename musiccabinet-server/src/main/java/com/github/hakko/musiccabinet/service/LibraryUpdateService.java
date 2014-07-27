@@ -27,54 +27,62 @@ import com.github.hakko.musiccabinet.service.lastfm.UserLovedTracksService;
 import com.github.hakko.musiccabinet.service.lastfm.UserRecommendedArtistsService;
 import com.github.hakko.musiccabinet.service.lastfm.UserTopArtistsService;
 import com.github.hakko.musiccabinet.service.library.LibraryScannerService;
+import com.github.hakko.musiccabinet.service.spotify.MissingAlbumService;
+import com.github.hakko.musiccabinet.service.spotify.MissingArtistService;
 
 public class LibraryUpdateService {
 
 	private LibraryScannerService libraryScannerService;
 	private LibraryBrowserService libraryBrowserService;
-	
+
 	private ArtistRelationService artistRelationService;
-    private ArtistTopTracksService artistTopTracksService;
-    private ArtistTopTagsService artistTopTagsService;
-    private ArtistInfoService artistInfoService;
-    private AlbumInfoService albumInfoService;
-    private TagInfoService tagInfoService;
-    private TagTopArtistsService tagTopArtistsService;
-    private GroupWeeklyArtistChartService groupWeeklyArtistChartService;
-    private UserTopArtistsService userTopArtistsService;
-    private UserRecommendedArtistsService userRecommendedArtistsService;
-    private UserLovedTracksService userLovedTracksService;
-    private ScrobbledTracksService scrobbledTracksService;
-    
-    private PlaylistGeneratorService playlistGeneratorService;
-    private SearchIndexUpdateExecutorService executorService;
-    private SearchIndexUpdateSettingsService settingsService;
-    
-    private boolean isIndexBeingCreated = false;
-    
-	private static final Logger LOG = Logger.getLogger(LibraryUpdateService.class);
+	private ArtistTopTracksService artistTopTracksService;
+	private ArtistTopTagsService artistTopTagsService;
+	private ArtistInfoService artistInfoService;
+	private AlbumInfoService albumInfoService;
+	private TagInfoService tagInfoService;
+	private TagTopArtistsService tagTopArtistsService;
+	private GroupWeeklyArtistChartService groupWeeklyArtistChartService;
+	private UserTopArtistsService userTopArtistsService;
+	private UserRecommendedArtistsService userRecommendedArtistsService;
+	private UserLovedTracksService userLovedTracksService;
+	private ScrobbledTracksService scrobbledTracksService;
+	private MissingAlbumService missingAlbumService;
+	private MissingArtistService missingArtistService;
+
+	private PlaylistGeneratorService playlistGeneratorService;
+	private SearchIndexUpdateExecutorService executorService;
+	private SearchIndexUpdateSettingsService settingsService;
+
+	private boolean isIndexBeingCreated = false;
+
+	private static final Logger LOG = Logger
+			.getLogger(LibraryUpdateService.class);
 
 	public boolean isIndexCreated() {
 		return libraryBrowserService.hasArtists();
 	}
-	
+
 	public boolean isIndexBeingCreated() {
-		return libraryScannerService.isLibraryBeingScanned() ||
-				isIndexBeingCreated;
+		return libraryScannerService.isLibraryBeingScanned()
+				|| isIndexBeingCreated;
 	}
-	
-	public void createSearchIndex(Set<String> paths, boolean isRootPaths, boolean offlineScan, boolean onlyNewArtists) throws ApplicationException {
+
+	public void createSearchIndex(Set<String> paths, boolean isRootPaths,
+			boolean offlineScan, boolean onlyNewArtists)
+			throws ApplicationException {
 		if (isIndexBeingCreated()) {
 			LOG.debug("Search index is being created. Additional update cancelled.");
 			return;
 		}
-		
-		isIndexBeingCreated = true;
-		LOG.info("Starting library update. Scan " + paths + ", offline = " + offlineScan);
 
-    	for (SearchIndexUpdateService updateService : getUpdateServices()) {
-    		updateService.reset();
-    	}
+		isIndexBeingCreated = true;
+		LOG.info("Starting library update. Scan " + paths + ", offline = "
+				+ offlineScan);
+
+		for (SearchIndexUpdateService updateService : getUpdateServices()) {
+			updateService.reset();
+		}
 
 		long millis = -System.currentTimeMillis();
 		libraryScannerService.update(paths, isRootPaths);
@@ -88,69 +96,93 @@ public class LibraryUpdateService {
 			} else {
 				LOG.warn("Could not connect to last.fm, no data fetched.");
 			}
+			
+			updateSpotifyData();
+			playlistGeneratorService.updateSearchIndex();
 		}
-		
+
 		LOG.info("Finishing library update.");
 		isIndexBeingCreated = false;
 	}
-	
+
 	private void updateLastFmData(boolean onlyUpdateNewArtists) {
 		LOG.debug("Starting last.fm update.");
 		settingsService.setOnlyUpdateNewArtists(onlyUpdateNewArtists);
-    	long millis = -System.currentTimeMillis();
-    	executorService.updateSearchIndex(onlyUpdateNewArtists ? 
-    			getUpdateServicesForNewArtists() : getUpdateServices());
-    	executorService.updateSearchIndex(asList(
-    			tagInfoService, tagTopArtistsService)); // re-run for new tags
-    	millis += System.currentTimeMillis();
+		long millis = -System.currentTimeMillis();
+		executorService
+				.updateSearchIndex(onlyUpdateNewArtists ? getUpdateServicesForNewArtists()
+						: getUpdateServices());
+		executorService.updateSearchIndex(asList(tagInfoService,
+				tagTopArtistsService)); // re-run for new tags
+		millis += System.currentTimeMillis();
 
-    	int total = 0;
-    	for (SearchIndexUpdateService updateService : getUpdateServices()) {
-    		total += max(0, updateService.getProgress().getTotalOperations());
-    		LOG.info(updateService.getProgress().getTotalOperations() + " " + 
-    				updateService.getUpdateDescription() + ".");
-    	}
-    	LOG.info("In total, " + total + " last.fm operations done in " + (millis / 1000) + " sec.");
+		int total = 0;
+		for (SearchIndexUpdateService updateService : getUpdateServices()) {
+			total += max(0, updateService.getProgress().getTotalOperations());
+			LOG.info(updateService.getProgress().getTotalOperations() + " "
+					+ updateService.getUpdateDescription() + ".");
+		}
+		LOG.info("In total, " + total + " last.fm operations done in "
+				+ (millis / 1000) + " sec.");
 	}
 	
-    private boolean canConnectToLastFm() {
-    	for (int i = 0; i < 20; i++) {
-    		LOG.debug("Check if last.fm can be looked up...");
-    		InetSocketAddress isa = new InetSocketAddress("last.fm", 80);
-    		if (isa.isUnresolved()) {
-    			LOG.debug("Failed, sleep and try again.");
-    			try {
-    				Thread.sleep(15000);
-    			} catch (InterruptedException e1) {
-    			}
-    		} else {
-    			LOG.debug("That went well, return true.");
-    			return true;
-    		}
-    	}
-    	
-    	LOG.warn("Tried connecting to last.fm for five minutes, give up.");
-    	return false;
-    }
+	private void updateSpotifyData() {
+		LOG.debug("Starting spotify update.");
+		long millis = -System.currentTimeMillis();
+		executorService
+				.updateSearchIndex(this.getUpdateServicesForSpotify());
+		executorService.updateSearchIndex(asList(tagInfoService,
+				tagTopArtistsService)); // re-run for new tags
+		millis += System.currentTimeMillis();
 
-    private List<SearchIndexUpdateService> getUpdateServicesForNewArtists() {
-    	return asList(
-        		artistRelationService, artistTopTracksService,
-    			artistTopTagsService, artistInfoService,
-    			albumInfoService);
-    }
-    
-    private List<SearchIndexUpdateService> getUpdateServices() {
-    	return asList(
-        		artistRelationService, artistTopTracksService,
-    			artistTopTagsService, artistInfoService, 
-    			albumInfoService, tagInfoService,
-    			groupWeeklyArtistChartService,
-    			tagTopArtistsService, userTopArtistsService, 
-    			userRecommendedArtistsService, userLovedTracksService,
-    			scrobbledTracksService);
-    }
-    
+		int total = 0;
+		for (SearchIndexUpdateService updateService : getUpdateServicesForSpotify()) {
+			total += max(0, updateService.getProgress().getTotalOperations());
+			LOG.info(updateService.getProgress().getTotalOperations() + " "
+					+ updateService.getUpdateDescription() + ".");
+		}
+		LOG.info("In total, " + total + " spotify operations done in "
+				+ (millis / 1000) + " sec.");
+		
+	}
+
+	private boolean canConnectToLastFm() {
+		for (int i = 0; i < 20; i++) {
+			LOG.debug("Check if last.fm can be looked up...");
+			InetSocketAddress isa = new InetSocketAddress("last.fm", 80);
+			if (isa.isUnresolved()) {
+				LOG.debug("Failed, sleep and try again.");
+				try {
+					Thread.sleep(15000);
+				} catch (InterruptedException e1) {
+				}
+			} else {
+				LOG.debug("That went well, return true.");
+				return true;
+			}
+		}
+
+		LOG.warn("Tried connecting to last.fm for five minutes, give up.");
+		return false;
+	}
+
+	private List<SearchIndexUpdateService> getUpdateServicesForSpotify() {
+		return asList(missingArtistService, missingAlbumService);
+	}
+	private List<SearchIndexUpdateService> getUpdateServicesForNewArtists() {
+		return asList(artistRelationService, artistTopTracksService,
+				artistTopTagsService, artistInfoService, albumInfoService);
+	}
+
+	private List<SearchIndexUpdateService> getUpdateServices() {
+		return asList(artistRelationService, artistTopTracksService,
+				artistTopTagsService, artistInfoService, albumInfoService,
+				tagInfoService, groupWeeklyArtistChartService,
+				tagTopArtistsService, userTopArtistsService,
+				userRecommendedArtistsService, userLovedTracksService,
+				scrobbledTracksService, missingArtistService, missingAlbumService);
+	}
+
 	public List<SearchIndexUpdateProgress> getSearchIndexUpdateProgress() {
 		List<SearchIndexUpdateProgress> updateProgress = new ArrayList<>();
 
@@ -158,17 +190,19 @@ public class LibraryUpdateService {
 		for (SearchIndexUpdateService updateService : getUpdateServices()) {
 			updateProgress.add(updateService.getProgress());
 		}
-		
+
 		return updateProgress;
 	}
 
 	// Spring setters
 
-	public void setLibraryScannerService(LibraryScannerService libraryScannerService) {
+	public void setLibraryScannerService(
+			LibraryScannerService libraryScannerService) {
 		this.libraryScannerService = libraryScannerService;
 	}
 
-	public void setLibraryBrowserService(LibraryBrowserService libraryBrowserService) {
+	public void setLibraryBrowserService(
+			LibraryBrowserService libraryBrowserService) {
 		this.libraryBrowserService = libraryBrowserService;
 	}
 
@@ -176,15 +210,18 @@ public class LibraryUpdateService {
 		this.albumInfoService = albumInfoService;
 	}
 
-	public void setArtistRelationService(ArtistRelationService artistRelationService) {
+	public void setArtistRelationService(
+			ArtistRelationService artistRelationService) {
 		this.artistRelationService = artistRelationService;
 	}
 
-	public void setArtistTopTracksService(ArtistTopTracksService artistTopTracksService) {
+	public void setArtistTopTracksService(
+			ArtistTopTracksService artistTopTracksService) {
 		this.artistTopTracksService = artistTopTracksService;
 	}
 
-	public void setArtistTopTagsService(ArtistTopTagsService artistTopTagsService) {
+	public void setArtistTopTagsService(
+			ArtistTopTagsService artistTopTagsService) {
 		this.artistTopTagsService = artistTopTagsService;
 	}
 
@@ -192,11 +229,13 @@ public class LibraryUpdateService {
 		this.artistInfoService = artistInfoService;
 	}
 
-	public void setPlaylistGeneratorService(PlaylistGeneratorService playlistGeneratorService) {
+	public void setPlaylistGeneratorService(
+			PlaylistGeneratorService playlistGeneratorService) {
 		this.playlistGeneratorService = playlistGeneratorService;
 	}
 
-	public void setScrobbledTracksService(ScrobbledTracksService scrobbledTracksService) {
+	public void setScrobbledTracksService(
+			ScrobbledTracksService scrobbledTracksService) {
 		this.scrobbledTracksService = scrobbledTracksService;
 	}
 
@@ -204,32 +243,48 @@ public class LibraryUpdateService {
 		this.tagInfoService = tagInfoService;
 	}
 
-	public void setTagTopArtistsService(TagTopArtistsService tagTopArtistsService) {
+	public void setTagTopArtistsService(
+			TagTopArtistsService tagTopArtistsService) {
 		this.tagTopArtistsService = tagTopArtistsService;
 	}
 
-	public void setGroupWeeklyArtistChartService(GroupWeeklyArtistChartService groupWeeklyArtistChartService) {
+	public void setGroupWeeklyArtistChartService(
+			GroupWeeklyArtistChartService groupWeeklyArtistChartService) {
 		this.groupWeeklyArtistChartService = groupWeeklyArtistChartService;
 	}
 
-	public void setUserTopArtistsService(UserTopArtistsService userTopArtistsService) {
+	public void setUserTopArtistsService(
+			UserTopArtistsService userTopArtistsService) {
 		this.userTopArtistsService = userTopArtistsService;
 	}
 
-	public void setUserRecommendedArtistsService(UserRecommendedArtistsService userRecommendedArtistsService) {
+	public void setUserRecommendedArtistsService(
+			UserRecommendedArtistsService userRecommendedArtistsService) {
 		this.userRecommendedArtistsService = userRecommendedArtistsService;
 	}
 
-	public void setUserLovedTracksService(UserLovedTracksService userLovedTracksService) {
+	public void setUserLovedTracksService(
+			UserLovedTracksService userLovedTracksService) {
 		this.userLovedTracksService = userLovedTracksService;
 	}
 
-	public void setSearchIndexUpdateExecutorService(SearchIndexUpdateExecutorService executorService) {
+	public void setSearchIndexUpdateExecutorService(
+			SearchIndexUpdateExecutorService executorService) {
 		this.executorService = executorService;
 	}
 
-	public void setSearchIndexUpdateSettingsService(SearchIndexUpdateSettingsService settingsService) {
+	public void setSearchIndexUpdateSettingsService(
+			SearchIndexUpdateSettingsService settingsService) {
 		this.settingsService = settingsService;
 	}
-	
+
+	public void setMissingAlbumService(MissingAlbumService missingAlbumService) {
+		this.missingAlbumService = missingAlbumService;
+	}
+
+	public void setMissingArtistService(
+			MissingArtistService missingArtistService) {
+		this.missingArtistService = missingArtistService;
+	}
+
 }

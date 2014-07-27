@@ -14,6 +14,7 @@ public class Track implements Comparable<Track> {
 	private Artist artist;
 	private String name;
 	private MetaData metaData;
+	private Uri spotifyUri;
 
 	public Track() {
 		setArtist(new Artist());
@@ -115,6 +116,14 @@ public class Track implements Comparable<Track> {
 
 	public void setUri(Uri uri) {
 		this.uri = uri;
+	}
+
+	public Uri getSpotifyUri() {
+		return spotifyUri;
+	}
+
+	public void setSpotifyUri(Uri spotifyUri) {
+		this.spotifyUri = spotifyUri;
 	}
 
 }

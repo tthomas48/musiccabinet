@@ -26,7 +26,9 @@ public class WebserviceInvocation {
 		GROUP_WEEKLY_ARTIST_CHART		(10, 7),
 		MB_ARTIST_QUERY					(11, 90),
 		MB_RELEASE_GROUPS				(12, 90),
-		USER_GET_LOVED_TRACKS			(13, 1);
+		USER_GET_LOVED_TRACKS			(13, 1),
+		SPOTIFY_MISSING_ALBUMS          (14, 1),
+		SPOTIFY_MISSING_ARTISTS         (15, 7);
 		
 		private final int databaseId;
 		private final int daysToCache;

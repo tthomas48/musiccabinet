@@ -29,31 +29,40 @@ public class SpotifyArtistInfoDao implements ArtistInfoDao {
 
 	@Override
 	public ArtistInfo getArtistInfo(Uri uri) {
-		if(uri instanceof SpotifyUri == false) {
+		if (uri instanceof SpotifyUri == false) {
 			return null;
 		}
-		Link link = ((SpotifyUri)uri).getLink();
+		Link link = ((SpotifyUri) uri).getLink();
 		if (link == null) {
 			return null;
 		}
 
+		try {
+			if(!spotifyService.lock()) {
+				return null;
+			}
+		
 		jahspotify.media.Artist artist = spotifyService.getSpotify()
 				.readArtist(link, true);
-		if(!MediaHelper.waitFor(artist, 60)) {
+		if (!MediaHelper.waitFor(artist, 60)) {
 			return null;
 		}
 
 		ArtistInfo ai = new ArtistInfo();
 		ai.setArtist(new Artist(uri, artist.getName()));
-		
+
 		// the JNI code does not seem to populate this yet
-		if(artist.getPortraits().size() > 0) {
-		  ai.setLargeImageUrl("coverArt.view?path=" + artist.getPortraits().get(0).asString());
+		if (artist.getPortraits().size() > 0) {
+			ai.setLargeImageUrl("coverArt.view?path="
+					+ artist.getPortraits().get(0).asString());
 		}
 		ai.setBioSummary(artist.getBios());
 		// TODO: What does this do?
 		ai.setInSearchIndex(false);
 		return ai;
+		} finally {
+			spotifyService.unlock();
+		}
 	}
 
 	@Override
@@ -64,32 +73,40 @@ public class SpotifyArtistInfoDao implements ArtistInfoDao {
 	@Override
 	public ArtistInfo getArtistInfo(Artist subsonicArtist) {
 		Uri uri = subsonicArtist.getUri();
-		if(uri instanceof SpotifyUri == false) {
+		if (uri instanceof SpotifyUri == false) {
 			return null;
 		}
-		Link link = ((SpotifyUri)uri).getLink();
+		Link link = ((SpotifyUri) uri).getLink();
 		if (link == null) {
 			return null;
 		}
-		
-		jahspotify.media.Artist artist = spotifyService.getSpotify()
-				.readArtist(link);
-		ArtistInfo ai = new ArtistInfo();
-		ai.setArtist(subsonicArtist);
-		if(!MediaHelper.waitFor(artist, 60)) {
-			return ai;
-		}
-		
-		ai.setSmallImageUrl(artist.getPortraits().get(2).asHTTPLink());
-		ai.setMediumImageUrl(artist.getPortraits().get(1).asHTTPLink());
-		ai.setLargeImageUrl(artist.getPortraits().get(0).asHTTPLink());
-		ai.setExtraLargeImageUrl(artist.getPortraits().get(3).asHTTPLink());
-		ai.setListeners(0);
-		ai.setPlayCount(0);
-		ai.setBioSummary(artist.getBios());
-		ai.setBioContent(artist.getBios());
+		try {
+			if (!spotifyService.lock()) {
+				return null;
+			}
 
-		return ai;
+			jahspotify.media.Artist artist = spotifyService.getSpotify()
+					.readArtist(link);
+			ArtistInfo ai = new ArtistInfo();
+			ai.setArtist(subsonicArtist);
+			if (!MediaHelper.waitFor(artist, 60)) {
+				return ai;
+			}
+
+			ai.setSmallImageUrl(artist.getPortraits().get(2).asHTTPLink());
+			ai.setMediumImageUrl(artist.getPortraits().get(1).asHTTPLink());
+			ai.setLargeImageUrl(artist.getPortraits().get(0).asHTTPLink());
+			ai.setExtraLargeImageUrl(artist.getPortraits().get(3).asHTTPLink());
+			ai.setListeners(0);
+			ai.setPlayCount(0);
+			ai.setBioSummary(artist.getBios());
+			ai.setBioContent(artist.getBios());
+
+			return ai;
+		} finally {
+			spotifyService.unlock();
+		}
+
 	}
 
 	@Override

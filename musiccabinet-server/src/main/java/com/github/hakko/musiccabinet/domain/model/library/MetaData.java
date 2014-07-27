@@ -8,10 +8,11 @@ import com.github.hakko.musiccabinet.configuration.Uri;
 public class MetaData {
 
 	private Mediatype mediaType;
-	private short bitrate;
-	private boolean vbr;
-	private short duration;
-	
+	private Short bitrate;
+	private Boolean vbr;
+	private Short duration;
+
+	private Uri uri;
 	private String artist;
 	private Uri artistUri;
 	private String albumArtist;
@@ -26,16 +27,20 @@ public class MetaData {
 	private Integer year;
 	private String genre;
 	private String lyrics;
-	private boolean hasLyrics;
-	private boolean isCoverArtEmbedded;
+	private Boolean hasLyrics;
+	private Boolean isCoverArtEmbedded;
 	private String path;
 	private String artworkPath;
-	private int size;
-	private long modified;
-	
+	private Long size;
+	private Long modified;
+	private Integer explicit;
+
 	private String artistSort;
 	private String albumArtistSort;
-	
+
+	private Integer width;
+	private Integer height;
+
 	public Mediatype getMediaType() {
 		return mediaType;
 	}
@@ -44,27 +49,61 @@ public class MetaData {
 		this.mediaType = mediaType;
 	}
 
-	public short getBitrate() {
+	public Short getBitrate() {
 		return bitrate;
 	}
 
-	public void setBitrate(short bitrate) {
+	public void setBitrate(Short bitrate) {
 		this.bitrate = bitrate;
 	}
 
-	public boolean isVbr() {
+	public Boolean isVbr() {
+		if(vbr == null) {
+			return Boolean.FALSE;
+		}
 		return vbr;
 	}
 
-	public void setVbr(boolean vbr) {
+	public void setVbr(Boolean vbr) {
 		this.vbr = vbr;
 	}
 
-	public short getDuration() {
+	public Short getDuration() {
 		return duration;
 	}
 
-	public void setDuration(short duration) {
+	public String getDurationAsString() {
+		if (duration == null) {
+			return null;
+		}
+
+		StringBuffer result = new StringBuffer(8);
+
+		int seconds = duration;
+
+		int hours = seconds / 3600;
+		seconds -= hours * 3600;
+
+		int minutes = seconds / 60;
+		seconds -= minutes * 60;
+
+		if (hours > 0) {
+			result.append(hours).append(':');
+			if (minutes < 10) {
+				result.append('0');
+			}
+		}
+
+		result.append(minutes).append(':');
+		if (seconds < 10) {
+			result.append('0');
+		}
+		result.append(seconds);
+
+		return result.toString();
+	}
+
+	public void setDuration(Short duration) {
 		this.duration = duration;
 	}
 
@@ -79,7 +118,7 @@ public class MetaData {
 	public Uri getArtistUri() {
 		return artistUri;
 	}
-	
+
 	public void setArtistUri(Uri artistUri) {
 		this.artistUri = artistUri;
 	}
@@ -111,7 +150,7 @@ public class MetaData {
 	public void setAlbumUri(Uri albumUri) {
 		this.albumUri = albumUri;
 	}
-	
+
 	public Uri getAlbumUri() {
 		return this.albumUri;
 	}
@@ -160,14 +199,20 @@ public class MetaData {
 		return year;
 	}
 
+	public String getYearAsString() {
+		if (year == null) {
+			return "";
+		}
+		return year.toString();
+	}
+
 	public void setYear(String year) {
 		if (year != null && year.length() > 4) {
 			year = year.substring(0, 4);
 		}
-		this.year = isDigits(year) && toInt(year) > 1500 
-				? toInt(year) : null;
+		this.year = isDigits(year) && toInt(year) > 1500 ? toInt(year) : null;
 	}
-	
+
 	public void setYear(Integer year) {
 		this.year = year;
 	}
@@ -196,11 +241,14 @@ public class MetaData {
 		this.hasLyrics = hasLyrics;
 	}
 
-	public boolean isCoverArtEmbedded() {
+	public Boolean isCoverArtEmbedded() {
+		if (isCoverArtEmbedded == null) {
+			return Boolean.FALSE;
+		}
 		return isCoverArtEmbedded;
 	}
 
-	public void setCoverArtEmbedded(boolean isCoverArtEmbedded) {
+	public void setCoverArtEmbedded(Boolean isCoverArtEmbedded) {
 		this.isCoverArtEmbedded = isCoverArtEmbedded;
 	}
 
@@ -220,19 +268,19 @@ public class MetaData {
 		this.artworkPath = artworkPath;
 	}
 
-	public int getSize() {
+	public Long getSize() {
 		return size;
 	}
 
-	public void setSize(int size) {
+	public void setSize(Long size) {
 		this.size = size;
 	}
 
-	public long getModified() {
+	public Long getModified() {
 		return modified;
 	}
 
-	public void setModified(long modified) {
+	public void setModified(Long modified) {
 		this.modified = modified;
 	}
 
@@ -252,33 +300,65 @@ public class MetaData {
 		this.albumArtistSort = albumArtistSort;
 	}
 
-	public enum Mediatype { 
+	public Uri getUri() {
+		return uri;
+	}
+
+	public void setUri(Uri uri) {
+		this.uri = uri;
+	}
+
+	public enum Mediatype {
 
 		// these are taken from org.jaudiotagger.audio.SupportedFileFormat,
 		// and map to library.fileheader_type
 
-	    OGG("OGG"),
-	    MP3("MP3"),
-	    FLAC("FLAC"),
-	    MP4("MP4"),
-	    M4A("M4A"),
-	    M4P("M4P"),
-	    WMA("WMA"),
-	    WAV("WAV"),
-	    RA("RA"),
-	    RM("RM"),
-	    M4B("M4B");
+		OGG("OGG"), MP3("MP3"), FLAC("FLAC"), MP4("MP4"), M4A("M4A"), M4P("M4P"), WMA(
+				"WMA"), WAV("WAV"), RA("RA"), RM("RM"), M4B("M4B");
 
-	    private String filesuffix;
+		private String filesuffix;
 
-	    Mediatype(String filesuffix) {
-	        this.filesuffix = filesuffix;
-	    }
+		Mediatype(String filesuffix) {
+			this.filesuffix = filesuffix;
+		}
 
-	    public String getFilesuffix() {
-	        return filesuffix;
-	    }
-	    
+		public String getFilesuffix() {
+			return filesuffix;
+		}
+
+	}
+	
+	public void setMediaType(String filesuffix) {
+		
+		this.mediaType = Mediatype.valueOf(filesuffix.toUpperCase());
+	}
+
+	public Integer getExplicit() {
+		return explicit;
+	}
+
+	public void setExplicit(Integer explicit) {
+		this.explicit = explicit;
+	}
+
+	public boolean isExplicit() {
+		return explicit == 1;
+	}
+
+	public Integer getWidth() {
+		return width;
+	}
+
+	public void setWidth(Integer width) {
+		this.width = width;
+	}
+
+	public Integer getHeight() {
+		return height;
+	}
+
+	public void setHeight(Integer height) {
+		this.height = height;
 	}
 
 }

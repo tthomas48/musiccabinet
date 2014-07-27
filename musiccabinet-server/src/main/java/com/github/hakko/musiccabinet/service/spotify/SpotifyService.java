@@ -3,11 +3,14 @@ package com.github.hakko.musiccabinet.service.spotify;
 import jahspotify.AbstractConnectionListener;
 import jahspotify.ConnectionListener;
 import jahspotify.JahSpotify;
+import jahspotify.JahSpotify.PlayerStatus;
 import jahspotify.services.JahSpotifyService;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.github.hakko.musiccabinet.dao.SpotifyDao;
 import com.github.hakko.musiccabinet.domain.model.library.SpotifyUser;
@@ -27,101 +30,121 @@ public class SpotifyService implements ConnectionListener {
 	private boolean loggedIn;
 	private boolean loggingIn;
 	private SpotifyUser spotifyUser;
+	private ReentrantLock lock = new ReentrantLock(true);
+
+	public boolean lock() {
+		try {
+			return lock.tryLock(60, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			return false;
+		}
+	}
+
+	public void unlock() {
+		if (!lock.isHeldByCurrentThread()) {
+			return;
+		}
+		lock.unlock();
+	}
 
 	public void init() {
-
-		System.err.println("Attempting to initialize spotify.");
 		try {
-			JahSpotifyService.class.getMethod("initialize", File.class);
+			if (!lock()) {
+				throw new RuntimeException(
+						"Could not lock to initialize spotify");
+			}
 
-		} catch (NoSuchMethodException e) {
-			System.err.println("Did not find spotify libraries.");
-			initialized = false;
-			return;
-		}
+			System.err.println("Attempting to initialize spotify.");
+			try {
+				JahSpotifyService.class.getMethod("initialize", File.class);
 
-		final File tempFolder = new File(settingsService.getSpotifyCache());
-		if (!tempFolder.exists()) {
-			if (!tempFolder.mkdir()) {
-				System.err
-						.println("Could not find or create spotify cache directory: "
-								+ tempFolder.getAbsolutePath());
+			} catch (NoSuchMethodException e) {
+				System.err.println("Did not find spotify libraries.");
+				initialized = false;
 				return;
 			}
-		}
 
-		if (!tempFolder.isDirectory()) {
-			System.err.println("Spotify cache must be a directory: "
-					+ tempFolder.getAbsolutePath());
-			return;
-		}
-		if (!tempFolder.canWrite()) {
-			System.err.println("Spotify cache must be a writable: "
-					+ tempFolder.getAbsolutePath());
-			return;
-		}
-		
-		final BlockingRequest<Boolean> blockingRequest = new BlockingRequest<Boolean>() {
-			@Override
-			public void run() {
-				JahSpotifyService.initialize(tempFolder);
-				getSpotify().addConnectionListener(SpotifyService.this);
-			}
-		};
-		AbstractConnectionListener initListener = new AbstractConnectionListener() {
-			@Override
-			public void initialized(boolean initialized) {
-				blockingRequest.finish(initialized);
-			}
-		};
-		registerListener(initListener);
-		SpotifyService.initialized = blockingRequest.start(); 
-		removeListener(initListener);
-		System.err.println("Callback hit");
-
-		
-
-		if (settingsService.getSpotifyUserName() != null) {
-			System.err.println(settingsService.getSpotifyUserName());
-			final SpotifyUser user = spotifyDao.getSpotifyUser(settingsService
-					.getSpotifyUserName());
-			System.err.println(user);
-			if (user != null && user.getBlob() != null) {
-				System.err.println("Logging in with existing settings.");
-
-				final BlockingRequest<Boolean> loginRequest = new BlockingRequest<Boolean>() {
-					@Override
-					public void run() {
-						login(user.getUserName(), null, user.getBlob());
-					}
-				};
-				AbstractConnectionListener loginListener = new AbstractConnectionListener() {
-					@Override
-					public void loggedIn(boolean success) {
-						loginRequest.finish(success);
-					}
-				};
-				
-
-				registerListener(loginListener);
-				Boolean loggedIn = loginRequest.start();
-				removeListener(loginListener);
-				if (!loggedIn) {
-					System.err.println("Invalid username or password.");
-				} else {
-				  System.err.println("Logged in: " + loggedIn);
+			final File tempFolder = new File(settingsService.getSpotifyCache());
+			if (!tempFolder.exists()) {
+				if (!tempFolder.mkdir()) {
+					System.err
+							.println("Could not find or create spotify cache directory: "
+									+ tempFolder.getAbsolutePath());
+					return;
 				}
-				
-			} else {
-				System.err.println("No existing blob.");
 			}
-		}
-		
 
-		if(initialized) {
-			System.err.println("Spotify service initialized.");
-		} else {
-			System.err.println("Error initializing spotify service.");
+			if (!tempFolder.isDirectory()) {
+				System.err.println("Spotify cache must be a directory: "
+						+ tempFolder.getAbsolutePath());
+				return;
+			}
+			if (!tempFolder.canWrite()) {
+				System.err.println("Spotify cache must be a writable: "
+						+ tempFolder.getAbsolutePath());
+				return;
+			}
+
+			final BlockingRequest<Boolean> blockingRequest = new BlockingRequest<Boolean>() {
+				@Override
+				public void run() {
+					JahSpotifyService.initialize(tempFolder);
+					getSpotify().addConnectionListener(SpotifyService.this);
+				}
+			};
+			AbstractConnectionListener initListener = new AbstractConnectionListener() {
+				@Override
+				public void initialized(boolean initialized) {
+					blockingRequest.finish(initialized);
+				}
+			};
+			registerListener(initListener);
+			SpotifyService.initialized = blockingRequest.start();
+			removeListener(initListener);
+			System.err.println("Callback hit");
+
+			if (settingsService.getSpotifyUserName() != null) {
+				System.err.println(settingsService.getSpotifyUserName());
+				final SpotifyUser user = spotifyDao
+						.getSpotifyUser(settingsService.getSpotifyUserName());
+				System.err.println(user);
+				if (user != null && user.getBlob() != null) {
+					System.err.println("Logging in with existing settings.");
+
+					final BlockingRequest<Boolean> loginRequest = new BlockingRequest<Boolean>() {
+						@Override
+						public void run() {
+							login(user.getUserName(), null, user.getBlob());
+						}
+					};
+					AbstractConnectionListener loginListener = new AbstractConnectionListener() {
+						@Override
+						public void loggedIn(boolean success) {
+							loginRequest.finish(success);
+						}
+					};
+
+					registerListener(loginListener);
+					Boolean loggedIn = loginRequest.start();
+					removeListener(loginListener);
+					if (loggedIn == null || !loggedIn) {
+						System.err.println("Invalid username or password.");
+					} else {
+						System.err.println("Logged in: " + loggedIn);
+					}
+
+				} else {
+					System.err.println("No existing blob.");
+				}
+			}
+
+			if (initialized) {
+				System.err.println("Spotify service initialized.");
+			} else {
+				System.err.println("Error initializing spotify service.");
+			}
+		} finally {
+			unlock();
 		}
 
 	}
@@ -141,7 +164,14 @@ public class SpotifyService implements ConnectionListener {
 		return JahSpotifyService.getInstance() != null;
 	}
 
+	public PlayerStatus getStatus() {
+		return JahSpotifyService.getInstance().createJahSpotify().getStatus();
+	}
+
 	public JahSpotify getSpotify() {
+		if (!lock.isHeldByCurrentThread()) {
+			throw new RuntimeException("getSpotify called without lock");
+		}
 		return JahSpotifyService.getInstance().createJahSpotify();
 	}
 
@@ -162,13 +192,34 @@ public class SpotifyService implements ConnectionListener {
 
 	@Override
 	public void initialized(boolean initialized) {
-		for (ConnectionListener listener : listeners) {
-			listener.initialized(initialized);
+		synchronized(listeners) {
+			for (ConnectionListener listener : listeners) {
+				listener.initialized(initialized);
+			}
 		}
 	}
 
 	public void login(String username, String password, String blob) {
-		this.getSpotify().login(username, password, blob, true);
+		try {
+			if (!lock()) {
+				return;
+			}
+			this.getSpotify().login(username, password, blob, true);
+
+		} finally {
+			unlock();
+		}
+	}
+
+	public boolean isLoggedIn() {
+		try {
+			if (!lock()) {
+				return false;
+			}
+			return getSpotify().isLoggedIn();
+		} finally {
+			unlock();
+		}
 	}
 
 	@Override
@@ -193,16 +244,23 @@ public class SpotifyService implements ConnectionListener {
 
 	@Override
 	public void loggedIn(boolean success) {
-		loggedIn = success;
-		if (loggedIn) {
-			spotifyUser = new SpotifyUser(this.getSpotify()
-					.getUser());
-			spotifyDao.createOrUpdateSpotifyUser(spotifyUser);
-		}
-		synchronized (listeners) {
-			for (ConnectionListener listener : listeners) {
-				listener.loggedIn(success);
+		try {
+			if (!lock()) {
+				return;
 			}
+
+			loggedIn = success;
+			if (loggedIn) {
+				spotifyUser = new SpotifyUser(this.getSpotify().getUser());
+				spotifyDao.createOrUpdateSpotifyUser(spotifyUser);
+			}
+			synchronized (listeners) {
+				for (ConnectionListener listener : listeners) {
+					listener.loggedIn(success);
+				}
+			}
+		} finally {
+			unlock();
 		}
 
 	}
@@ -228,14 +286,21 @@ public class SpotifyService implements ConnectionListener {
 
 	@Override
 	public void blobUpdated(String blob) {
-		System.err.println("Spotify blob updated to " + blob);
-		SpotifyUser spotifyUser = new SpotifyUser(this.getSpotify().getUser());
-		spotifyUser.setBlob(blob);
-		spotifyDao.createOrUpdateSpotifyUser(spotifyUser);
-		synchronized (listeners) {
-			for (ConnectionListener listener : listeners) {
-				listener.blobUpdated(blob);
+		try {
+			if (lock()) {
+				System.err.println("Spotify blob updated to " + blob);
+				SpotifyUser spotifyUser = new SpotifyUser(this.getSpotify()
+						.getUser());
+				spotifyUser.setBlob(blob);
+				spotifyDao.createOrUpdateSpotifyUser(spotifyUser);
+				synchronized (listeners) {
+					for (ConnectionListener listener : listeners) {
+						listener.blobUpdated(blob);
+					}
+				}
 			}
+		} finally {
+			unlock();
 		}
 
 	}
@@ -248,9 +313,13 @@ public class SpotifyService implements ConnectionListener {
 			}
 		}
 	}
-	
+
 	public SpotifyUser getSpotifyUser() {
 		return spotifyUser;
+	}
+	
+	public SpotifySettingsService getSpotifySettingsService() {
+		return settingsService;
 	}
 
 }
