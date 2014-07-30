@@ -49,6 +49,26 @@ public class LibraryBrowserService {
 	public List<ArtistRecommendation> getStarredArtists(String lastFmUsername, int offset, int limit, String query) {
 		return libraryBrowserDao.getStarredArtists(lastFmUsername, offset, limit, query);
 	}
+	
+	public List<Album> getAlbumsByName(String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getAlbumsByName(offset, limit, query);
+	}
+	
+	public List<Album> getAlbumsByArtist(String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getAlbumsByArtist(offset, limit, query);
+	}
+	
+	public List<Album> getAlbumsByYear(String lastFmUsername, int offset, int limit, String query, int fromYear, int toYear) {
+		return libraryBrowserDao.getAlbumsByYear(offset, limit, query, fromYear, toYear);
+	}
+	
+	public List<Album> getAlbumsByGenre(String lastFmUsername, int offset, int limit, String query, String genre) {
+		return libraryBrowserDao.getAlbumsByGenre(offset, limit, query, genre);
+	}
+	
+	
+	
+	
 
 	public Album getAlbum(Uri albumUri) {
 		return libraryBrowserDao.getAlbum(albumUri);

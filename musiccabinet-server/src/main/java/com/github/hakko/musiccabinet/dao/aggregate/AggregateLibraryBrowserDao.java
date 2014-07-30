@@ -198,6 +198,52 @@ public class AggregateLibraryBrowserDao implements LibraryBrowserDao {
 		}
 		return albums;
 	}
+	
+	@Override
+	public List<Album> getAlbumsByArtist(int offset,
+			int limit, String query) {
+		List<Album> albums = new ArrayList<Album>();
+		for (LibraryBrowserDao dao : daos) {
+			albums.addAll(dao.getAlbumsByArtist(offset, limit,
+					query));
+		}
+		return albums;
+	}
+	
+	@Override
+	public List<Album> getAlbumsByGenre(int offset,
+			int limit, String query, String genre) {
+		
+		List<Album> albums = new ArrayList<Album>();
+		for (LibraryBrowserDao dao : daos) {
+			albums.addAll(dao.getAlbumsByGenre(offset, limit,
+					query, genre));
+		}
+		return albums;
+	}
+	
+	@Override
+	public List<Album> getAlbumsByName(int offset,
+			int limit, String query) {
+		
+		List<Album> albums = new ArrayList<Album>();
+		for (LibraryBrowserDao dao : daos) {
+			albums.addAll(dao.getAlbumsByName(offset, limit,
+					query));
+		}
+		return albums;
+	}
+	
+	@Override
+	public List<Album> getAlbumsByYear(int offset,
+			int limit, String query, int fromYear, int toYear) {
+		List<Album> albums = new ArrayList<Album>();
+		for (LibraryBrowserDao dao : daos) {
+			albums.addAll(dao.getAlbumsByYear(offset, limit,
+					query, fromYear, toYear));
+		}
+		return albums;
+	}
 
 	@Override
 	public Track getTrack(Uri trackUri) {

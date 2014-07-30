@@ -9,11 +9,13 @@ import java.util.Set;
 
 import org.joda.time.DateTime;
 
+import com.github.hakko.musiccabinet.dao.AlbumInfoDao;
 import com.github.hakko.musiccabinet.dao.LibraryAdditionDao;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLibraryBrowserDao;
 import com.github.hakko.musiccabinet.dao.spotify.SpotifyLibraryBrowserDao;
 import com.github.hakko.musiccabinet.domain.model.library.File;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
+import com.github.hakko.musiccabinet.domain.model.music.AlbumInfo;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
 import com.github.hakko.musiccabinet.domain.model.music.Track;
 import com.github.hakko.musiccabinet.exception.ApplicationException;
@@ -32,6 +34,7 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 	private SpotifyLibraryBrowserDao spotifyLibraryBrowserDao;
 	private JdbcLibraryBrowserDao jdbcLibraryBrowserDao;
 	private LibraryAdditionDao libraryAdditionDao;
+	private AlbumInfoDao albumInfoDao;
 
 	protected WebserviceHistoryService webserviceHistoryService;
 
@@ -56,6 +59,7 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 		Set<File> files = new HashSet<File>();
 		List<Album> existingAlbums = new ArrayList<Album>();
 		List<Album> albums = new ArrayList<Album>();
+		List<AlbumInfo> albumInfos = new ArrayList<AlbumInfo>();
 		for (String artistName : artistNames) {
 			try {
 				albums.clear();
@@ -100,6 +104,12 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 					if (album.getTrackUris().size() < 5) {
 						continue NEXTALBUM;
 					}
+					
+					AlbumInfo albumInfo = new AlbumInfo();
+					albumInfo.setAlbum(album);
+					albumInfo.setLargeImageUrl(album.getCoverArtURL());
+					albumInfos.add(albumInfo);
+					
 
 					List<Track> tracks = spotifyLibraryBrowserDao
 							.getTracks(album.getTrackUris());
@@ -119,6 +129,9 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 					libraryAdditionDao.addFiles("spotify:", files);
 					libraryAdditionDao.updateLibrary();
 					files.clear();
+					
+					albumInfoDao.createAlbumInfo(albumInfos);
+					albumInfos.clear();
 				}
 			} catch (Throwable e) {
 				LOG.error("Error processing albums for artist " + artistName, e);
@@ -128,6 +141,8 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 		if (files.size() > 0) {
 			libraryAdditionDao.addFiles("spotify:", files);
 			libraryAdditionDao.updateLibrary();
+			
+			albumInfoDao.createAlbumInfo(albumInfos);
 		}
 
 	}
@@ -155,4 +170,7 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 		this.libraryAdditionDao = libraryAdditionDao;
 	}
 
+	public void setAlbumInfoDao(AlbumInfoDao albumInfoDao) {
+		this.albumInfoDao = albumInfoDao;
+	}
 }

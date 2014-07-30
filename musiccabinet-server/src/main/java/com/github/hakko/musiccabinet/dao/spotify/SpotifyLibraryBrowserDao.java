@@ -155,16 +155,16 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	@Override
 	public void getAlbums(List<Album> albums, Artist artist,
 			boolean sortAscending) {
-		
+
 		// we only want to come through this path if we're coming out
 		// of search's
-		if(!URIUtil.isSpotify(artist.getUri())) {
+		if (!URIUtil.isSpotify(artist.getUri())) {
 			return;
 		}
 
 		getAlbums(albums, artist.getName(), sortAscending);
 	}
-	
+
 	public void getAlbums(List<Album> albums, String artistName,
 			boolean sortAscending) {
 
@@ -185,14 +185,16 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 			if (!spotifyService.lock()) {
 				return;
 			}
-			
+
 			jahspotify.media.Artist spotifyArtist = loadArtist(artistUri);
 
 			List<Link> albumLinks = spotifyArtist.getAlbums();
 			ALBUMS: for (Link albumLink : albumLinks) {
-				jahspotify.media.Album spotifyAlbum = loadAlbum(new SpotifyUri(albumLink)); 
+				jahspotify.media.Album spotifyAlbum = loadAlbum(new SpotifyUri(
+						albumLink));
 
-				jahspotify.media.Artist albumArtist = loadArtist(new SpotifyUri(spotifyAlbum.getArtist())); 
+				jahspotify.media.Artist albumArtist = loadArtist(new SpotifyUri(
+						spotifyAlbum.getArtist()));
 
 				for (Album album : albums) {
 					if (spotifyAlbum.getName().toLowerCase()
@@ -215,13 +217,13 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 				String albumArtistName = albumArtist.getName();
 				Uri albumUri = new SpotifyUri(albumLink);
 				String coverUri = "";
-				if(cover != null) {
+				if (cover != null) {
 					coverUri = cover.asString();
 				}
 				Uri albumLinkUri = new SpotifyUri(albumLink);
-				albums.add(new Album(albumArtistUri,
-						albumArtistName, albumUri,
-						albumName, year, coverUri, false, coverUri, tracks, albumLinkUri));
+				albums.add(new Album(albumArtistUri, albumArtistName, albumUri,
+						albumName, year, coverUri, false, coverUri, tracks,
+						albumLinkUri));
 			}
 		} finally {
 			spotifyService.unlock();
@@ -343,10 +345,12 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 					}
 					MetaData md = new MetaData();
 
-					jahspotify.media.Album album = loadAlbum(new SpotifyUri(spotifyTrack.getAlbum())); 
+					jahspotify.media.Album album = loadAlbum(new SpotifyUri(
+							spotifyTrack.getAlbum()));
 					md.setAlbum(album.getName());
 
-					jahspotify.media.Artist artist = loadArtist(new SpotifyUri(album.getArtist())); 
+					jahspotify.media.Artist artist = loadArtist(new SpotifyUri(
+							album.getArtist()));
 
 					md.setUri(uri);
 					md.setMediaType(MetaData.Mediatype.MP3);
@@ -480,5 +484,27 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 
 	public void setNameSearchService(INameSearchService nameSearchService) {
 		this.nameSearchService = nameSearchService;
+	}
+
+	@Override
+	public List<Album> getAlbumsByName(int offset, int limit, String query) {
+		return new ArrayList<Album>();
+	}
+
+	@Override
+	public List<Album> getAlbumsByArtist(int offset, int limit, String query) {
+		return new ArrayList<Album>();
+	}
+
+	@Override
+	public List<Album> getAlbumsByYear(int offset, int limit, String query,
+			int fromYear, int toYear) {
+		return new ArrayList<Album>();
+	}
+
+	@Override
+	public List<Album> getAlbumsByGenre(int offset, int limit, String query,
+			String genre) {
+		return new ArrayList<Album>();
 	}
 }
