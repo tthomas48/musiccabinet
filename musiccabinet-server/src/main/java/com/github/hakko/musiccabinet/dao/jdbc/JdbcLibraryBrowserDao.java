@@ -858,7 +858,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		}
 		args.add(offset);
 		args.add(limit);
-		
+
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
@@ -876,9 +876,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
 				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
 				+ " left outer join music.albuminfo ai on ai.album_id = la.album_id"
-				+ orderBy
-				+ " offset ? limit ?";
-		
+				+ orderBy + " offset ? limit ?";
 
 		return jdbcTemplate.query(sql, args.toArray(), new AlbumRowMapper());
 
@@ -910,7 +908,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		}
 		args.add(offset);
 		args.add(limit);
-		
+
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
@@ -918,7 +916,6 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " inner join music.album ma on lt.album_id = ma.id"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " where true"
-				+ " and la.year between ? and ? "
 				+ albumNameCriteria
 				+ " group by lt.album_id) tr"
 				+ " inner join library.album la on la.album_id = tr.album_id"
@@ -929,8 +926,9 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
 				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
 				+ " left outer join music.albuminfo ai on ai.album_id = la.album_id"
+				+ " where la.year between ? and ? "
 				+ " order by la.year asc, ma.album_name_capitalization offset ? limit ?";
-		
+
 		return jdbcTemplate.query(sql, args.toArray(), new AlbumRowMapper());
 	}
 
@@ -950,12 +948,12 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ topTagsTable
 				+ " att"
 				+ " inner join music.tag t on att.tag_id = t.id"
-				+ " where artist_id = mt.artist_id and tag_count > 25 and t.tag_name = ?)";
+				+ " where att.artist_id = ma.artist_id and tag_count > 25 and t.tag_name = ?)";
 
 		args.add(genre);
 		args.add(offset);
 		args.add(limit);
-		
+
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
@@ -974,10 +972,50 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
 				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
 				+ " left outer join music.albuminfo ai on ai.album_id = la.album_id"
-				+ " order by ma.album_name_capitalization desc offset ? limit ?";
-		
+				+ " order by ma.album_name_capitalization asc offset ? limit ?";
 
 		return jdbcTemplate.query(sql, args.toArray(), new AlbumRowMapper());
+	}
+
+	@Override
+	public List<Track> getTracksByGenre(String genre, int offset, int limit) {
+
+		String topTagsTable = settingsService.getArtistTopTagsTable();
+
+		List<Object> args = new ArrayList<>();
+		args.add(genre);
+		args.add(limit);
+		args.add(offset);
+
+		String sql = "select mt.track_name_capitalization, "
+				+ " alb.album_name_capitalization,"
+				+ " art.artist_name_capitalization,"
+				+ " albart.artist_name_capitalization,"
+				+ " comp.artist_name_capitalization,"
+				+ " ft.track_nr, ft.track_nrs, ft.disc_nr, ft.disc_nrs, ft.year,"
+				+ " case when ft.lyrics is null then false else true end,"
+				+ " fh.bitrate, fh.vbr, fh.duration, fh.type_id, "
+				+ " d.path, f.filename, f.size, f.modified, lt.id, alb.id, art.id, ft.explicit"
+				+ " from music.track mt"
+				+ " inner join library.track lt on lt.track_id = mt.id"
+				+ " inner join library.file f on f.id = lt.file_id"
+				+ " inner join library.directory d on f.directory_id = d.id"
+				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
+				+ " inner join library.fileheader fh on fh.file_id = lt.file_id"
+				+ " inner join music.artist art on ft.artist_id = art.id"
+				+ " left outer join music.artist albart on ft.album_artist_id = albart.id"
+				+ " left outer join music.artist comp on ft.composer_id = comp.id"
+				+ " inner join music.album alb on lt.album_id = alb.id"
+				+ " where exists (select 1 from "
+				+ topTagsTable
+				+ " att"
+				+ " inner join music.tag t on att.tag_id = t.id"
+				+ " where att.artist_id = art.id"
+				+ " and t.tag_name = ?)"
+				+ " order by mt.track_name_capitalization limit ? offset ?";
+
+		return jdbcTemplate.query(sql, args.toArray(), new TrackWithMetadataRowMapper());
+
 	}
 
 }

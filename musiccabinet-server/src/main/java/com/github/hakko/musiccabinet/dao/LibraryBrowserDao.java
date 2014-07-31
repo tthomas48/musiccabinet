@@ -39,6 +39,7 @@ public interface LibraryBrowserDao {
 	
 	Track getTrack(Uri trackUri);
 	List<Track> getTracks(List<? extends Uri> trackUris);
+	List<Track> getTracksByGenre(String genre, int offset, int limit);
 	List<? extends Uri> getRecentlyPlayedTrackUris(String lastFmUsername, int offset, int limit, String query);
 	List<? extends Uri> getMostPlayedTrackUris(String lastFmUsername, int offset, int limit, String query);
 	List<? extends Uri> getStarredTrackUris(String lastFmUsername, int offset, int limit, String query);

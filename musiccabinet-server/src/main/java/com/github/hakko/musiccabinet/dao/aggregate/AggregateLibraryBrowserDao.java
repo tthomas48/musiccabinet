@@ -418,4 +418,13 @@ public class AggregateLibraryBrowserDao implements LibraryBrowserDao {
 		}
 		return files;
 	}
+	
+	@Override
+	public List<Track> getTracksByGenre(String genre, int offset, int limit) {
+		List<Track> tracks = new ArrayList<Track>();
+		for (LibraryBrowserDao dao : daos) {
+			tracks.addAll(dao.getTracksByGenre(genre, offset, limit));
+		}
+		return tracks;
+	}
 }

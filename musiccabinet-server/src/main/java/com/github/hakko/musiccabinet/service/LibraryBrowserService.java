@@ -112,6 +112,10 @@ public class LibraryBrowserService {
 		return libraryBrowserDao.getTracks(trackUris);
 	}
 	
+	public List<Track> getTracksByGenre(String genre, int offset, int limit) {
+		return libraryBrowserDao.getTracksByGenre(genre, offset, limit);
+	}
+	
 	public List<? extends Uri> getRecentlyPlayedTrackUris(String lastFmUsername, int offset, int limit, String query) {
 		return libraryBrowserDao.getRecentlyPlayedTrackUris(lastFmUsername, offset, limit, query);
 	}

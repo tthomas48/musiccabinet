@@ -393,6 +393,9 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	@Override
 	public List<? extends Uri> getStarredTrackUris(String lastFmUsername,
 			int offset, int limit, String query) {
+		// this should be handled in the MissingArtistService
+		return new ArrayList<>();
+		/*
 		try {
 			if (!spotifyService.lock()) {
 				return null;
@@ -416,6 +419,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 		} finally {
 			spotifyService.unlock();
 		}
+		*/
 	}
 
 	@Override
@@ -507,4 +511,10 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 			String genre) {
 		return new ArrayList<Album>();
 	}
+
+	@Override
+	public List<Track> getTracksByGenre(String genre, int offset, int limit) {
+		return new ArrayList<Track>();
+	}
+
 }
