@@ -306,8 +306,9 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 			String query) {
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
-				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.sort_id"
+				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.sort_id, max(ltf.modified) modified"
 				+ " from library.track lt"
+				+ " inner join library.file ltf on ltf.id = lt.file_id"				
 				+ " inner join music.album ma on lt.album_id = ma.id"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " inner join (select la.album_id, la.id as sort_id "
@@ -323,7 +324,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
 				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
 				+ " left outer join music.albuminfo ai on ai.album_id = la.album_id"
-				+ " order by sort_id desc";
+				+ " order by tr.modified desc, sort_id desc";
 
 		Object[] params = query == null ? new Object[] { offset, limit }
 				: new Object[] { getNameQuery(query), offset, limit };
