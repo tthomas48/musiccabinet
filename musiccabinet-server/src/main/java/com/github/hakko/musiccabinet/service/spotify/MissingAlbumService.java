@@ -64,6 +64,12 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 			try {
 				albums.clear();
 				existingAlbums.clear();
+				
+				if(artistName.toLowerCase().contains("various")) {
+					LOG.debug("Skipping " + artistName);
+					addFinishedOperation();
+					continue;
+				}
 
 				Artist artist = jdbcLibraryBrowserDao.getArtist(artistName);
 				if (artist == null) {
@@ -71,6 +77,11 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 					addFinishedOperation();
 					continue;
 				}
+				
+				if (jdbcLibraryBrowserDao.isStarred(artist) == false) {
+					continue;
+				}
+				
 				jdbcLibraryBrowserDao.getAlbums(existingAlbums, artist, false);
 
 				albums.addAll(existingAlbums);
@@ -82,16 +93,15 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 					// just the albums man
 					for (Album existingAlbum : existingAlbums) {
 						// we want to get rid of "BLAH BLAH (Deluxe Version)
-						if (album
+						if (spotifyService.cleanAlbumName(album
 								.getName()
-								.toLowerCase()
+								)
 								.startsWith(
-										existingAlbum.getName().toLowerCase())
-								|| existingAlbum
-										.getName()
-										.toLowerCase()
+										spotifyService.cleanAlbumName(existingAlbum.getName()))
+								|| spotifyService.cleanAlbumName(existingAlbum
+										.getName())
 										.startsWith(
-												album.getName().toLowerCase())) {
+												spotifyService.cleanAlbumName(album.getName()))) {
 							continue NEXTALBUM;
 						}
 					}

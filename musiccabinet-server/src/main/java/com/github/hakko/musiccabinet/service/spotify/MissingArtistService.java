@@ -94,6 +94,11 @@ public class MissingArtistService extends SearchIndexUpdateService {
 					addFinishedOperation();
 					continue ARTISTLINK;
 				}
+				
+				if (artist.getName().toLowerCase().contains("various")) {
+					addFinishedOperation();
+					continue ARTISTLINK;
+				}
 
 				for (com.github.hakko.musiccabinet.domain.model.music.Artist existingArtist : existingArtists) {
 					if (existingArtist.getName().toLowerCase()

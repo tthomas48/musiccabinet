@@ -189,6 +189,19 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 		return jdbcTemplate.query(sql, new ArtistRecommendationRowMapper());
 	}
+	
+	public boolean isStarred(Artist artist) {
+		String sql = "select TRUE "
+				+ " from music.artistinfo ai"
+				+ " inner join music.artist a on ai.artist_id = a.id"
+				+ " inner join library.artist la on la.artist_id = a.id"
+				+ " inner join library.starredartist sa on sa.artist_id = la.artist_id"
+				+ " where a.id = ?";
+
+		List<Object> args = new ArrayList<>();
+		args.add(artist.getId());
+		return jdbcTemplate.queryForObject(sql, args.toArray(), Boolean.class);
+	}
 
 	@Override
 	public List<ArtistRecommendation> getStarredArtists(String lastFmUsername,

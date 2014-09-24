@@ -347,6 +347,9 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 
 					jahspotify.media.Album album = loadAlbum(new SpotifyUri(
 							spotifyTrack.getAlbum()));
+					if(album == null) {
+						continue;
+					}
 					md.setAlbum(album.getName());
 
 					jahspotify.media.Artist artist = loadArtist(new SpotifyUri(

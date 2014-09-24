@@ -321,5 +321,14 @@ public class SpotifyService implements ConnectionListener {
 	public SpotifySettingsService getSpotifySettingsService() {
 		return settingsService;
 	}
+	
+	public String cleanAlbumName(String name) {
+		if(name == null) {
+			return "";
+		}
+		name = name.replaceAll("\\(Deluxe Version\\)", "");
+		name = name.replaceAll("\\[Remastered\\]", "");
+		return name.trim().toLowerCase();
+	}
 
 }
