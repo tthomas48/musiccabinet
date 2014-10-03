@@ -31,6 +31,51 @@ public class JdbcWebserviceHistoryDao implements JdbcTemplateDao, WebserviceHist
 	private JdbcTemplate jdbcTemplate;
 	private MusicDao musicDao;
 	private LastFmDao lastFmDao;
+        
+        private final String INSERT_WEB_SERVICE_HISTORY="insert into library.webservice_history"
+				+ " (artist_id, album_id, track_id, lastfmuser_id, lastfmgroup_id,"
+				+ " tag_id, calltype_id, page, invocation_time)"
+				+ " values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        private final String ALLOW_WEBSERVICE_INVOCATION_PAGE="select max(invocation_time) from library.webservice_history"
+			+ " where calltype_id = ? "
+			+ " and page = ?";
+        
+        private final String ALLOW_WEBSERVICE_INVOCATION_ARTIST="select max(invocation_time) from library.webservice_history h"
+			+ " inner join music.artist a on a.id = h.artist_id"
+			+ " where calltype_id = ? " 
+			+ " and a.artist_name = upper(?)";
+        
+        private final String ALLOW_WEBSERIVCE_INVOCATION_TRACK="select max(invocation_time) from library.webservice_history h"
+			+ " inner join music.track t on t.id = h.track_id"
+			+ " inner join music.artist a on a.id = t.artist_id"
+			+ " where calltype_id = ? " 
+			+ " and a.artist_name = upper(?) and t.track_name = upper(?)";
+        
+        private final String ALLOW_WEBSERVICE_INVOCATION_ALBUM="select max(invocation_time) from library.webservice_history h"
+			+ " inner join music.album alb on alb.id = h.album_id"
+			+ " inner join music.artist art on art.id = alb.artist_id"
+			+ " where calltype_id = ? "
+			+ " and art.artist_name = upper(?) and alb.album_name = upper(?)";
+        
+        private final String ALLOW_WEBSERVICE_INVOCATION_USER_PAGE="select max(invocation_time) from library.webservice_history h"
+			+ " inner join music.lastfmuser u on h.lastfmuser_id = u.id"
+			+ " where calltype_id = ? "
+			+ " and u.lastfm_user = upper(?) and h.page = ?";
+        
+        private final String ALLOW_WEBSERVICE_INVOCATION_USER="select max(invocation_time) from library.webservice_history h"
+			+ " inner join music.lastfmuser u on h.lastfmuser_id = u.id"
+			+ " where calltype_id = ? "
+			+ " and u.lastfm_user = upper(?)";
+        
+        private final String ALLOW_WEBSERVICE_INVOCATION_GROUP="select max(invocation_time) from library.webservice_history h"
+			+ " inner join music.lastfmgroup g on h.lastfmgroup_id = g.id"
+			+ " where calltype_id = ? "
+			+ " and g.group_name = upper(?)";
+        
+        private final String ALLOW_WEBSERVICE_INOVOCATION_TAG="select max(invocation_time) from library.webservice_history h"
+			+ " where calltype_id = ? "
+			+ " and h.tag_id = ?";
 	
 	@Override
 	public void logWebserviceInvocation(WebserviceInvocation wi) {
@@ -76,12 +121,8 @@ public class JdbcWebserviceHistoryDao implements JdbcTemplateDao, WebserviceHist
 			sql.append(" and page = " + wi.getPage());
 
 		jdbcTemplate.update(sql.toString());
-		jdbcTemplate.update("insert into library.webservice_history"
-				+ " (artist_id, album_id, track_id, lastfmuser_id, lastfmgroup_id,"
-				+ " tag_id, calltype_id, page, invocation_time)"
-				+ " values (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-				artistId, albumId, trackId, userId, groupId, tagId, 
-				wi.getCallType().getDatabaseId(), wi.getPage(), invocationTime);
+		jdbcTemplate.update(INSERT_WEB_SERVICE_HISTORY, new Object[]{artistId, albumId, trackId, userId, groupId, tagId, 
+				wi.getCallType().getDatabaseId(), wi.getPage(), invocationTime});
 	}
 	
 	/*
@@ -115,80 +156,56 @@ public class JdbcWebserviceHistoryDao implements JdbcTemplateDao, WebserviceHist
 	}
 
 	protected boolean isWebserviceInvocationAllowed(Calltype callType, short page) {
-		String sql = "select max(invocation_time) from library.webservice_history"
-			+ " where calltype_id = " + callType.getDatabaseId() 
-			+ " and page = " + page;
-		Timestamp lastInvocation = jdbcTemplate.queryForObject(sql, Timestamp.class);
+
+		Timestamp lastInvocation = jdbcTemplate.queryForObject(ALLOW_WEBSERVICE_INVOCATION_PAGE,new Object[]{callType.getDatabaseId() ,page}, Timestamp.class);
 		return isWebserviceInvocationAllowed(callType, lastInvocation);
 	}
 
 	protected boolean isWebserviceInvocationAllowed(Calltype callType, Artist artist) {
-		String sql = "select max(invocation_time) from library.webservice_history h"
-			+ " inner join music.artist a on a.id = h.artist_id"
-			+ " where calltype_id = " + callType.getDatabaseId()
-			+ " and a.artist_name = upper(?)";
-		Timestamp lastInvocation = jdbcTemplate.queryForObject(sql, 
-				new Object[]{artist.getName()}, Timestamp.class);
+
+		Timestamp lastInvocation = jdbcTemplate.queryForObject(ALLOW_WEBSERVICE_INVOCATION_ARTIST, 
+				new Object[]{callType.getDatabaseId(),artist.getName()}, Timestamp.class);
 		return isWebserviceInvocationAllowed(callType, lastInvocation);
 	}
 
 	protected boolean isWebserviceInvocationAllowed(Calltype callType, Track track) {
-		String sql = "select max(invocation_time) from library.webservice_history h"
-			+ " inner join music.track t on t.id = h.track_id"
-			+ " inner join music.artist a on a.id = t.artist_id"
-			+ " where calltype_id = " + callType.getDatabaseId()
-			+ " and a.artist_name = upper(?) and t.track_name = upper(?)";
-		Timestamp lastInvocation = jdbcTemplate.queryForObject(sql, new Object[]{
-				track.getArtist().getName(), track.getName()}, Timestamp.class);
+
+		Timestamp lastInvocation = jdbcTemplate.queryForObject(ALLOW_WEBSERIVCE_INVOCATION_TRACK, new Object[]{
+				callType.getDatabaseId(),track.getArtist().getName(), track.getName()}, Timestamp.class);
 		return isWebserviceInvocationAllowed(callType, lastInvocation);
 	}
 
 	protected boolean isWebserviceInvocationAllowed(Calltype callType, Album album) {
-		String sql = "select max(invocation_time) from library.webservice_history h"
-			+ " inner join music.album alb on alb.id = h.album_id"
-			+ " inner join music.artist art on art.id = alb.artist_id"
-			+ " where calltype_id = " + callType.getDatabaseId()
-			+ " and art.artist_name = upper(?) and alb.album_name = upper(?)";
-		Timestamp lastInvocation = jdbcTemplate.queryForObject(sql, new Object[]{
-				album.getArtist().getName(), album.getName()}, Timestamp.class);
+
+		Timestamp lastInvocation = jdbcTemplate.queryForObject(ALLOW_WEBSERVICE_INVOCATION_ALBUM, new Object[]{
+				callType.getDatabaseId(),album.getArtist().getName(), album.getName()}, Timestamp.class);
 		return isWebserviceInvocationAllowed(callType, lastInvocation);
 	}
 
 	protected boolean isWebserviceInvocationAllowed(Calltype callType, LastFmUser user, short page) {
-		String sql = "select max(invocation_time) from library.webservice_history h"
-			+ " inner join music.lastfmuser u on h.lastfmuser_id = u.id"
-			+ " where calltype_id = " + callType.getDatabaseId()
-			+ " and u.lastfm_user = upper(?) and h.page = ?";
-		Timestamp lastInvocation = jdbcTemplate.queryForObject(sql, new Object[]{
-				user.getLastFmUsername(), page}, Timestamp.class);
+
+		Timestamp lastInvocation = jdbcTemplate.queryForObject(ALLOW_WEBSERVICE_INVOCATION_USER_PAGE, new Object[]{
+				callType.getDatabaseId(),user.getLastFmUsername(), page}, Timestamp.class);
 		return isWebserviceInvocationAllowed(callType, lastInvocation);
 	}
 
 	protected boolean isWebserviceInvocationAllowed(Calltype callType, LastFmUser user) {
-		String sql = "select max(invocation_time) from library.webservice_history h"
-			+ " inner join music.lastfmuser u on h.lastfmuser_id = u.id"
-			+ " where calltype_id = " + callType.getDatabaseId()
-			+ " and u.lastfm_user = upper(?)";
-		Timestamp lastInvocation = jdbcTemplate.queryForObject(sql, new Object[]{
-				user.getLastFmUsername()}, Timestamp.class);
+
+		Timestamp lastInvocation = jdbcTemplate.queryForObject(ALLOW_WEBSERVICE_INVOCATION_USER, new Object[]{
+				callType.getDatabaseId(),user.getLastFmUsername()}, Timestamp.class);
 		return isWebserviceInvocationAllowed(callType, lastInvocation);
 	}
 
 	protected boolean isWebserviceInvocationAllowed(Calltype callType, LastFmGroup group) {
-		String sql = "select max(invocation_time) from library.webservice_history h"
-			+ " inner join music.lastfmgroup g on h.lastfmgroup_id = g.id"
-			+ " where calltype_id = " + callType.getDatabaseId()
-			+ " and g.group_name = upper(?)";
-		Timestamp lastInvocation = jdbcTemplate.queryForObject(sql, new Object[]{
-				group.getName()}, Timestamp.class);
+
+		Timestamp lastInvocation = jdbcTemplate.queryForObject(ALLOW_WEBSERVICE_INVOCATION_GROUP, new Object[]{
+				callType.getDatabaseId(),group.getName()}, Timestamp.class);
 		return isWebserviceInvocationAllowed(callType, lastInvocation);
 	}
 
 	protected boolean isWebserviceInvocationAllowed(Calltype callType, Tag tag) {
-		String sql = "select max(invocation_time) from library.webservice_history h"
-			+ " where calltype_id = " + callType.getDatabaseId()
-			+ " and h.tag_id = " + tag.getId();
-		Timestamp lastInvocation = jdbcTemplate.queryForObject(sql, Timestamp.class);
+
+		Timestamp lastInvocation = jdbcTemplate.queryForObject(ALLOW_WEBSERVICE_INOVOCATION_TAG,new Object[]{callType.getDatabaseId(),tag.getId()}, Timestamp.class);
 		return isWebserviceInvocationAllowed(callType, lastInvocation);
 	}
 
