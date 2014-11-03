@@ -35,23 +35,15 @@ public class JdbcNameSearchDao implements NameSearchDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
 	private LastFmSettingsService settingsService;
-
-	@Override
-	public NameSearchResult<Artist> getArtists(String userQuery, int offset, int limit) {
-		String sql = "select ma.id, ma.artist_name_capitalization"
+        
+        private final String GET_ARTISTS="select ma.id, ma.artist_name_capitalization"
 				+ " from library.artist la"
 				+ " inner join music.artist ma on la.artist_id = ma.id"
 				+ " where la.artist_name_search like ?"
 				+ " order by la.hasalbums desc, ma.artist_name"
 				+ " offset ? limit ?";
-		List<Artist> artists = jdbcTemplate.query(sql,
-				new Object[]{getNameQuery(userQuery), offset, limit}, new ArtistRowMapper());
-		return new NameSearchResult<>(artists, offset);
-	}
-
-	@Override
-	public NameSearchResult<Album> getAlbums(String userQuery, int offset, int limit) {
-		String sql = "select mart.id, mart.artist_name_capitalization,"
+        
+        private final String GET_ALBUMS= "select mart.id, mart.artist_name_capitalization,"
 				+ " malb.id, malb.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, null, array[]::int[], malb.spotify_uri"
 				+ " from library.album la"
@@ -64,15 +56,7 @@ public class JdbcNameSearchDao implements NameSearchDao, JdbcTemplateDao {
 				+ " where la.album_name_search like ?"
 				+ " order by malb.album_name"
 				+ " offset ? limit ?";
-		List<Album> albums = jdbcTemplate.query(sql,
-				new Object[]{getNameQuery(userQuery), offset, limit}, new AlbumRowMapper());
-
-		return new NameSearchResult<>(albums, offset);
-	}
-
-	@Override
-	public NameSearchResult<Track> getTracks(String userQuery, int offset, int limit) {
-		String sql = "select mart.id, mart.artist_name_capitalization,"
+        private final String GET_TRACKS="select mart.id, mart.artist_name_capitalization,"
 				+ " malb.id, malb.album_name_capitalization,"
 				+ " lt.id, mt.track_name_capitalization from library.track lt"
 				+ " inner join music.track mt on lt.track_id = mt.id"
@@ -81,7 +65,28 @@ public class JdbcNameSearchDao implements NameSearchDao, JdbcTemplateDao {
 				+ " where lt.track_name_search like ?"
 				+ " order by mt.track_name"
 				+ " offset ? limit ?";
-		List<Track> albums = jdbcTemplate.query(sql,
+
+	@Override
+	public NameSearchResult<Artist> getArtists(String userQuery, int offset, int limit) {
+
+		List<Artist> artists = jdbcTemplate.query(GET_ARTISTS,
+				new Object[]{getNameQuery(userQuery), offset, limit}, new ArtistRowMapper());
+		return new NameSearchResult<>(artists, offset);
+	}
+
+	@Override
+	public NameSearchResult<Album> getAlbums(String userQuery, int offset, int limit) {
+
+		List<Album> albums = jdbcTemplate.query(GET_ALBUMS,
+				new Object[]{getNameQuery(userQuery), offset, limit}, new AlbumRowMapper());
+
+		return new NameSearchResult<>(albums, offset);
+	}
+
+	@Override
+	public NameSearchResult<Track> getTracks(String userQuery, int offset, int limit) {
+
+		List<Track> albums = jdbcTemplate.query(GET_TRACKS,
 				new Object[]{getNameQuery(userQuery), offset, limit}, new RowMapper<Track>() {
 			@Override
 			public Track mapRow(ResultSet rs, int rowNum) throws SQLException {

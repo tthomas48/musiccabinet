@@ -19,7 +19,15 @@ import com.github.hakko.musiccabinet.domain.model.music.TrackRelation;
 public class JdbcTrackRelationDao implements TrackRelationDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
+        
+        private final String BATCH_INSERT_TRACK_RELATION="insert into music.trackrelation_import (source_id, target_artist_name, target_track_name, weight) values (?,?,?,?)";
 	
+        private final String GET_TRACK_RELATION="select artist_name_capitalization, track_name_capitalization, weight"
+			+ " from music.trackrelation" 
+			+ " inner join music.track on music.trackrelation.target_id = music.track.id"
+			+ " inner join music.artist on music.track.artist_id = music.artist.id"
+			+ " where music.trackrelation.source_id = ?";
+        
 	@Override
 	public void createTrackRelations(Track sourceTrack, List<TrackRelation> trackRelations) {
 		if (trackRelations.size() > 0) {
@@ -37,8 +45,7 @@ public class JdbcTrackRelationDao implements TrackRelationDao, JdbcTemplateDao {
 		int sourceTrackId = jdbcTemplate.queryForInt("select * from music.get_track_id(?,?)",
 				sourceTrack.getArtist().getName(), sourceTrack.getName());
 		
-		String sql = "insert into music.trackrelation_import (source_id, target_artist_name, target_track_name, weight) values (?,?,?,?)";
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_TRACK_RELATION);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("source_id", Types.INTEGER));
 		batchUpdate.declareParameter(new SqlParameter("target_artist_name", Types.VARCHAR));
@@ -63,13 +70,7 @@ public class JdbcTrackRelationDao implements TrackRelationDao, JdbcTemplateDao {
 				"select * from music.get_track_id(?,?)", 
 				sourceTrack.getArtist().getName(), sourceTrack.getName());
 		
-		String sql = "select artist_name_capitalization, track_name_capitalization, weight"
-			+ " from music.trackrelation" 
-			+ " inner join music.track on music.trackrelation.target_id = music.track.id"
-			+ " inner join music.artist on music.track.artist_id = music.artist.id"
-			+ " where music.trackrelation.source_id = ?";
-		
-		List<TrackRelation> trackRelations = jdbcTemplate.query(sql, 
+		List<TrackRelation> trackRelations = jdbcTemplate.query(GET_TRACK_RELATION, 
 				new Object[]{sourceTrackId}, new RowMapper<TrackRelation>() {
 			@Override
 			public TrackRelation mapRow(ResultSet rs, int rowNum)

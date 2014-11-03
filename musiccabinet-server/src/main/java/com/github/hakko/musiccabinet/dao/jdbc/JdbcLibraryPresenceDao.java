@@ -18,12 +18,20 @@ import com.github.hakko.musiccabinet.domain.model.library.File;
 public class JdbcLibraryPresenceDao implements LibraryPresenceDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
+        
+        private final String EXISTS="select exists(select 1 from library.directory where path = ?)";
+        
+        private final String GET_SUB_DIRECTORIES="select d2.path from library.directory d2"
+				+ " inner join library.directory d1"
+				+ " on d2.parent_id = d1.id and d1.path = ?";
+        
+        private final String GET_FILES="select d.path, f.filename, f.modified, f.size from library.file f"
+				+ " inner join library.directory d on f.directory_id = d.id"
+				+ " where d.path = ?";
 
 	@Override
 	public boolean exists(String directory) {
-		String sql = "select exists(select 1 from library.directory where path = ?)";
-
-		return jdbcTemplate.queryForObject(sql, Boolean.class, directory);
+		return jdbcTemplate.queryForObject(EXISTS, Boolean.class, directory);
 	}
 
 	@Override
@@ -32,17 +40,14 @@ public class JdbcLibraryPresenceDao implements LibraryPresenceDao, JdbcTemplateD
 				+ " inner join library.directory d1"
 				+ " on d2.parent_id = d1.id and d1.path = ?";
 
-		return new HashSet<String>(jdbcTemplate.queryForList(sql, String.class, directory));
+		return new HashSet<>(jdbcTemplate.queryForList(GET_SUB_DIRECTORIES, String.class, directory));
 	}
 
 	@Override
 	public Set<File> getFiles(String directory) {
-		String sql = "select d.path, f.filename, f.modified, f.size from library.file f"
-				+ " inner join library.directory d on f.directory_id = d.id"
-				+ " where d.path = ?";
-		
+
 		final Set<File> files = new HashSet<>();
-		jdbcTemplate.query(sql, new Object[]{directory}, new RowCallbackHandler() {
+		jdbcTemplate.query(GET_FILES, new Object[]{directory}, new RowCallbackHandler() {
 			@Override
 			public void processRow(ResultSet rs) throws SQLException {
 				String directory = rs.getString(1);
