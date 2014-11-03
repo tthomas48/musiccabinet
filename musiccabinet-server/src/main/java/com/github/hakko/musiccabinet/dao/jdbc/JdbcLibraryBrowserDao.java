@@ -196,11 +196,13 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " inner join music.artist a on ai.artist_id = a.id"
 				+ " inner join library.artist la on la.artist_id = a.id"
 				+ " inner join library.starredartist sa on sa.artist_id = la.artist_id"
-				+ " where a.id = ?";
+				+ " where ai.artist_id = ?";
 
 		List<Object> args = new ArrayList<>();
 		args.add(artist.getId());
-		return jdbcTemplate.queryForObject(sql, args.toArray(), Boolean.class);
+		Boolean response = jdbcTemplate.queryForObject(sql, args.toArray(), Boolean.class);
+		response = (response != null ? response.booleanValue() : false);
+		return response;
 	}
 
 	@Override
@@ -315,18 +317,21 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getRecentlyAddedAlbums(int offset, int limit,
+	public List<Album> getRecentlyAddedAlbums(boolean spotifyEnabled, int offset, int limit,
 			String query) {
+		
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.sort_id, max(ltf.modified) modified"
 				+ " from library.track lt"
 				+ " inner join library.file ltf on ltf.id = lt.file_id"				
-				+ " inner join music.album ma on lt.album_id = ma.id"
+				+ " inner join music.album ma on (lt.album_id = ma.id"
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " inner join (select la.album_id, la.id as sort_id "
 				+ "  from library.album la "
-				+ (query == null ? "" : " where la.album_name_search like ?")
+				+ " where true "
+				+ (query != null  ? " and la.album_name_search like ? " : "")
 				+ "  order by la.id desc offset ? limit ?) filter on lt.album_id = filter.album_id"
 				+ " group by lt.album_id, filter.sort_id) tr"
 				+ " inner join library.album la on la.album_id = tr.album_id"
@@ -345,7 +350,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getRecentlyPlayedAlbums(String lastFmUsername,
+	public List<Album> getRecentlyPlayedAlbums(boolean spotifyEnabled, String lastFmUsername,
 			int offset, int limit, String query) {
 		String userTable = "", userCriteria = "", albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
@@ -365,7 +370,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.last_invocation_time"
 				+ " from library.track lt"
-				+ " inner join music.album ma on lt.album_id = ma.id"
+				+ " inner join music.album ma on (lt.album_id = ma.id"
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " inner join (select la.album_id, max(invocation_time) as last_invocation_time"
 				+ " from library.playcount pc"
@@ -390,7 +396,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getMostPlayedAlbums(String lastFmUsername, int offset,
+	public List<Album> getMostPlayedAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
 			int limit, String query) {
 		String userTable = "", userCriteria = "", albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
@@ -410,7 +416,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.cnt"
 				+ " from library.track lt"
-				+ " inner join music.album ma on lt.album_id = ma.id"
+				+ " inner join music.album ma on (lt.album_id = ma.id"
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " inner join (select la.album_id, count(la.album_id) as cnt"
 				+ " from library.playcount pc"
@@ -435,16 +442,15 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getRandomAlbums(int limit) {
+	public List<Album> getRandomAlbums(boolean spotifyEnabled, int limit) {
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
 				+ " from library.track lt"
-				+ " inner join music.album ma on lt.album_id = ma.id"
+				+ " inner join music.album ma on (lt.album_id = ma.id"
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
-				+ " inner join (select album_id from library.album la order by random() limit "
-				+ limit
-				+ ") la on la.album_id = ma.id"
+				+ " inner join (select album_id from library.album la) la on la.album_id = ma.id"
 				+ " group by lt.album_id) tr"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
@@ -453,13 +459,14 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " left outer join library.directory d1 on f1.directory_id = d1.id"
 				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
 				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
-				+ " left outer join music.albuminfo ai on ai.album_id = la.album_id";
+				+ " left outer join music.albuminfo ai on ai.album_id = la.album_id"
+				+ " order by random() limit " + limit;
 
 		return jdbcTemplate.query(sql, new AlbumRowMapper());
 	}
 
 	@Override
-	public List<Album> getStarredAlbums(String lastFmUsername, int offset,
+	public List<Album> getStarredAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
 			int limit, String query) {
 		String userTable = "", userCriteria = "", albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
@@ -479,7 +486,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.added"
 				+ " from library.track lt"
-				+ " inner join music.album ma on lt.album_id = ma.id"
+				+ " inner join music.album ma on (lt.album_id = ma.id"
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " inner join (select sa.album_id, sa.added from library.starredalbum sa "
 				+ " inner join library.album la on sa.album_id = la.album_id"
@@ -862,7 +870,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		this.settingsService = settingsService;
 	}
 
-	private List<Album> getAlbums(int offset, int limit, String query,
+	private List<Album> getAlbums(boolean spotifyEnabled, int offset, int limit, String query,
 			String orderBy) {
 		String albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
@@ -881,6 +889,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " where true"
 				+ albumNameCriteria
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
 				+ " group by lt.album_id) tr"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
@@ -897,19 +906,19 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getAlbumsByName(int offset, int limit, String query) {
-		return getAlbums(offset, limit, query,
+	public List<Album> getAlbumsByName(boolean spotifyEnabled, int offset, int limit, String query) {
+		return getAlbums(spotifyEnabled, offset, limit, query,
 				" order by ma.album_name_capitalization");
 	}
 
 	@Override
-	public List<Album> getAlbumsByArtist(int offset, int limit, String query) {
-		return getAlbums(offset, limit, query,
+	public List<Album> getAlbumsByArtist(boolean spotifyEnabled, int offset, int limit, String query) {
+		return getAlbums(spotifyEnabled, offset, limit, query,
 				" order by a.artist_name_capitalization, ma.album_name_capitalization");
 	}
 
 	@Override
-	public List<Album> getAlbumsByYear(int offset, int limit, String query,
+	public List<Album> getAlbumsByYear(boolean spotifyEnabled, int offset, int limit, String query,
 			int fromYear, int toYear) {
 		String albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
@@ -931,6 +940,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " where true"
 				+ albumNameCriteria
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
 				+ " group by lt.album_id) tr"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
@@ -947,7 +957,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getAlbumsByGenre(int offset, int limit, String query,
+	public List<Album> getAlbumsByGenre(boolean spotifyEnabled, int offset, int limit, String query,
 			String genre) {
 		String albumNameCriteria = "";
 		String topTagsTable = settingsService.getArtistTopTagsTable();
@@ -977,6 +987,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " where true"
 				+ genreCriteria
 				+ albumNameCriteria
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
 				+ " group by lt.album_id) tr"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"

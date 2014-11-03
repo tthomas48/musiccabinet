@@ -27,15 +27,15 @@ public interface LibraryBrowserDao {
 	void getAlbums(List<Album> albums, Artist artist, boolean sortByYear, boolean sortAscending);
 	
 	List<Album> getVariousArtistsAlbums();
-	List<Album> getRecentlyAddedAlbums(int offset, int limit, String query);
-	List<Album> getRecentlyPlayedAlbums(String lastFmUsername, int offset, int limit, String query);
-	List<Album> getMostPlayedAlbums(String lastFmUsername, int offset, int limit, String query);
-	List<Album> getRandomAlbums(int limit);
-	List<Album> getStarredAlbums(String lastFmUsername, int offset, int limit, String query);
-	List<Album> getAlbumsByName(int offset, int limit, String query);
-	List<Album> getAlbumsByArtist(int offset, int limit, String query);
-	List<Album> getAlbumsByYear(int offset, int limit, String query, int fromYear, int toYear);
-	List<Album> getAlbumsByGenre(int offset, int limit, String query, String genre);
+	List<Album> getRecentlyAddedAlbums(boolean spotifyEnabled, int offset, int limit, String query);
+	List<Album> getRecentlyPlayedAlbums(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query);
+	List<Album> getMostPlayedAlbums(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query);
+	List<Album> getRandomAlbums(boolean spotifyEnabled, int limit);
+	List<Album> getStarredAlbums(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query);
+	List<Album> getAlbumsByName(boolean spotifyEnabled, int offset, int limit, String query);
+	List<Album> getAlbumsByArtist(boolean spotifyEnabled, int offset, int limit, String query);
+	List<Album> getAlbumsByYear(boolean spotifyEnabled, int offset, int limit, String query, int fromYear, int toYear);
+	List<Album> getAlbumsByGenre(boolean spotifyEnabled, int offset, int limit, String query, String genre);
 	
 	Track getTrack(Uri trackUri);
 	List<Track> getTracks(List<? extends Uri> trackUris);

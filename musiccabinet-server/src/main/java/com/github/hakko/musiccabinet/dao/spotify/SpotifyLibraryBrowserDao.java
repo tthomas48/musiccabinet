@@ -243,30 +243,30 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	}
 
 	@Override
-	public List<Album> getRecentlyAddedAlbums(int offset, int limit,
+	public List<Album> getRecentlyAddedAlbums(boolean spotifyEnabled, int offset, int limit,
 			String query) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getRecentlyPlayedAlbums(String lastFmUsername,
+	public List<Album> getRecentlyPlayedAlbums(boolean spotifyEnabled, String lastFmUsername,
 			int offset, int limit, String query) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getMostPlayedAlbums(String lastFmUsername, int offset,
+	public List<Album> getMostPlayedAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
 			int limit, String query) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getRandomAlbums(int limit) {
+	public List<Album> getRandomAlbums(boolean spotifyEnabled, int limit) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getStarredAlbums(String lastFmUsername, int offset,
+	public List<Album> getStarredAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
 			int limit, String query) {
 
 		/*
@@ -494,23 +494,23 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	}
 
 	@Override
-	public List<Album> getAlbumsByName(int offset, int limit, String query) {
+	public List<Album> getAlbumsByName(boolean spotifyEnabled, int offset, int limit, String query) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getAlbumsByArtist(int offset, int limit, String query) {
+	public List<Album> getAlbumsByArtist(boolean spotifyEnabled, int offset, int limit, String query) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getAlbumsByYear(int offset, int limit, String query,
+	public List<Album> getAlbumsByYear(boolean spotifyEnabled, int offset, int limit, String query,
 			int fromYear, int toYear) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getAlbumsByGenre(int offset, int limit, String query,
+	public List<Album> getAlbumsByGenre(boolean spotifyEnabled, int offset, int limit, String query,
 			String genre) {
 		return new ArrayList<Album>();
 	}

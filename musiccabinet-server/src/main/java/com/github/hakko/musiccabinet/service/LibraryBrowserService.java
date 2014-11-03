@@ -1,7 +1,6 @@
 package com.github.hakko.musiccabinet.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import com.github.hakko.musiccabinet.configuration.Uri;
@@ -50,20 +49,20 @@ public class LibraryBrowserService {
 		return libraryBrowserDao.getStarredArtists(lastFmUsername, offset, limit, query);
 	}
 	
-	public List<Album> getAlbumsByName(String lastFmUsername, int offset, int limit, String query) {
-		return libraryBrowserDao.getAlbumsByName(offset, limit, query);
+	public List<Album> getAlbumsByName(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getAlbumsByName(spotifyEnabled, offset, limit, query);
 	}
 	
-	public List<Album> getAlbumsByArtist(String lastFmUsername, int offset, int limit, String query) {
-		return libraryBrowserDao.getAlbumsByArtist(offset, limit, query);
+	public List<Album> getAlbumsByArtist(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getAlbumsByArtist(spotifyEnabled, offset, limit, query);
 	}
 	
-	public List<Album> getAlbumsByYear(String lastFmUsername, int offset, int limit, String query, int fromYear, int toYear) {
-		return libraryBrowserDao.getAlbumsByYear(offset, limit, query, fromYear, toYear);
+	public List<Album> getAlbumsByYear(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query, int fromYear, int toYear) {
+		return libraryBrowserDao.getAlbumsByYear(spotifyEnabled, offset, limit, query, fromYear, toYear);
 	}
 	
-	public List<Album> getAlbumsByGenre(String lastFmUsername, int offset, int limit, String query, String genre) {
-		return libraryBrowserDao.getAlbumsByGenre(offset, limit, query, genre);
+	public List<Album> getAlbumsByGenre(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query, String genre) {
+		return libraryBrowserDao.getAlbumsByGenre(spotifyEnabled, offset, limit, query, genre);
 	}
 	
 	
@@ -88,24 +87,24 @@ public class LibraryBrowserService {
 		return libraryBrowserDao.getVariousArtistsAlbums();
 	}
 	
-	public List<Album> getRecentlyAddedAlbums(int offset, int limit, String query) {
-		return libraryBrowserDao.getRecentlyAddedAlbums(offset, limit, query);
+	public List<Album> getRecentlyAddedAlbums(boolean spotifyEnabled, int offset, int limit, String query) {
+		return libraryBrowserDao.getRecentlyAddedAlbums(spotifyEnabled, offset, limit, query);
 	}
 
-	public List<Album> getRecentlyPlayedAlbums(String lastFmUsername, int offset, int limit, String query) {
-		return libraryBrowserDao.getRecentlyPlayedAlbums(lastFmUsername, offset, limit, query);
+	public List<Album> getRecentlyPlayedAlbums(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getRecentlyPlayedAlbums(spotifyEnabled, lastFmUsername, offset, limit, query);
 	}
 
-	public List<Album> getMostPlayedAlbums(String lastFmUsername, int offset, int limit, String query) {
-		return libraryBrowserDao.getMostPlayedAlbums(lastFmUsername, offset, limit, query);
+	public List<Album> getMostPlayedAlbums(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getMostPlayedAlbums(spotifyEnabled, lastFmUsername, offset, limit, query);
 	}
 
-	public List<Album> getRandomAlbums(int limit) {
-		return libraryBrowserDao.getRandomAlbums(limit);
+	public List<Album> getRandomAlbums(boolean spotifyEnabled, int limit) {
+		return libraryBrowserDao.getRandomAlbums(spotifyEnabled, limit);
 	}
 
-	public List<Album> getStarredAlbums(String lastFmUsername, int offset, int limit, String query) {
-		return libraryBrowserDao.getStarredAlbums(lastFmUsername, offset, limit, query);
+	public List<Album> getStarredAlbums(boolean spotifyEnabled, String lastFmUsername, int offset, int limit, String query) {
+		return libraryBrowserDao.getStarredAlbums(spotifyEnabled, lastFmUsername, offset, limit, query);
 	}
 
 	public List<Track> getTracks(List<? extends Uri> trackUris) {

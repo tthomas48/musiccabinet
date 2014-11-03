@@ -174,21 +174,21 @@ public class JdbcLibraryBrowserDaoAggregationTest {
 		submitFile(additionDao, UnittestLibraryUtil.getFile(artistName1, albumName1, trackName1));
 		submitFile(additionDao, UnittestLibraryUtil.getFile(artistName1, albumName2, trackName1));
 		
-		List<Album> albums = browserDao.getRecentlyAddedAlbums(0, 10, null);
+		List<Album> albums = browserDao.getRecentlyAddedAlbums(true, 0, 10, null);
 		Assert.assertNotNull(albums);
 		Assert.assertEquals(2, albums.size());
 
-		albums = browserDao.getRecentlyAddedAlbums(0, 1, null);
+		albums = browserDao.getRecentlyAddedAlbums(true, 0, 1, null);
 		Assert.assertNotNull(albums);
 		Assert.assertEquals(1, albums.size());
 		Assert.assertEquals(albumName2, albums.get(0).getName());
 
-		albums = browserDao.getRecentlyAddedAlbums(1, 1, null);
+		albums = browserDao.getRecentlyAddedAlbums(true, 1, 1, null);
 		Assert.assertNotNull(albums);
 		Assert.assertEquals(1, albums.size());
 		Assert.assertEquals(albumName1, albums.get(0).getName());
 
-		albums = browserDao.getRecentlyAddedAlbums(0, 10, albumName1);
+		albums = browserDao.getRecentlyAddedAlbums(true, 0, 10, albumName1);
 		Assert.assertNotNull(albums);
 		Assert.assertEquals(1, albums.size());
 		Assert.assertEquals(albumName1, albums.get(0).getName());
@@ -212,30 +212,30 @@ public class JdbcLibraryBrowserDaoAggregationTest {
 
 	@Test
 	public void returnsRecentlyPlayedAlbums() {
-		List<Album> recentlyPlayed = browserDao.getRecentlyPlayedAlbums(userName1, 0, 10, null);
+		List<Album> recentlyPlayed = browserDao.getRecentlyPlayedAlbums(true, userName1, 0, 10, null);
 		Assert.assertEquals(0, recentlyPlayed.size());
 		
 		playCountDao.addPlayCount(user1, track1);
-		assertEquals(1, browserDao.getRecentlyPlayedAlbums(userName1, 0, 10, null).size());
-		assertEquals(0, browserDao.getRecentlyPlayedAlbums(userName1, 0, 10, albumName2).size());
-		assertEquals(1, browserDao.getRecentlyPlayedAlbums(userName1, 0, 10, albumName1).size());
-		assertEquals(1, browserDao.getRecentlyPlayedAlbums(null, 0, 10, null).size());
+		assertEquals(1, browserDao.getRecentlyPlayedAlbums(true, userName1, 0, 10, null).size());
+		assertEquals(0, browserDao.getRecentlyPlayedAlbums(true, userName1, 0, 10, albumName2).size());
+		assertEquals(1, browserDao.getRecentlyPlayedAlbums(true, userName1, 0, 10, albumName1).size());
+		assertEquals(1, browserDao.getRecentlyPlayedAlbums(true, null, 0, 10, null).size());
 
 		playCountDao.addPlayCount(user1, track2);
-		assertEquals(2, browserDao.getRecentlyPlayedAlbums(userName1, 0, 10, null).size());
-		assertEquals(1, browserDao.getRecentlyPlayedAlbums(userName1, 0, 10, albumName2).size());
-		assertEquals(1, browserDao.getRecentlyPlayedAlbums(userName1, 0, 10, albumName1).size());
-		assertEquals(2, browserDao.getRecentlyPlayedAlbums(null, 0, 10, null).size());
+		assertEquals(2, browserDao.getRecentlyPlayedAlbums(true, userName1, 0, 10, null).size());
+		assertEquals(1, browserDao.getRecentlyPlayedAlbums(true, userName1, 0, 10, albumName2).size());
+		assertEquals(1, browserDao.getRecentlyPlayedAlbums(true, userName1, 0, 10, albumName1).size());
+		assertEquals(2, browserDao.getRecentlyPlayedAlbums(true, null, 0, 10, null).size());
 
-		assertEquals(1, browserDao.getRecentlyPlayedAlbums(userName1, 1, 1, null).size());
-		assertEquals(album2.getName(), browserDao.getRecentlyPlayedAlbums(userName1, 0, 1, null).get(0).getName());
-		assertEquals(album1.getName(), browserDao.getRecentlyPlayedAlbums(userName1, 1, 1, null).get(0).getName());
+		assertEquals(1, browserDao.getRecentlyPlayedAlbums(true, userName1, 1, 1, null).size());
+		assertEquals(album2.getName(), browserDao.getRecentlyPlayedAlbums(true, userName1, 0, 1, null).get(0).getName());
+		assertEquals(album1.getName(), browserDao.getRecentlyPlayedAlbums(true, userName1, 1, 1, null).get(0).getName());
 		
-		assertEquals(0, browserDao.getRecentlyPlayedAlbums(userName2, 0, 10, null).size());
+		assertEquals(0, browserDao.getRecentlyPlayedAlbums(true, userName2, 0, 10, null).size());
 
 		playCountDao.addPlayCount(user2, track2);
-		assertEquals(1, browserDao.getRecentlyPlayedAlbums(userName2, 0, 10, null).size());
-		assertEquals(2, browserDao.getRecentlyPlayedAlbums(null, 0, 10, null).size());
+		assertEquals(1, browserDao.getRecentlyPlayedAlbums(true, userName2, 0, 10, null).size());
+		assertEquals(2, browserDao.getRecentlyPlayedAlbums(true, null, 0, 10, null).size());
 	}
 
 	@Test
@@ -270,31 +270,31 @@ public class JdbcLibraryBrowserDaoAggregationTest {
 
 	@Test
 	public void returnsMostPlayedAlbums() {
-		List<Album> mostPlayed = browserDao.getMostPlayedAlbums(userName1, 0, 10, null);
+		List<Album> mostPlayed = browserDao.getMostPlayedAlbums(true, userName1, 0, 10, null);
 		Assert.assertEquals(0, mostPlayed.size());
 		
 		playCountDao.addPlayCount(user1, track1);
-		assertEquals(1, browserDao.getMostPlayedAlbums(userName1, 0, 10, null).size());
-		assertEquals(0, browserDao.getMostPlayedAlbums(userName1, 0, 10, albumName2).size());
-		assertEquals(1, browserDao.getMostPlayedAlbums(userName1, 0, 10, albumName1).size());
-		assertEquals(1, browserDao.getMostPlayedAlbums(null, 0, 10, null).size());
+		assertEquals(1, browserDao.getMostPlayedAlbums(true, userName1, 0, 10, null).size());
+		assertEquals(0, browserDao.getMostPlayedAlbums(true, userName1, 0, 10, albumName2).size());
+		assertEquals(1, browserDao.getMostPlayedAlbums(true, userName1, 0, 10, albumName1).size());
+		assertEquals(1, browserDao.getMostPlayedAlbums(true, null, 0, 10, null).size());
 
 		playCountDao.addPlayCount(user1, track2);
 		playCountDao.addPlayCount(user1, track2);
-		assertEquals(2, browserDao.getMostPlayedAlbums(userName1, 0, 10, null).size());
-		assertEquals(1, browserDao.getMostPlayedAlbums(userName1, 0, 10, albumName2).size());
-		assertEquals(1, browserDao.getMostPlayedAlbums(userName1, 0, 10, albumName1).size());
+		assertEquals(2, browserDao.getMostPlayedAlbums(true, userName1, 0, 10, null).size());
+		assertEquals(1, browserDao.getMostPlayedAlbums(true, userName1, 0, 10, albumName2).size());
+		assertEquals(1, browserDao.getMostPlayedAlbums(true, userName1, 0, 10, albumName1).size());
 
-		assertEquals(1, browserDao.getMostPlayedAlbums(userName1, 1, 1, null).size());
-		assertEquals(album2.getName(), browserDao.getMostPlayedAlbums(userName1, 0, 1, null).get(0).getName());
-		assertEquals(album1.getName(), browserDao.getMostPlayedAlbums(userName1, 1, 1, null).get(0).getName());
+		assertEquals(1, browserDao.getMostPlayedAlbums(true, userName1, 1, 1, null).size());
+		assertEquals(album2.getName(), browserDao.getMostPlayedAlbums(true, userName1, 0, 1, null).get(0).getName());
+		assertEquals(album1.getName(), browserDao.getMostPlayedAlbums(true, userName1, 1, 1, null).get(0).getName());
 
-		assertEquals(0, browserDao.getMostPlayedAlbums(userName2, 0, 10, null).size());
-		assertEquals(2, browserDao.getMostPlayedAlbums(null, 0, 10, null).size());
+		assertEquals(0, browserDao.getMostPlayedAlbums(true, userName2, 0, 10, null).size());
+		assertEquals(2, browserDao.getMostPlayedAlbums(true, null, 0, 10, null).size());
 
 		playCountDao.addPlayCount(user2, track1);
-		assertEquals(1, browserDao.getMostPlayedAlbums(userName2, 0, 10, null).size());
-		assertEquals(2, browserDao.getMostPlayedAlbums(null, 0, 10, null).size());
+		assertEquals(1, browserDao.getMostPlayedAlbums(true, userName2, 0, 10, null).size());
+		assertEquals(2, browserDao.getMostPlayedAlbums(true, null, 0, 10, null).size());
 	}
 
 	@Test
@@ -323,9 +323,9 @@ public class JdbcLibraryBrowserDaoAggregationTest {
 
 	@Test
 	public void returnsRandomAlbum() {
-		Assert.assertEquals(0, browserDao.getRandomAlbums(0).size());
-		Assert.assertEquals(1, browserDao.getRandomAlbums(1).size());
-		Assert.assertEquals(2, browserDao.getRandomAlbums(2).size());
+		Assert.assertEquals(0, browserDao.getRandomAlbums(true, 0).size());
+		Assert.assertEquals(1, browserDao.getRandomAlbums(true, 1).size());
+		Assert.assertEquals(2, browserDao.getRandomAlbums(true, 2).size());
 	}
 
 	@Test
@@ -367,16 +367,16 @@ public class JdbcLibraryBrowserDaoAggregationTest {
 	public void returnsStarredAlbum() {
 		starDao.starAlbum(user1, album1.getUri());
 		
-		Assert.assertEquals(1, browserDao.getStarredAlbums(userName1, 0, 10, null).size());
-		Assert.assertEquals(1, browserDao.getStarredAlbums(userName1, 0, 10, albumName1).size());
-		Assert.assertEquals(0, browserDao.getStarredAlbums(userName1, 0, 10, albumName2).size());
-		Assert.assertEquals(0, browserDao.getStarredAlbums(userName2, 0, 10, albumName1).size());
-		Assert.assertEquals(0, browserDao.getStarredAlbums(userName1, 1, 10, albumName1).size());
-		Assert.assertEquals(1, browserDao.getStarredAlbums(null, 0, 10, null).size());
+		Assert.assertEquals(1, browserDao.getStarredAlbums(true, userName1, 0, 10, null).size());
+		Assert.assertEquals(1, browserDao.getStarredAlbums(true, userName1, 0, 10, albumName1).size());
+		Assert.assertEquals(0, browserDao.getStarredAlbums(true, userName1, 0, 10, albumName2).size());
+		Assert.assertEquals(0, browserDao.getStarredAlbums(true, userName2, 0, 10, albumName1).size());
+		Assert.assertEquals(0, browserDao.getStarredAlbums(true, userName1, 1, 10, albumName1).size());
+		Assert.assertEquals(1, browserDao.getStarredAlbums(true, null, 0, 10, null).size());
 
 		starDao.starAlbum(user2, album2.getUri());
-		Assert.assertEquals(1, browserDao.getStarredAlbums(userName2, 0, 10, null).size());
-		Assert.assertEquals(2, browserDao.getStarredAlbums(null, 0, 10, null).size());
+		Assert.assertEquals(1, browserDao.getStarredAlbums(true, userName2, 0, 10, null).size());
+		Assert.assertEquals(2, browserDao.getStarredAlbums(true, null, 0, 10, null).size());
 	}
 
 	@Test

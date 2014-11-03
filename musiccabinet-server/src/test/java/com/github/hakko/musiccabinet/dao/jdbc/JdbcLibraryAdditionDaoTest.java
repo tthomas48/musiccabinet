@@ -61,7 +61,7 @@ public class JdbcLibraryAdditionDaoTest {
 	
 	@Test
 	public void addsAlbumsOrderedByFileModificationDate() {
-		List<Album> albums = libraryBrowserDao.getRecentlyAddedAlbums(0, 10, null);
+		List<Album> albums = libraryBrowserDao.getRecentlyAddedAlbums(true, 0, 10, null);
 		
 		Assert.assertEquals(5, albums.size());
 		

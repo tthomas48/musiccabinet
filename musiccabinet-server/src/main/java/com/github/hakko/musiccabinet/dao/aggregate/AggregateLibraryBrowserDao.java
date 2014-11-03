@@ -148,98 +148,98 @@ public class AggregateLibraryBrowserDao implements LibraryBrowserDao {
 	}
 
 	@Override
-	public List<Album> getRecentlyAddedAlbums(int offset, int limit,
+	public List<Album> getRecentlyAddedAlbums(boolean spotifyEnabled, int offset, int limit,
 			String query) {
 		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getRecentlyAddedAlbums(offset, limit, query));
+			albums.addAll(dao.getRecentlyAddedAlbums(spotifyEnabled, offset, limit, query));
 		}
 		return albums;
 	}
 
 	@Override
-	public List<Album> getRecentlyPlayedAlbums(String lastFmUsername,
+	public List<Album> getRecentlyPlayedAlbums(boolean spotifyEnabled, String lastFmUsername,
 			int offset, int limit, String query) {
 		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getRecentlyPlayedAlbums(lastFmUsername, offset,
+			albums.addAll(dao.getRecentlyPlayedAlbums(spotifyEnabled, lastFmUsername, offset,
 					limit, query));
 		}
 		return albums;
 	}
 
 	@Override
-	public List<Album> getMostPlayedAlbums(String lastFmUsername, int offset,
+	public List<Album> getMostPlayedAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
 			int limit, String query) {
 		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getMostPlayedAlbums(lastFmUsername, offset,
+			albums.addAll(dao.getMostPlayedAlbums(spotifyEnabled, lastFmUsername, offset,
 					limit, query));
 		}
 		return albums;
 	}
 
 	@Override
-	public List<Album> getRandomAlbums(int limit) {
+	public List<Album> getRandomAlbums(boolean spotifyEnabled, int limit) {
 		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getRandomAlbums(limit));
+			albums.addAll(dao.getRandomAlbums(spotifyEnabled, limit));
 		}
 		return albums;
 	}
 
 	@Override
-	public List<Album> getStarredAlbums(String lastFmUsername, int offset,
+	public List<Album> getStarredAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
 			int limit, String query) {
 		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getStarredAlbums(lastFmUsername, offset, limit,
+			albums.addAll(dao.getStarredAlbums(spotifyEnabled, lastFmUsername, offset, limit,
 					query));
 		}
 		return albums;
 	}
 	
 	@Override
-	public List<Album> getAlbumsByArtist(int offset,
+	public List<Album> getAlbumsByArtist(boolean spotifyEnabled, int offset,
 			int limit, String query) {
 		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getAlbumsByArtist(offset, limit,
+			albums.addAll(dao.getAlbumsByArtist(spotifyEnabled, offset, limit,
 					query));
 		}
 		return albums;
 	}
 	
 	@Override
-	public List<Album> getAlbumsByGenre(int offset,
+	public List<Album> getAlbumsByGenre(boolean spotifyEnabled, int offset,
 			int limit, String query, String genre) {
 		
 		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getAlbumsByGenre(offset, limit,
+			albums.addAll(dao.getAlbumsByGenre(spotifyEnabled, offset, limit,
 					query, genre));
 		}
 		return albums;
 	}
 	
 	@Override
-	public List<Album> getAlbumsByName(int offset,
+	public List<Album> getAlbumsByName(boolean spotifyEnabled, int offset,
 			int limit, String query) {
 		
 		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getAlbumsByName(offset, limit,
+			albums.addAll(dao.getAlbumsByName(spotifyEnabled, offset, limit,
 					query));
 		}
 		return albums;
 	}
 	
 	@Override
-	public List<Album> getAlbumsByYear(int offset,
+	public List<Album> getAlbumsByYear(boolean spotifyEnabled, int offset,
 			int limit, String query, int fromYear, int toYear) {
 		List<Album> albums = new ArrayList<Album>();
 		for (LibraryBrowserDao dao : daos) {
-			albums.addAll(dao.getAlbumsByYear(offset, limit,
+			albums.addAll(dao.getAlbumsByYear(spotifyEnabled, offset, limit,
 					query, fromYear, toYear));
 		}
 		return albums;
