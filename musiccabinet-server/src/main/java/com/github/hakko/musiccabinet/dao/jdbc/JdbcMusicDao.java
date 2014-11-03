@@ -21,14 +21,29 @@ import com.github.hakko.musiccabinet.domain.model.music.Track;
 public class JdbcMusicDao implements MusicDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
+        
+        private final String GET_ARTIST_URI="select * from music.get_artist_id(?)";
+        
+        private final String GET_ARTIST="select artist_name_capitalization from music.artist where artist_name = upper(?)";
+        
+        private final String GET_ARTISTS_LIST="select id, artist_name_capitalization from music.artist"
+				+ " where id in ( ? )"
+				+ " order by artist_name_capitalization";
+        
+        private final String GET_ALBUM_URI="select * from music.get_album_id(?,?)";
+        
+        private final String GET_TRACK_URI="select * from music.get_track_id(?,?)";
+        
+        private final String GET_TRACK="select a.artist_name_capitalization, t.track_name_capitalization"
+				+ " from music.artist a inner join music.track t on t.artist_id = a.id"
+				+ " where t.id = ?";
 	
 	public void setArtistUri(Artist artist) {
 		artist.setUri(getArtistUri(artist.getName()));
 	}
 	
 	public Uri getArtistUri(String artistName) {
-		return new SubsonicUri(jdbcTemplate.queryForInt(
-			"select * from music.get_artist_id(?)", artistName));
+		return new SubsonicUri(jdbcTemplate.queryForInt(GET_ARTIST_URI,new Object[]{artistName} ));
 	}
 	
 	public Uri getArtistUri(Artist artist) {
@@ -36,27 +51,20 @@ public class JdbcMusicDao implements MusicDao, JdbcTemplateDao {
 	}
 	
 	public Artist getArtist(String artistName) {
-		String sql = "select artist_name_capitalization from music.artist where artist_name = upper(?)";
-		return new Artist(jdbcTemplate.queryForObject(sql, String.class, artistName));
+		return new Artist(jdbcTemplate.queryForObject(GET_ARTIST, String.class, artistName));
 	}
 
 	public List<Artist> getArtists(Set<Uri> artistIds) {
 		if (artistIds.isEmpty()) {
 			return new ArrayList<>();
 		}
-		
-		
-		String sql = "select id, artist_name_capitalization from music.artist"
-				+ " where id in (" + PostgreSQLUtil.getUriParameters(artistIds) + ")"
-				+ " order by artist_name_capitalization";
-		
-		return jdbcTemplate.query(sql, new ArtistRowMapper());
+
+		return jdbcTemplate.query(GET_ARTISTS_LIST,new Object[]{PostgreSQLUtil.getUriParameters(artistIds)}, new ArtistRowMapper());
 	}
 	
 	public Uri getAlbumUri(String artistName, String albumName) {
 		return new SubsonicUri(jdbcTemplate.queryForInt(
-				"select * from music.get_album_id(?,?)",
-				artistName, albumName));
+				GET_ALBUM_URI,new Object[]{artistName, albumName}));
 	}
 	
 	public Uri getAlbumUri(Album album) {
@@ -65,8 +73,7 @@ public class JdbcMusicDao implements MusicDao, JdbcTemplateDao {
 	
 	public Uri getTrackUri(String artistName, String trackName) {
 		return new SubsonicUri(jdbcTemplate.queryForInt(
-			"select * from music.get_track_id(?,?)", 
-			artistName, trackName));
+			GET_TRACK_URI, new Object[]{artistName, trackName}));
 	}
 	
 	public Uri getTrackUri(Track track) {
@@ -76,12 +83,8 @@ public class JdbcMusicDao implements MusicDao, JdbcTemplateDao {
 	@Override
 	public Track getTrack(Uri trackUri) {
 		Integer trackId = trackUri.getId();
-		
-		String sql = "select a.artist_name_capitalization, t.track_name_capitalization"
-				+ " from music.artist a inner join music.track t on t.artist_id = a.id"
-				+ " where t.id = " + trackId;
 
-		return jdbcTemplate.queryForObject(sql, new TrackWithArtistRowMapper());
+		return jdbcTemplate.queryForObject(GET_TRACK,new Object[]{trackId}, new TrackWithArtistRowMapper());
 	}
 
 	@Override

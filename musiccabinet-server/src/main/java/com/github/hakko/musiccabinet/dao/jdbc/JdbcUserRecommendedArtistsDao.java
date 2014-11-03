@@ -21,6 +21,20 @@ import com.github.hakko.musiccabinet.domain.model.music.Artist;
 public class JdbcUserRecommendedArtistsDao implements UserRecommendedArtistsDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
+        
+        private final String BATCH_INSERT_USER_RECCOMENDED="insert into music.userrecommendedartist_import"
+				+ " (lastfm_user, artist_name, rank, contextartist1_name, contextartist2_name)"
+				+ " values (?,?,?,?,?)";
+        
+        private final String GET_USER_RECCOMENDED_ARTISTS="select a.artist_name_capitalization,"
+				+ " ca1.artist_name_capitalization, ca2.artist_name_capitalization"
+				+ " from music.userrecommendedartist ura"
+				+ " inner join music.artist a on ura.artist_id = a.id"
+				+ " inner join music.artist ca1 on ura.contextartist1_id = ca1.id"
+				+ " inner join music.artist ca2 on ura.contextartist2_id = ca2.id"
+				+ " inner join music.lastfmuser u on ura.lastfmuser_id = u.id"
+				+ " where u.lastfm_user = upper(?)"
+				+ " order by rank";
 
 	@Override
 	public void createUserRecommendedArtists(List<UserRecommendedArtists> userRecommendedArtists) {
@@ -38,10 +52,8 @@ public class JdbcUserRecommendedArtistsDao implements UserRecommendedArtistsDao,
 	}
 
 	private void batchInsert(List<RecommendedArtist> artists, LastFmUser user) {
-		String sql = "insert into music.userrecommendedartist_import"
-				+ " (lastfm_user, artist_name, rank, contextartist1_name, contextartist2_name)"
-				+ " values (?,?,?,?,?)";
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
+
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_USER_RECCOMENDED);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("lastfm_user", Types.VARCHAR));
 		batchUpdate.declareParameter(new SqlParameter("artist_name", Types.VARCHAR));
@@ -67,17 +79,8 @@ public class JdbcUserRecommendedArtistsDao implements UserRecommendedArtistsDao,
 		
 	@Override
 	public List<RecommendedArtist> getUserRecommendedArtists(String lastFmUsername) {
-		String sql = "select a.artist_name_capitalization,"
-				+ " ca1.artist_name_capitalization, ca2.artist_name_capitalization"
-				+ " from music.userrecommendedartist ura"
-				+ " inner join music.artist a on ura.artist_id = a.id"
-				+ " inner join music.artist ca1 on ura.contextartist1_id = ca1.id"
-				+ " inner join music.artist ca2 on ura.contextartist2_id = ca2.id"
-				+ " inner join music.lastfmuser u on ura.lastfmuser_id = u.id"
-				+ " where u.lastfm_user = upper(?)"
-				+ " order by rank";
 
-		return jdbcTemplate.query(sql, new Object[]{lastFmUsername}, new RowMapper<RecommendedArtist>() {
+		return jdbcTemplate.query(GET_USER_RECCOMENDED_ARTISTS, new Object[]{lastFmUsername}, new RowMapper<RecommendedArtist>() {
 			@Override
 			public RecommendedArtist mapRow(ResultSet rs, int rowNum) throws SQLException {
 				return new RecommendedArtist(rs.getString(1), rs.getString(2), rs.getString(3));

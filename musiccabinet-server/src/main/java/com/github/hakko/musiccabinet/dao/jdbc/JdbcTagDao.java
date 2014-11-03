@@ -31,12 +31,41 @@ public class JdbcTagDao implements TagDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
 	private LastFmSettingsService settingsService;
+        
+        private final String CREATE_TAGS="insert into music.tag (tag_name) select distinct (?)"
+				+ " where not exists (select 1 from music.tag where tag_name = ?)";
+        
+        private final String GET_AVALABLE_TAGS="select * from"
+				+ " (select t.tag_name, tc.tag_name, occ.count,"
+				+ " case when tt.tag_id is null then false else true end from music.tag t"
+				+ " inner join (select tag_id, count(tag_id) from ? att"
+				+ " where tag_count > 25 group by tag_id) occ on occ.tag_id = t.id"
+				+ " left outer join music.tag tc on t.corrected_id = tc.id"
+				+ " left outer join (select tag_id from library.toptag) tt on t.id = tt.tag_id"
+				+ " where occ.count >= 5"
+				+ " order by occ.count desc limit 250) top order by 1";
+        
+        private final String GET_TOP_TAGS_OCCURENCE="select tag.tag_name, null, 10+ntile(30) over (order by pop.sum), true from library.toptag tt"
+				+ " inner join music.tag tag on tt.tag_id = tag.id"
+				+ " inner join (select coalesce(t.corrected_id, t.id) as tag_id, sum(tag_count)"
+				+ "  from ? att inner join music.tag t on att.tag_id = t.id"
+				+ "  group by coalesce(t.corrected_id, t.id)) pop on tag.id = pop.tag_id"
+				+ " order by tag.tag_name";
+        
+        private final String GET_TAGS_WITHOUT_TOP_ARTIST="select t.id, t.tag_name from music.tag t"
+				+ " left outer join (select tag_id, count(tag_id) from ? where tag_count > 25 group by tag_id) occ on t.id = occ.tag_id"
+				+ " left outer join (select tag_id, sum(tag_count) from ? group by tag_id) pop on t.id = pop.tag_id"
+				+ " left outer join (select tag_id from library.toptag) tt on t.id = tt.tag_id"
+				+ " where ((occ.count > 5 and pop.sum/occ.count > 50)"
+				+ " or t.id in (select tag_id from library.toptag))"
+				+ " and not exists (select 1 from music.tagtopartist where tag_id = t.id)";
+        
+        private final String BATCH_INSERT_TOP_TAG="insert into music.tagtopartist_import (tag_name, artist_name, rank) values (?,?,?)";
 
 	@Override
 	public void createTags(List<String> tags) {
-		String sql = "insert into music.tag (tag_name) select distinct (?)"
-				+ " where not exists (select 1 from music.tag where tag_name = ?)";
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
+
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), CREATE_TAGS);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("tag_name", Types.VARCHAR));
 		batchUpdate.declareParameter(new SqlParameter("tag_name", Types.VARCHAR));
@@ -120,17 +149,8 @@ public class JdbcTagDao implements TagDao, JdbcTemplateDao {
 	@Override
 	public List<TagOccurrence> getAvailableTags() {
 		String topTagsTable = settingsService.getArtistTopTagsTable();
-		String sql = "select * from"
-				+ " (select t.tag_name, tc.tag_name, occ.count,"
-				+ " case when tt.tag_id is null then false else true end from music.tag t"
-				+ " inner join (select tag_id, count(tag_id) from " + topTagsTable + " att"
-				+ " where tag_count > 25 group by tag_id) occ on occ.tag_id = t.id"
-				+ " left outer join music.tag tc on t.corrected_id = tc.id"
-				+ " left outer join (select tag_id from library.toptag) tt on t.id = tt.tag_id"
-				+ " where occ.count >= 5"
-				+ " order by occ.count desc limit 250) top order by 1";
 
-		return jdbcTemplate.query(sql, new TagOccurrenceRowMapper());
+		return jdbcTemplate.query(GET_AVALABLE_TAGS,new Object[]{topTagsTable}, new TagOccurrenceRowMapper());
 	}
 
 	@Override
@@ -176,30 +196,15 @@ public class JdbcTagDao implements TagDao, JdbcTemplateDao {
 	@Override
 	public List<TagOccurrence> getTopTagsOccurrence() {
 		String topTagsTable = settingsService.getArtistTopTagsTable();
-		String sql =
-				"select tag.tag_name, null, 10+ntile(30) over (order by pop.sum), true from library.toptag tt"
-				+ " inner join music.tag tag on tt.tag_id = tag.id"
-				+ " inner join (select coalesce(t.corrected_id, t.id) as tag_id, sum(tag_count)"
-				+ "  from " + topTagsTable + " att inner join music.tag t on att.tag_id = t.id"
-				+ "  group by coalesce(t.corrected_id, t.id)) pop on tag.id = pop.tag_id"
-				+ " order by tag.tag_name";
-
-		return jdbcTemplate.query(sql, new TagOccurrenceRowMapper());
+                
+		return jdbcTemplate.query(GET_TOP_TAGS_OCCURENCE, new Object[]{topTagsTable},new TagOccurrenceRowMapper());
 	}
 
 	@Override
 	public List<Tag> getTagsWithoutTopArtists() {
 		String topTagsTable = settingsService.getArtistTopTagsTable();
-		String sql =
-				"select t.id, t.tag_name from music.tag t"
-				+ " left outer join (select tag_id, count(tag_id) from " + topTagsTable + " where tag_count > 25 group by tag_id) occ on t.id = occ.tag_id"
-				+ " left outer join (select tag_id, sum(tag_count) from " + topTagsTable + " group by tag_id) pop on t.id = pop.tag_id"
-				+ " left outer join (select tag_id from library.toptag) tt on t.id = tt.tag_id"
-				+ " where ((occ.count > 5 and pop.sum/occ.count > 50)"
-				+ " or t.id in (select tag_id from library.toptag))"
-				+ " and not exists (select 1 from music.tagtopartist where tag_id = t.id)";
 
-		return jdbcTemplate.query(sql, new TagIdNameRowMapper());
+		return jdbcTemplate.query(GET_TAGS_WITHOUT_TOP_ARTIST,new Object[]{topTagsTable,topTagsTable}, new TagIdNameRowMapper());
 	}
 
 	@Override
@@ -218,8 +223,8 @@ public class JdbcTagDao implements TagDao, JdbcTemplateDao {
 	}
 
 	private void batchInsert(String tagName, List<Artist> artists) {
-		String sql = "insert into music.tagtopartist_import (tag_name, artist_name, rank) values (?,?,?)";
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
+
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_TOP_TAG);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("tag_name", Types.VARCHAR));
 		batchUpdate.declareParameter(new SqlParameter("artist_name", Types.VARCHAR));
