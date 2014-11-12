@@ -21,19 +21,7 @@ public class JdbcArtistRelationDao implements ArtistRelationDao, JdbcTemplateDao
 
 	private JdbcTemplate jdbcTemplate;
 	private LastFmSettingsService settingsService;
-        
-        private final String BATCH_INSERT_ARTIST_RELATION="insert into music.artistrelation_import (source_id, target_artist_name, weight) values (?,?,?)";
 
-        private final String GET_ARTIST_RELATIONS="select artist_name_capitalization, weight"
-			+ " from music.artistrelation"
-			+ " inner join music.artist on music.artistrelation.target_id = music.artist.id"
-			+ " where music.artistrelation.source_id = ?";
-        
-        private final String TOP_TAGS="select tag_id, tag_count from ? where artist_id = ? order by tag_count desc limit 5";
-        
-        private final String INSERT_SIMILARITY="insert into similarity (artist_id, count)"
-				+ " select artist_id, 100-abs(?-tag_count) from"
-				+ " ? where tag_id = ?";
 	@Override
 	public void createArtistRelations(Artist sourceArtist, List<ArtistRelation> artistRelations) {
 		if (artistRelations.size() > 0) {
@@ -51,7 +39,8 @@ public class JdbcArtistRelationDao implements ArtistRelationDao, JdbcTemplateDao
 		int sourceArtistId = jdbcTemplate.queryForInt("select * from music.get_artist_id(?)",
 				sourceArtist.getName());
 
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_ARTIST_RELATION);
+		String sql = "insert into music.artistrelation_import (source_id, target_artist_name, weight) values (?,?,?)";
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("source_id", Types.INTEGER));
 		batchUpdate.declareParameter(new SqlParameter("target_artist_name", Types.VARCHAR));
@@ -73,8 +62,12 @@ public class JdbcArtistRelationDao implements ArtistRelationDao, JdbcTemplateDao
 		final int sourceArtistId = jdbcTemplate.queryForInt(
 				"select * from music.get_artist_id(?)", sourceArtist.getName());
 
+		String sql = "select artist_name_capitalization, weight"
+			+ " from music.artistrelation"
+			+ " inner join music.artist on music.artistrelation.target_id = music.artist.id"
+			+ " where music.artistrelation.source_id = ?";
 
-		List<ArtistRelation> artistRelations = jdbcTemplate.query(GET_ARTIST_RELATIONS,
+		List<ArtistRelation> artistRelations = jdbcTemplate.query(sql,
 				new Object[]{sourceArtistId}, new RowMapper<ArtistRelation>() {
 			@Override
 			public ArtistRelation mapRow(ResultSet rs, int rowNum)
@@ -101,17 +94,23 @@ public class JdbcArtistRelationDao implements ArtistRelationDao, JdbcTemplateDao
 	 */
 	public List<ArtistRelation> getSimilarArtistsByTags(int artistId) {
 		String topTagsTable = settingsService.getArtistTopTagsTable();
-
+		String topTagsSql =
+				"select tag_id, tag_count from " + topTagsTable
+				+ " where artist_id = " + artistId
+				+ " order by tag_count desc limit 5";
 		String similarityTableSql =
 				"create temporary table similarity"
 				+ " (artist_id integer not null, count integer not null";
-
+		String insertSimilaritySql =
+				"insert into similarity (artist_id, count)"
+				+ " select artist_id, 100-abs(?-tag_count) from"
+				+ " " + topTagsTable + " where tag_id = ?";
 		String topArtistsSql =
 				"select a.artist_name_capitalization, m.sum/(100.0*?) from music.artist a"
 				+ " inner join (select artist_id, sum(count) from similarity group by artist_id) s"
 				+ " on a.id = s.artist_id order by m.sum desc";
 
-		List<TagCount> topTags = jdbcTemplate.query(TOP_TAGS,new Object[]{topTagsTable,artistId}, new RowMapper<TagCount>() {
+		List<TagCount> topTags = jdbcTemplate.query(topTagsSql, new RowMapper<TagCount>() {
 			@Override
 			public TagCount mapRow(ResultSet rs, int rowNum)
 					throws SQLException {
@@ -121,7 +120,7 @@ public class JdbcArtistRelationDao implements ArtistRelationDao, JdbcTemplateDao
 
 		jdbcTemplate.execute(similarityTableSql);
 		for (TagCount topTag : topTags) {
-			jdbcTemplate.update(INSERT_SIMILARITY,new Object[]{topTag.tagCount, topTag.tagId});
+			jdbcTemplate.update(insertSimilaritySql, topTag.tagCount, topTag.tagId);
 		}
 
 		return jdbcTemplate.query(topArtistsSql, new Object[]{topTags.size()},

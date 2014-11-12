@@ -18,8 +18,6 @@ import com.github.hakko.musiccabinet.domain.model.library.TrackPlayCount;
 public class JdbcTrackPlayCountDao implements TrackPlayCountDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String BATCH_INSERT_PLAY_COUNT="insert into library.trackplaycount_import (artist_name, track_name, play_count) values (?,?,?)";
 	
 	@Override
 	public void createTrackPlayCounts(List<TrackPlayCount> trackPlayCounts) {
@@ -33,7 +31,8 @@ public class JdbcTrackPlayCountDao implements TrackPlayCountDao, JdbcTemplateDao
 	}
 	
 	private void batchInsert(List<TrackPlayCount> trackPlayCounts) {
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_PLAY_COUNT);
+		String sql = "insert into library.trackplaycount_import (artist_name, track_name, play_count) values (?,?,?)";
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("artist_name", Types.VARCHAR));
 		batchUpdate.declareParameter(new SqlParameter("track_name", Types.VARCHAR));

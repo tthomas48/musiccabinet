@@ -9,8 +9,6 @@ import com.github.hakko.musiccabinet.dao.FunctionCountDao;
 public class JdbcFunctionCountDao implements FunctionCountDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String COUNT_FUNCTIONS_BY_NAME="select util.count_functions(?)";
 
 	@Override
 	public int countFunctions() {
@@ -19,7 +17,7 @@ public class JdbcFunctionCountDao implements FunctionCountDao, JdbcTemplateDao {
 
 	@Override
 	public int countFunctionsByName(String name) {
-		return jdbcTemplate.queryForInt(COUNT_FUNCTIONS_BY_NAME,new Object[]{name});
+		return jdbcTemplate.queryForInt("select util.count_functions(?)", name);
 	}
 	
 	@Override

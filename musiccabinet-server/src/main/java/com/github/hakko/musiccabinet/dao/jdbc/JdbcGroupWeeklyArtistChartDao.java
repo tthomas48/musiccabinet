@@ -18,8 +18,6 @@ import com.github.hakko.musiccabinet.domain.model.music.ArtistPlayCount;
 public class JdbcGroupWeeklyArtistChartDao implements GroupWeeklyArtistChartDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String BATCH_INSERT_GROUP_MUSIC_WEEKLY="insert into music.groupweeklyartistchart_import (lastfmgroup_name, artist_name, playcount) values (?,?,?)";
 
 	@Override
 	public void createArtistCharts(List<GroupWeeklyArtistChart> artistCharts) {
@@ -37,7 +35,8 @@ public class JdbcGroupWeeklyArtistChartDao implements GroupWeeklyArtistChartDao,
 	}
 
 	private void batchInsert(GroupWeeklyArtistChart artistChart) {
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_GROUP_MUSIC_WEEKLY);
+		String sql = "insert into music.groupweeklyartistchart_import (lastfmgroup_name, artist_name, playcount) values (?,?,?)";
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("lastfmgroup_name", Types.VARCHAR));
 		batchUpdate.declareParameter(new SqlParameter("artist_name", Types.VARCHAR));

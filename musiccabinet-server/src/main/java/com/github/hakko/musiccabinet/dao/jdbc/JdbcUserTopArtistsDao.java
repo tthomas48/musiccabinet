@@ -17,24 +17,11 @@ import com.github.hakko.musiccabinet.domain.model.library.LastFmUser;
 import com.github.hakko.musiccabinet.domain.model.library.Period;
 import com.github.hakko.musiccabinet.domain.model.music.Artist;
 
-public class JdbcUserTopArtistsDao implements UserTopArtistsDao, JdbcTemplateDao {
+public class JdbcUserTopArtistsDao implements UserTopArtistsDao,
+		JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String BATCH_INSERT_USER_TOP_ARTIST="insert into music.usertopartist_import (lastfm_user, artist_name, rank, days) values (?,?,?,?)";
 
-        private final String GET_USER_TOP_ARTISTS="select a.id, a.artist_name_capitalization, ai.largeimageurl"
-				+ " from music.artistinfo ai"
-				+ " inner join music.artist a on ai.artist_id = a.id"
-				+ " inner join music.usertopartist uta on uta.artist_id = a.id"
-				+ " inner join music.lastfmuser u on uta.lastfmuser_id = u.id"
-				+ " where u.lastfm_user = upper(?) and uta.days = ? and exists"
-				+ " (select 1 from library.track lt"
-				+ "  inner join music.track mt on lt.track_id = mt.id"
-				+ "  where mt.artist_id = a.id)"
-				+ " order by rank"
-				+ " offset ? limit ?";
-        
 	@Override
 	public void createUserTopArtists(List<UserTopArtists> userTopArtists) {
 		if (userTopArtists.size() > 0) {
@@ -45,23 +32,28 @@ public class JdbcUserTopArtistsDao implements UserTopArtistsDao, JdbcTemplateDao
 			updateUserTopArtists();
 		}
 	}
-	
+
 	private void clearImportTable() {
 		jdbcTemplate.execute("truncate music.usertopartist_import");
 	}
 
-	private void batchInsert(List<Artist> artists, LastFmUser user, Period period) {
+	private void batchInsert(List<Artist> artists, LastFmUser user,
+			Period period) {
 
-                BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_USER_TOP_ARTIST);
+		String sql = "insert into music.usertopartist_import (lastfm_user, artist_name, rank, days) values (?,?,?,?)";
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(
+				jdbcTemplate.getDataSource(), sql);
 		batchUpdate.setBatchSize(1000);
-		batchUpdate.declareParameter(new SqlParameter("lastfm_user", Types.VARCHAR));
-		batchUpdate.declareParameter(new SqlParameter("artist_name", Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("lastfm_user",
+				Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("artist_name",
+				Types.VARCHAR));
 		batchUpdate.declareParameter(new SqlParameter("rank", Types.INTEGER));
 		batchUpdate.declareParameter(new SqlParameter("days", Types.INTEGER));
-		
+
 		for (int i = 0; i < artists.size(); i++) {
-			batchUpdate.update(new Object[]{user.getLastFmUsername(), 
-					artists.get(i).getName(), i, period.getDays()});
+			batchUpdate.update(new Object[] { user.getLastFmUsername(),
+					artists.get(i).getName(), i, period.getDays() });
 		}
 		batchUpdate.flush();
 	}
@@ -69,12 +61,24 @@ public class JdbcUserTopArtistsDao implements UserTopArtistsDao, JdbcTemplateDao
 	private void updateUserTopArtists() {
 		jdbcTemplate.execute("select music.update_usertopartists()");
 	}
-	
-	@Override
-	public List<ArtistRecommendation> getUserTopArtists(LastFmUser user, Period period, int offset, int limit) {
 
-		return jdbcTemplate.query(GET_USER_TOP_ARTISTS,
-				new Object[]{user.getLastFmUsername(), period.getDays(), offset, limit},
+	@Override
+	public List<ArtistRecommendation> getUserTopArtists(LastFmUser user,
+			Period period, int offset, int limit) {
+
+		String sql = "select a.id, a.artist_name_capitalization, ai.largeimageurl"
+				+ " from music.artistinfo ai"
+				+ " inner join music.artist a on ai.artist_id = a.id"
+				+ " inner join music.usertopartist uta on uta.artist_id = a.id"
+				+ " inner join music.lastfmuser u on uta.lastfmuser_id = u.id"
+				+ " where u.lastfm_user = upper(?) and uta.days = ? and exists"
+				+ " (select 1 from library.track lt"
+				+ "  inner join music.track mt on lt.track_id = mt.id"
+				+ "  where mt.artist_id = a.id)"
+				+ " order by rank"
+				+ " offset ? limit ?";
+		return jdbcTemplate.query(sql, new Object[] { user.getLastFmUsername(),
+				period.getDays(), offset, limit },
 				new ArtistRecommendationRowMapper());
 	}
 
@@ -84,7 +88,7 @@ public class JdbcUserTopArtistsDao implements UserTopArtistsDao, JdbcTemplateDao
 	}
 
 	// Spring setters
-	
+
 	public void setDataSource(DataSource dataSource) {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}

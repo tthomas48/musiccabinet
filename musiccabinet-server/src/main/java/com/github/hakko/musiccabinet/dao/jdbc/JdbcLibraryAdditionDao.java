@@ -19,24 +19,8 @@ public class JdbcLibraryAdditionDao implements LibraryAdditionDao,
 
 	private JdbcTemplate jdbcTemplate;
 
-	private static final Logger LOG = Logger.getLogger(JdbcLibraryAdditionDao.class);
-        
-        private final String ADD_SUB_DIRECTORIES="insert into library.directory_import (parent_path, path) values (?,?)";
-        
-        private final String ADD_FILES="insert into library.file_import (path, filename, modified, size) values (?,?,?,?)";
-        
-        private final String UPDATE_METADATA="update library.file_headertag_set extension = ?,"
-				+ "bitrate = ?, vbr = ?, duration = ?, artist_name = ?, album_artist_name = ?, composer_name = ?,"
-				+ "album_name = ?, track_name = ?, track_nr = ?, track_nrs = ?, disc_nr = ?, disc_nrs = ?, year = ?,"
-				+ "tag_name = ?, lyrics = ?, coverart = ?, artistsort_name = ?, albumartistsort_name = ?, "
-				+ "spotify_uri, = ? spotify_artist_uri = ?, spotify_album_uri = ?, explicit = ?) "
-				+ "where path = ? and filename = ?";
-        
-        private final String ADD_METADATA="insert into library.file_headertag_import (path, filename, extension,"
-				+ "bitrate, vbr, duration, artist_name, album_artist_name, composer_name,"
-				+ "album_name, track_name, track_nr, track_nrs, disc_nr, disc_nrs, year,"
-				+ "tag_name, lyrics, coverart, artistsort_name, albumartistsort_name, spotify_uri, spotify_artist_uri, spotify_album_uri, explicit) values"
-				+ "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	private static final Logger LOG = Logger
+			.getLogger(JdbcLibraryAdditionDao.class);
 
 	@Override
 	public void clearImport() {
@@ -48,8 +32,9 @@ public class JdbcLibraryAdditionDao implements LibraryAdditionDao,
 	@Override
 	public void addSubdirectories(String directory, Set<String> subDirectories) {
 
+		String sql = "insert into library.directory_import (parent_path, path) values (?,?)";
 		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(
-				jdbcTemplate.getDataSource(), ADD_SUB_DIRECTORIES);
+				jdbcTemplate.getDataSource(), sql);
 		batchUpdate.declareParameter(new SqlParameter("parent_path",
 				Types.VARCHAR));
 		batchUpdate.declareParameter(new SqlParameter("path", Types.VARCHAR));
@@ -64,8 +49,9 @@ public class JdbcLibraryAdditionDao implements LibraryAdditionDao,
 	@Override
 	public void addFiles(String directory, Set<File> files) {
 
+		String sql = "insert into library.file_import (path, filename, modified, size) values (?,?,?,?)";
 		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(
-				jdbcTemplate.getDataSource(), ADD_FILES);
+				jdbcTemplate.getDataSource(), sql);
 		batchUpdate.declareParameter(new SqlParameter("path", Types.VARCHAR));
 		batchUpdate
 				.declareParameter(new SqlParameter("filename", Types.VARCHAR));
@@ -83,7 +69,7 @@ public class JdbcLibraryAdditionDao implements LibraryAdditionDao,
 		addMetadata(files);
 	}
 
-        @Override
+	@Override
 	public void updateMetadata(String directory, String filename, MetaData md) {
 
 		if (md != null) {
@@ -99,28 +85,41 @@ public class JdbcLibraryAdditionDao implements LibraryAdditionDao,
 			if (md.getAlbumUri() != null) {
 				albumUri = md.getAlbumUri().toString();
 			}
-			
+
 			String fileSuffix = null;
-			if(md.getMediaType() != null) {
+			if (md.getMediaType() != null) {
 				fileSuffix = md.getMediaType().getFilesuffix();
 			}
+			String sql = "update library.file_headertag_set extension = ?,"
+					+ "bitrate = ?, vbr = ?, duration = ?, artist_name = ?, album_artist_name = ?, composer_name = ?,"
+					+ "album_name = ?, track_name = ?, track_nr = ?, track_nrs = ?, disc_nr = ?, disc_nrs = ?, year = ?,"
+					+ "tag_name = ?, lyrics = ?, coverart = ?, artistsort_name = ?, albumartistsort_name = ?, "
+					+ "spotify_uri, = ? spotify_artist_uri = ?, spotify_album_uri = ?, explicit = ?) "
+					+ "where path = ? and filename = ?";
 
-			jdbcTemplate.update(UPDATE_METADATA,new Object[]{fileSuffix,
-					md.getBitrate(), md.isVbr(), md.getDuration(),
-					md.getArtist(), md.getAlbumArtist(), md.getComposer(),
-					md.getAlbum(), md.getTitle(), md.getTrackNr(),
-					md.getTrackNrs(), md.getDiscNr(), md.getDiscNrs(),
-					md.getYear(), md.getGenre(), md.getLyrics(),
-					md.isCoverArtEmbedded(), md.getArtistSort(),
-					md.getAlbumArtistSort(), uri, artistUri, albumUri,
-					md.getExplicit(), directory, filename});
+			jdbcTemplate.update(
+					sql,
+					new Object[] { fileSuffix, md.getBitrate(), md.isVbr(),
+							md.getDuration(), md.getArtist(),
+							md.getAlbumArtist(), md.getComposer(),
+							md.getAlbum(), md.getTitle(), md.getTrackNr(),
+							md.getTrackNrs(), md.getDiscNr(), md.getDiscNrs(),
+							md.getYear(), md.getGenre(), md.getLyrics(),
+							md.isCoverArtEmbedded(), md.getArtistSort(),
+							md.getAlbumArtistSort(), uri, artistUri, albumUri,
+							md.getExplicit(), directory, filename });
 		}
 	}
 
 	private void addMetadata(Set<File> files) {
 
+		String sql = "insert into library.file_headertag_import (path, filename, extension,"
+				+ "bitrate, vbr, duration, artist_name, album_artist_name, composer_name,"
+				+ "album_name, track_name, track_nr, track_nrs, disc_nr, disc_nrs, year,"
+				+ "tag_name, lyrics, coverart, artistsort_name, albumartistsort_name, spotify_uri, spotify_artist_uri, spotify_album_uri, explicit) values"
+				+ "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		BatchSqlUpdate batch = new BatchSqlUpdate(jdbcTemplate.getDataSource(),
-				ADD_METADATA);
+				sql);
 		batch.declareParameter(new SqlParameter("path", Types.VARCHAR));
 		batch.declareParameter(new SqlParameter("filename", Types.VARCHAR));
 		batch.declareParameter(new SqlParameter("extension", Types.VARCHAR));

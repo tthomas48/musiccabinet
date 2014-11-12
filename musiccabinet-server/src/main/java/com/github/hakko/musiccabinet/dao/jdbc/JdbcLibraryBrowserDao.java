@@ -47,108 +47,6 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 	private JdbcTemplate jdbcTemplate;
 	private LastFmSettingsService settingsService;
-        
-        private final String GET_ARTIST="select ma.id, ma.artist_name_capitalization from music.artist ma"
-				+ " where ma.artist_name_capitalization like ?";
-        
-        private final String GET_ARTST_FROM_TAG="select ma.id, ma.artist_name_capitalization from music.artist ma"
-				+ " inner join library.artist la on la.artist_id = ma.id"
-				+ " where la.hasalbums and exists (select 1 from"
-				+ " ? "				
-				+ " att"
-				+ " inner join music.tag t on att.tag_id = t.id"
-				+ " where att.artist_id = ma.id and att.tag_count > ? and"
-				+ " coalesce(t.corrected_id, t.id) in (select id from music.tag where tag_name = ?))";
-        
-        private final String GET_ALBUM_FROM_URI="select ma.artist_id, null, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, lt.track_ids, ma.spotify_uri"
-				+ " from music.album ma"
-				+ " inner join library.album la on la.album_id = ma.id "
-				+ " inner join (select la2.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
-				+ "		from library.album la2"
-				+ "		inner join library.track lt on lt.album_id = la2.album_id"
-				+ "     inner join library.filetag ft on ft.file_id = lt.file_id"
-				+ "     group by la2.album_id) lt"
-				+ "		on lt.album_id = la.album_id"
-				+ " left outer join library.file f1 on f1.id = la.embeddedcoverartfile_id"
-				+ " left outer join library.directory d1 on f1.directory_id = d1.id"
-				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
-				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
-				+ " left outer join music.albuminfo ai on la.album_id = ai.album_id"
-				+ " where la.album_id = ?";
-        
-        private final String GET_RANDOM_ALBUMS = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
-				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
-				+ " from library.track lt"
-				+ " inner join music.album ma on (lt.album_id = ma.id %s)"
-				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
-				+ " inner join (select album_id from library.album la order by random() limit ? "
-				+ " ) la on la.album_id = ma.id"
-				+ " group by lt.album_id) tr"
-				+ " inner join library.album la on la.album_id = tr.album_id"
-				+ " inner join music.album ma on la.album_id = ma.id"
-				+ " inner join music.artist a on ma.artist_id = a.id"
-				+ " left outer join library.file f1 on f1.id = la.embeddedcoverartfile_id"
-				+ " left outer join library.directory d1 on f1.directory_id = d1.id"
-				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
-				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
-				+ " left outer join music.albuminfo ai on ai.album_id = la.album_id";
-        
-        private final String GET_TRACK="select ma.artist_name_capitalization,"
-				+ " mt.track_name_capitalization from library.track lt"
-				+ " inner join music.track mt on lt.track_id = mt.id"
-				+ " inner join music.artist ma on mt.artist_id = ma.id"
-				+ " where lt.id = ?";
-        
-        private final String GET_TRACKS_FROM_LIST="select mt.track_name_capitalization, "
-				+ " alb.album_name_capitalization,"
-				+ " art.artist_name_capitalization,"
-				+ " albart.artist_name_capitalization,"
-				+ " comp.artist_name_capitalization,"
-				+ " ft.track_nr, ft.track_nrs, ft.disc_nr, ft.disc_nrs, ft.year,"
-				+ " case when ft.lyrics is null then false else true end,"
-				+ " fh.bitrate, fh.vbr, fh.duration, fh.type_id, "
-				+ " d.path, f.filename, f.size, f.modified, lt.id, alb.id, art.id, ft.explicit"
-				+ " from music.track mt"
-				+ " inner join library.track lt on lt.track_id = mt.id"
-				+ " inner join library.file f on f.id = lt.file_id"
-				+ " inner join library.directory d on f.directory_id = d.id"
-				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
-				+ " inner join library.fileheader fh on fh.file_id = lt.file_id"
-				+ " inner join music.artist art on ft.artist_id = art.id"
-				+ " left outer join music.artist albart on ft.album_artist_id = albart.id"
-				+ " left outer join music.artist comp on ft.composer_id = comp.id"
-				+ " inner join music.album alb on lt.album_id = alb.id"
-				+ " where lt.id in ( ? )";
-        
-        private final String GET_COVER_ART_FOR_TRACKID="select lt.id, d1.path, f1.filename, d2.path, f2.filename"
-				+ " from library.track lt"
-				+ " inner join library.album la on la.album_id = lt.album_id"
-				+ " left outer join library.file f1 on f1.id = la.embeddedcoverartfile_id"
-				+ " left outer join library.directory d1 on f1.directory_id = d1.id"
-				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
-				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
-				+ " where lt.id in ( ? )";
-        
-        private final String GET_LYRICS_FOR_TRACK="select ft.lyrics from library.track lt"
-				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
-				+ " where lt.id = ?";
-        
-        private final String GET_LYRICS_FOR_TRACK_BY_ARTIST="select ft.lyrics from library.filetag ft"
-				+ " inner join music.artist a on ft.artist_id = a.id"
-				+ " inner join music.track t on ft.track_id = t.id"
-				+ " where a.artist_name = upper(?) and t.track_name = upper(?)";
-        
-        private final String GET_TRACK_URI="select lt.id from library.file f"
-				+ " inner join library.directory d on f.directory_id = d.id"
-				+ " inner join library.track lt on lt.file_id = f.id"
-				+ " where d.path = ? and f.filename = ?";
-        
-        private final String GET_CASEINSENSITIVE_URI="select lt.id from library.file f"
-				+ " inner join library.directory d on f.directory_id = d.id"
-				+ " inner join library.track lt on lt.file_id = f.id"
-				+ " where lower(d.path) = ? and lower(f.filename) = ?";
 
 	@Override
 	public boolean hasArtists() {
@@ -163,7 +61,10 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 	@Override
 	public Artist getArtist(String artistName) {
-		return jdbcTemplate.queryForObject(GET_ARTIST, new Object[] { artistName },
+		String sql = "select ma.id, ma.artist_name_capitalization from music.artist ma"
+				+ " where ma.artist_name_capitalization like ?";
+
+		return jdbcTemplate.queryForObject(sql, new Object[] { artistName },
 				new ArtistRowMapper());
 	}
 
@@ -180,8 +81,17 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	public List<Artist> getArtists(String tag, int treshold) {
 		String topTagsTable = settingsService.getArtistTopTagsTable();
 
-		return jdbcTemplate.query(GET_ARTST_FROM_TAG, new Object[] {topTagsTable, treshold, tag },
-				new ArtistRowMapper());
+		String sql = "select ma.id, ma.artist_name_capitalization from music.artist ma"
+				+ " inner join library.artist la on la.artist_id = ma.id"
+				+ " where la.hasalbums and exists (select 1 from"
+				+ " ? "
+				+ " att"
+				+ " inner join music.tag t on att.tag_id = t.id"
+				+ " where att.artist_id = ma.id and att.tag_count > ? and"
+				+ " coalesce(t.corrected_id, t.id) in (select id from music.tag where tag_name = ?))";
+
+		return jdbcTemplate.query(sql, new Object[] { topTagsTable, treshold,
+				tag }, new ArtistRowMapper());
 	}
 
 	@Override
@@ -279,7 +189,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 		return jdbcTemplate.query(sql, new ArtistRecommendationRowMapper());
 	}
-	
+
 	public boolean isStarred(Artist artist) {
 		String sql = "select TRUE "
 				+ " from music.artistinfo ai"
@@ -290,7 +200,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 		List<Object> args = new ArrayList<>();
 		args.add(artist.getId());
-		Boolean response = jdbcTemplate.queryForObject(sql, args.toArray(), Boolean.class);
+		Boolean response = jdbcTemplate.queryForObject(sql, args.toArray(),
+				Boolean.class);
 		response = (response != null ? response.booleanValue() : false);
 		return response;
 	}
@@ -335,7 +246,25 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 		final Integer albumId = albumUri.getId();
 
-		return jdbcTemplate.queryForObject(GET_ALBUM_FROM_URI,new Object[]{albumId}, new AlbumRowMapper());
+		String sql = "select ma.artist_id, null, ma.id, ma.album_name_capitalization, la.year,"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, lt.track_ids, ma.spotify_uri"
+				+ " from music.album ma"
+				+ " inner join library.album la on la.album_id = ma.id "
+				+ " inner join (select la2.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
+				+ "		from library.album la2"
+				+ "		inner join library.track lt on lt.album_id = la2.album_id"
+				+ "     inner join library.filetag ft on ft.file_id = lt.file_id"
+				+ "     group by la2.album_id) lt"
+				+ "		on lt.album_id = la.album_id"
+				+ " left outer join library.file f1 on f1.id = la.embeddedcoverartfile_id"
+				+ " left outer join library.directory d1 on f1.directory_id = d1.id"
+				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
+				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
+				+ " left outer join music.albuminfo ai on la.album_id = ai.album_id"
+				+ " where la.album_id = ?";
+
+		return jdbcTemplate.queryForObject(sql, new Object[] { albumId },
+				new AlbumRowMapper());
 	}
 
 	@Override
@@ -390,21 +319,22 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getRecentlyAddedAlbums(boolean spotifyEnabled, int offset, int limit,
-			String query) {
-		
+	public List<Album> getRecentlyAddedAlbums(boolean spotifyEnabled,
+			int offset, int limit, String query) {
+
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
 				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.sort_id, max(ltf.modified) modified"
 				+ " from library.track lt"
-				+ " inner join library.file ltf on ltf.id = lt.file_id"				
+				+ " inner join library.file ltf on ltf.id = lt.file_id"
 				+ " inner join music.album ma on (lt.album_id = ma.id"
-				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
+				+ ")"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " inner join (select la.album_id, la.id as sort_id "
 				+ "  from library.album la "
 				+ " where true "
-				+ (query != null  ? " and la.album_name_search like ? " : "")
+				+ (query != null ? " and la.album_name_search like ? " : "")
 				+ "  order by la.id desc offset ? limit ?) filter on lt.album_id = filter.album_id"
 				+ " group by lt.album_id, filter.sort_id) tr"
 				+ " inner join library.album la on la.album_id = tr.album_id"
@@ -423,8 +353,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getRecentlyPlayedAlbums(boolean spotifyEnabled, String lastFmUsername,
-			int offset, int limit, String query) {
+	public List<Album> getRecentlyPlayedAlbums(boolean spotifyEnabled,
+			String lastFmUsername, int offset, int limit, String query) {
 		String userTable = "", userCriteria = "", albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
 		if (lastFmUsername != null) {
@@ -444,7 +374,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.last_invocation_time"
 				+ " from library.track lt"
 				+ " inner join music.album ma on (lt.album_id = ma.id"
-				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
+				+ ")"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " inner join (select la.album_id, max(invocation_time) as last_invocation_time"
 				+ " from library.playcount pc"
@@ -469,8 +400,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getMostPlayedAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
-			int limit, String query) {
+	public List<Album> getMostPlayedAlbums(boolean spotifyEnabled,
+			String lastFmUsername, int offset, int limit, String query) {
 		String userTable = "", userCriteria = "", albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
 		if (lastFmUsername != null) {
@@ -490,7 +421,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.cnt"
 				+ " from library.track lt"
 				+ " inner join music.album ma on (lt.album_id = ma.id"
-				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
+				+ ")"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " inner join (select la.album_id, count(la.album_id) as cnt"
 				+ " from library.playcount pc"
@@ -516,12 +448,32 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 	@Override
 	public List<Album> getRandomAlbums(boolean spotifyEnabled, int limit) {
-		return jdbcTemplate.query(String.format(GET_RANDOM_ALBUMS, (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"),new Object[]{limit}, new AlbumRowMapper());
+		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
+				+ " from library.track lt"
+				+ " inner join music.album ma on (lt.album_id = ma.id "
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
+				+ " )"
+				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
+				+ " inner join (select album_id from library.album la order by random() limit ? "
+				+ " ) la on la.album_id = ma.id"
+				+ " group by lt.album_id) tr"
+				+ " inner join library.album la on la.album_id = tr.album_id"
+				+ " inner join music.album ma on la.album_id = ma.id"
+				+ " inner join music.artist a on ma.artist_id = a.id"
+				+ " left outer join library.file f1 on f1.id = la.embeddedcoverartfile_id"
+				+ " left outer join library.directory d1 on f1.directory_id = d1.id"
+				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
+				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
+				+ " left outer join music.albuminfo ai on ai.album_id = la.album_id";
+		return jdbcTemplate.query(sql, new Object[] { limit },
+				new AlbumRowMapper());
 	}
 
 	@Override
-	public List<Album> getStarredAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
-			int limit, String query) {
+	public List<Album> getStarredAlbums(boolean spotifyEnabled,
+			String lastFmUsername, int offset, int limit, String query) {
 		String userTable = "", userCriteria = "", albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
 		if (lastFmUsername != null) {
@@ -541,7 +493,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.added"
 				+ " from library.track lt"
 				+ " inner join music.album ma on (lt.album_id = ma.id"
-				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ") + ")"
+				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
+				+ ")"
 				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
 				+ " inner join (select sa.album_id, sa.added from library.starredalbum sa "
 				+ " inner join library.album la on sa.album_id = la.album_id"
@@ -573,7 +526,13 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	public Track getTrack(Uri trackUri) {
 		Integer trackId = trackUri.getId();
 
-		return jdbcTemplate.queryForObject(GET_TRACK,new Object[]{trackId}, new TrackWithArtistRowMapper());
+		String sql = "select ma.artist_name_capitalization,"
+				+ " mt.track_name_capitalization from library.track lt"
+				+ " inner join music.track mt on lt.track_id = mt.id"
+				+ " inner join music.artist ma on mt.artist_id = ma.id"
+				+ " where lt.id = ?";
+		return jdbcTemplate.queryForObject(sql, new Object[] { trackId },
+				new TrackWithArtistRowMapper());
 	}
 
 	@Override
@@ -595,7 +554,28 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 			return new ArrayList<>();
 		}
 
-		return jdbcTemplate.query(GET_TRACKS_FROM_LIST,new Object[]{getUriParameters(tracks)}, new TrackWithMetadataRowMapper());
+		String sql = "select mt.track_name_capitalization, "
+				+ " alb.album_name_capitalization,"
+				+ " art.artist_name_capitalization,"
+				+ " albart.artist_name_capitalization,"
+				+ " comp.artist_name_capitalization,"
+				+ " ft.track_nr, ft.track_nrs, ft.disc_nr, ft.disc_nrs, ft.year,"
+				+ " case when ft.lyrics is null then false else true end,"
+				+ " fh.bitrate, fh.vbr, fh.duration, fh.type_id, "
+				+ " d.path, f.filename, f.size, f.modified, lt.id, alb.id, art.id, ft.explicit"
+				+ " from music.track mt"
+				+ " inner join library.track lt on lt.track_id = mt.id"
+				+ " inner join library.file f on f.id = lt.file_id"
+				+ " inner join library.directory d on f.directory_id = d.id"
+				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
+				+ " inner join library.fileheader fh on fh.file_id = lt.file_id"
+				+ " inner join music.artist art on ft.artist_id = art.id"
+				+ " left outer join music.artist albart on ft.album_artist_id = albart.id"
+				+ " left outer join music.artist comp on ft.composer_id = comp.id"
+				+ " inner join music.album alb on lt.album_id = alb.id"
+				+ " where lt.id in ( " + getUriParameters(tracks) + ")";
+
+		return jdbcTemplate.query(sql, new TrackWithMetadataRowMapper());
 	}
 
 	@Override
@@ -742,8 +722,18 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	private Map<Integer, String> getCoverArtFileForTrackIds(List<Uri> trackUris) {
 		final Map<Integer, String> map = new HashMap<>();
 
+		String sql = "select lt.id, d1.path, f1.filename, d2.path, f2.filename"
+				+ " from library.track lt"
+				+ " inner join library.album la on la.album_id = lt.album_id"
+				+ " left outer join library.file f1 on f1.id = la.embeddedcoverartfile_id"
+				+ " left outer join library.directory d1 on f1.directory_id = d1.id"
+				+ " left outer join library.file f2 on f2.id = la.coverartfile_id"
+				+ " left outer join library.directory d2 on f2.directory_id = d2.id"
+				+ " where lt.id in ("
+				+ PostgreSQLUtil.getUriParameters(trackUris) + ")";
+
 		if (!trackUris.isEmpty()) {
-			jdbcTemplate.query(GET_COVER_ART_FOR_TRACKID,new Object[]{PostgreSQLUtil.getUriParameters(trackUris)}, new RowCallbackHandler() {
+			jdbcTemplate.query(sql, new Object[0], new RowCallbackHandler() {
 				@Override
 				public void processRow(ResultSet rs) throws SQLException {
 					String coverArtFile = getFileName(rs.getString(2),
@@ -762,13 +752,22 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 	@Override
 	public String getLyricsForTrack(Uri trackUri) {
-		return jdbcTemplate.queryForObject(GET_LYRICS_FOR_TRACK,new Object[]{trackUri.getId()}, String.class);
+		String sql = "select ft.lyrics from library.track lt"
+				+ " inner join library.filetag ft on ft.file_id = lt.file_id"
+				+ " where lt.id = ?";
+		return jdbcTemplate.queryForObject(sql,
+				new Object[] { trackUri.getId() }, String.class);
 	}
 
 	@Override
 	public String getLyricsForTrack(String artistName, String trackName) {
 
-		List<String> lyrics = jdbcTemplate.queryForList(GET_LYRICS_FOR_TRACK_BY_ARTIST, new Object[] {
+		String sql = "select ft.lyrics from library.filetag ft"
+				+ " inner join music.artist a on ft.artist_id = a.id"
+				+ " inner join music.track t on ft.track_id = t.id"
+				+ " where a.artist_name = upper(?) and t.track_name = upper(?)";
+
+		List<String> lyrics = jdbcTemplate.queryForList(sql, new Object[] {
 				artistName, trackName }, String.class);
 		return lyrics.isEmpty() ? null : lyrics.get(0);
 	}
@@ -819,7 +818,12 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	private Uri getTrackUri(String directory, String filename) {
-		return new SubsonicUri(jdbcTemplate.queryForInt(GET_TRACK_URI,new Object[]{directory,filename}));
+		String sql = "select lt.id from library.file f"
+				+ " inner join library.directory d on f.directory_id = d.id"
+				+ " inner join library.track lt on lt.file_id = f.id"
+				+ " where d.path = ? and f.filename = ?";
+		return new SubsonicUri(jdbcTemplate.queryForInt(sql, new Object[] {
+				directory, filename }));
 	}
 
 	/*
@@ -832,7 +836,12 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		String filename = FilenameUtils.getName(absolutePath.toLowerCase());
 
 		try {
-			return new SubsonicUri(jdbcTemplate.queryForInt(GET_CASEINSENSITIVE_URI,new Object[]{directory,filename} ));
+			String sql = "select lt.id from library.file f"
+					+ " inner join library.directory d on f.directory_id = d.id"
+					+ " inner join library.track lt on lt.file_id = f.id"
+					+ " where lower(d.path) = ? and lower(f.filename) = ?";
+			return new SubsonicUri(jdbcTemplate.queryForInt(sql, new Object[] {
+					directory, filename }));
 		} catch (DataAccessException e) {
 			return new SubsonicUri(-1);
 		}
@@ -840,7 +849,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 	@Override
 	public void markAllFilesForFullRescan() {
-		jdbcTemplate.update("update library.file set modified = 'infinity', size = -1");
+		jdbcTemplate
+				.update("update library.file set modified = 'infinity', size = -1");
 	}
 
 	@Override
@@ -867,8 +877,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		this.settingsService = settingsService;
 	}
 
-	private List<Album> getAlbums(boolean spotifyEnabled, int offset, int limit, String query,
-			String orderBy) {
+	private List<Album> getAlbums(boolean spotifyEnabled, int offset,
+			int limit, String query, String orderBy) {
 		String albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
 		if (query != null) {
@@ -903,20 +913,22 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getAlbumsByName(boolean spotifyEnabled, int offset, int limit, String query) {
+	public List<Album> getAlbumsByName(boolean spotifyEnabled, int offset,
+			int limit, String query) {
 		return getAlbums(spotifyEnabled, offset, limit, query,
 				" order by ma.album_name_capitalization");
 	}
 
 	@Override
-	public List<Album> getAlbumsByArtist(boolean spotifyEnabled, int offset, int limit, String query) {
+	public List<Album> getAlbumsByArtist(boolean spotifyEnabled, int offset,
+			int limit, String query) {
 		return getAlbums(spotifyEnabled, offset, limit, query,
 				" order by a.artist_name_capitalization, ma.album_name_capitalization");
 	}
 
 	@Override
-	public List<Album> getAlbumsByYear(boolean spotifyEnabled, int offset, int limit, String query,
-			int fromYear, int toYear) {
+	public List<Album> getAlbumsByYear(boolean spotifyEnabled, int offset,
+			int limit, String query, int fromYear, int toYear) {
 		String albumNameCriteria = "";
 		List<Object> args = new ArrayList<>();
 		args.add(fromYear);
@@ -954,8 +966,8 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	}
 
 	@Override
-	public List<Album> getAlbumsByGenre(boolean spotifyEnabled, int offset, int limit, String query,
-			String genre) {
+	public List<Album> getAlbumsByGenre(boolean spotifyEnabled, int offset,
+			int limit, String query, String genre) {
 		String albumNameCriteria = "";
 		String topTagsTable = settingsService.getArtistTopTagsTable();
 
@@ -1028,15 +1040,13 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " left outer join music.artist albart on ft.album_artist_id = albart.id"
 				+ " left outer join music.artist comp on ft.composer_id = comp.id"
 				+ " inner join music.album alb on lt.album_id = alb.id"
-				+ " where exists (select 1 from "
-				+ topTagsTable
-				+ " att"
+				+ " where exists (select 1 from " + topTagsTable + " att"
 				+ " inner join music.tag t on att.tag_id = t.id"
-				+ " where att.artist_id = art.id"
-				+ " and t.tag_name = ?)"
+				+ " where att.artist_id = art.id" + " and t.tag_name = ?)"
 				+ " order by mt.track_name_capitalization limit ? offset ?";
 
-		return jdbcTemplate.query(sql, args.toArray(), new TrackWithMetadataRowMapper());
+		return jdbcTemplate.query(sql, args.toArray(),
+				new TrackWithMetadataRowMapper());
 
 	}
 

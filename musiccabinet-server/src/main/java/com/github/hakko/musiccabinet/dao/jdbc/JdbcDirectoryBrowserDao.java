@@ -17,18 +17,7 @@ import com.github.hakko.musiccabinet.domain.model.music.Album;
 public class JdbcDirectoryBrowserDao implements DirectoryBrowserDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String GET_DIRECTORY="select id, path from library.directory where id = ?";
-        
-        private final String GET_SUBDIRECTORIES="select id, path from library.directory where parent_id = ?";
-        
-        private final String GET_PARENT_ID="select coalesce(parent_id, -1) from library.directory where id = ?";
 
-        private final String ADD_DIRECTORY="insert into library.directory (parent_id, path) values (?,?)";
-        
-        private final String GET_NON_AUDIO_FILES="select filename from library.file f where directory_id = ? "
-				+ " and not exists (select 1 from library.filetag ft where file_id = f.id)"
-				+ " order by lower(filename)";
 	@Override
 	public Set<Directory> getRootDirectories() {
 		String sql = "select id, path from library.directory where parent_id is null";
@@ -37,23 +26,32 @@ public class JdbcDirectoryBrowserDao implements DirectoryBrowserDao, JdbcTemplat
 	}
 
 	@Override
-	public Directory getDirectory(int directoryId) {	
-		return jdbcTemplate.queryForObject(GET_DIRECTORY,new Object[]{directoryId}, new DirectoryRowMapper());
+	public Directory getDirectory(int directoryId) {
+		String sql = "select id, path from library.directory where id = " + directoryId;
+		
+		return jdbcTemplate.queryForObject(sql, new DirectoryRowMapper());
 	}
 	
 	@Override
 	public Set<Directory> getSubDirectories(int directoryId) {
-		return new TreeSet<>(jdbcTemplate.query(GET_SUBDIRECTORIES,new Object[]{directoryId}, new DirectoryRowMapper()));
+		String sql = "select id, path from library.directory where parent_id = " + directoryId;
+
+		return new TreeSet<>(jdbcTemplate.query(sql, new DirectoryRowMapper()));
 	}
 	
 	@Override
-	public int getParentId(int directoryId) {		
-		return jdbcTemplate.queryForInt(GET_PARENT_ID,new Object[]{directoryId});
+	public int getParentId(int directoryId) {
+		String sql = "select coalesce(parent_id, -1) from library.directory"
+				+ " where id = " + directoryId;
+		
+		return jdbcTemplate.queryForInt(sql);
 	}
 	
 	@Override
 	public void addDirectory(String path, int parentId) {
-		jdbcTemplate.update(ADD_DIRECTORY,new Object[]{parentId, path});
+		String sql = "insert into library.directory (parent_id, path) values (?,?)";
+		
+		jdbcTemplate.update(sql, parentId, path);
 	}
 	
 	@Override
@@ -84,7 +82,11 @@ public class JdbcDirectoryBrowserDao implements DirectoryBrowserDao, JdbcTemplat
 	
 	@Override
 	public List<String> getNonAudioFiles(int directoryId) {
-		return jdbcTemplate.queryForList(GET_NON_AUDIO_FILES,new Object[]{directoryId}, String.class);
+		String sql = "select filename from library.file f where directory_id = " + directoryId 
+				+ " and not exists (select 1 from library.filetag ft where file_id = f.id)"
+				+ " order by lower(filename)";
+		
+		return jdbcTemplate.queryForList(sql, String.class);
 	}
 	
 	@Override

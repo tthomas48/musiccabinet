@@ -22,13 +22,7 @@ import com.github.hakko.musiccabinet.domain.model.music.MBArtist;
 public class JdbcMusicBrainzArtistDao implements MusicBrainzArtistDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String BATCH_INSERT_MUSIC_BRAINZ_ARTIST="insert into music.mb_artist_import (artist_name, mbid, country_code, start_year, active) values (?,?,?,?,?)";
 	
-        private final String GET_ARTIST="select a.id, a.artist_name_capitalization, mba.mbid, mba.country_code,"
-			+ " mba.start_year, mba.active from music.mb_artist mba"
-			+ " inner join music.artist a on mba.artist_id = a.id"
-			+ " where a.id = ?";
 	@Override
 	public void createArtists(List<MBArtist> artists) {
 		if (artists.size() > 0) {
@@ -43,7 +37,8 @@ public class JdbcMusicBrainzArtistDao implements MusicBrainzArtistDao, JdbcTempl
 	}
 	
 	private void batchInsert(List<MBArtist> artists) {
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_MUSIC_BRAINZ_ARTIST);
+		String sql = "insert into music.mb_artist_import (artist_name, mbid, country_code, start_year, active) values (?,?,?,?,?)";
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("artist_name", Types.VARCHAR));
 		batchUpdate.declareParameter(new SqlParameter("mbid", Types.VARCHAR));
@@ -64,7 +59,11 @@ public class JdbcMusicBrainzArtistDao implements MusicBrainzArtistDao, JdbcTempl
 	
 	@Override
 	public MBArtist getArtist(Uri artistUri) {
-		return jdbcTemplate.queryForObject(GET_ARTIST, new Object[]{artistUri.getId()} , new MBArtistRowMapper());
+		return jdbcTemplate.queryForObject(
+			"select a.id, a.artist_name_capitalization, mba.mbid, mba.country_code,"
+			+ " mba.start_year, mba.active from music.mb_artist mba"
+			+ " inner join music.artist a on mba.artist_id = a.id"
+			+ " where a.id = " + artistUri.getId(), new MBArtistRowMapper());
 	}
 	
 	@Override

@@ -19,24 +19,7 @@ import com.github.hakko.musiccabinet.domain.model.music.Track;
 public class JdbcArtistTopTracksDao implements ArtistTopTracksDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String GET_ARTIST_ID = "select * from music.get_artist_id(?)";
-        
-        private final String BATCH_INSERT_ARTIST_TOP_TRACK="insert into music.artisttoptrack_import (artist_id, track_name, rank) values (?,?,?)";
 
-        private final String GET_ARTIST_TOP_TRACKS="select artist_name_capitalization, track_name_capitalization"
-			+ " from music.artisttoptrack att" 
-			+ " inner join music.artist a on att.artist_id = a.id"
-			+ " inner join music.track t on att.track_id = t.id"
-			+ " where a.id = ? order by att.rank";
-        
-        private final String GET_ARTIST_TOP_TRACKS_URI="select coalesce(attpc.track_id, -1), t.track_name_capitalization"
-				+ " from music.artisttoptrack att"
-				+ " inner join music.track t on att.track_id = t.id"
-				+ " left outer join library.artisttoptrackplaycount attpc"
-				+ " on attpc.artist_id = att.artist_id and attpc.rank = att.rank"
-				+ " where att.artist_id = ? order by att.rank limit ?";
-        
 	@Override
 	public void createTopTracks(Artist artist, List<Track> topTracks) {
 		if (topTracks.size() > 0) {
@@ -51,9 +34,11 @@ public class JdbcArtistTopTracksDao implements ArtistTopTracksDao, JdbcTemplateD
 	}
 
 	private void batchInsert(Artist artist, List<Track> topTracks) {
-		int sourceArtistId = jdbcTemplate.queryForInt(GET_ARTIST_ID,new Object[]{artist.getName()});
+		int sourceArtistId = jdbcTemplate.queryForInt(
+				"select * from music.get_artist_id(?)", artist.getName());
 		
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_ARTIST_TOP_TRACK);
+		String sql = "insert into music.artisttoptrack_import (artist_id, track_name, rank) values (?,?,?)";
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("artist_id", Types.INTEGER));
 		batchUpdate.declareParameter(new SqlParameter("track_name", Types.VARCHAR));
@@ -72,9 +57,16 @@ public class JdbcArtistTopTracksDao implements ArtistTopTracksDao, JdbcTemplateD
 	
 	@Override
 	public List<Track> getTopTracks(Artist artist) {
-		final int artistId = jdbcTemplate.queryForInt(GET_ARTIST_ID,  new Object[]{artist.getName()});		
+		final int artistId = jdbcTemplate.queryForInt(
+				"select * from music.get_artist_id(?)", artist.getName());
 		
-		return jdbcTemplate.query(GET_ARTIST_TOP_TRACKS, new Object[]{artistId}, 
+		String sql = "select artist_name_capitalization, track_name_capitalization"
+			+ " from music.artisttoptrack att" 
+			+ " inner join music.artist a on att.artist_id = a.id"
+			+ " inner join music.track t on att.track_id = t.id"
+			+ " where a.id = ? order by att.rank";
+		
+		return jdbcTemplate.query(sql, new Object[]{artistId}, 
 				new TrackWithArtistRowMapper());
 	}
 
@@ -85,7 +77,14 @@ public class JdbcArtistTopTracksDao implements ArtistTopTracksDao, JdbcTemplateD
 	
 	protected List<Track> getTopTracks(Uri artistUri, int limit) {
 		
-		return jdbcTemplate.query(GET_ARTIST_TOP_TRACKS_URI, new Object[]{artistUri.getId(), limit}, 
+		String sql = "select coalesce(attpc.track_id, -1), t.track_name_capitalization"
+				+ " from music.artisttoptrack att"
+				+ " inner join music.track t on att.track_id = t.id"
+				+ " left outer join library.artisttoptrackplaycount attpc"
+				+ " on attpc.artist_id = att.artist_id and attpc.rank = att.rank"
+				+ " where att.artist_id = ? order by att.rank limit ?";
+		
+		return jdbcTemplate.query(sql, new Object[]{artistUri.getId(), limit}, 
 				new TrackRowMapper());
 	}
 	

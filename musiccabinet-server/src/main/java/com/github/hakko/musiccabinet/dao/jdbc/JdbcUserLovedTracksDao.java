@@ -16,19 +16,10 @@ import com.github.hakko.musiccabinet.domain.model.aggr.UserLovedTracks;
 import com.github.hakko.musiccabinet.domain.model.aggr.UserStarredTrack;
 import com.github.hakko.musiccabinet.domain.model.music.Track;
 
-public class JdbcUserLovedTracksDao implements UserLovedTracksDao, JdbcTemplateDao {
+public class JdbcUserLovedTracksDao implements UserLovedTracksDao,
+		JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String BATCH_INSERT_USER_LOVED_TRACKS="insert into music.lovedtrack_import"
-				+ " (lastfm_user, artist_name, track_name) values (?,?,?)";
-        
-        private final String GET_LOVED_TRACKS="select a.artist_name_capitalization, t.track_name_capitalization"
-				+ " from music.lovedtrack lt"
-				+ " inner join music.track t on lt.track_id = t.id"
-				+ " inner join music.artist a on t.artist_id = a.id"
-				+ " inner join music.lastfmuser u on lt.lastfmuser_id = u.id"
-				+ " where u.lastfm_user = upper(?)";
 
 	@Override
 	public void createLovedTracks(List<UserLovedTracks> userLovedTracks) {
@@ -40,18 +31,24 @@ public class JdbcUserLovedTracksDao implements UserLovedTracksDao, JdbcTemplateD
 			updateLibrary();
 		}
 	}
-	
+
 	private void batchInsert(String lastFmUsername, List<Track> lovedTracks) {
 
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_USER_LOVED_TRACKS);
+		String sql = "insert into music.lovedtrack_import"
+				+ " (lastfm_user, artist_name, track_name) values (?,?,?)";
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(
+				jdbcTemplate.getDataSource(), sql);
 		batchUpdate.setBatchSize(1000);
-		batchUpdate.declareParameter(new SqlParameter("lastfm_user", Types.VARCHAR));
-		batchUpdate.declareParameter(new SqlParameter("artist_name", Types.VARCHAR));
-		batchUpdate.declareParameter(new SqlParameter("track_name", Types.VARCHAR));
-		
+		batchUpdate.declareParameter(new SqlParameter("lastfm_user",
+				Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("artist_name",
+				Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("track_name",
+				Types.VARCHAR));
+
 		for (Track track : lovedTracks) {
-			batchUpdate.update(new Object[]{lastFmUsername, 
-					track.getArtist().getName(), track.getName()});
+			batchUpdate.update(new Object[] { lastFmUsername,
+					track.getArtist().getName(), track.getName() });
 		}
 		batchUpdate.flush();
 	}
@@ -67,7 +64,13 @@ public class JdbcUserLovedTracksDao implements UserLovedTracksDao, JdbcTemplateD
 	@Override
 	public List<Track> getLovedTracks(String lastFmUsername) {
 
-		return jdbcTemplate.query(GET_LOVED_TRACKS, new Object[]{lastFmUsername}, 
+		String sql = "select a.artist_name_capitalization, t.track_name_capitalization"
+				+ " from music.lovedtrack lt"
+				+ " inner join music.track t on lt.track_id = t.id"
+				+ " inner join music.artist a on t.artist_id = a.id"
+				+ " inner join music.lastfmuser u on lt.lastfmuser_id = u.id"
+				+ " where u.lastfm_user = upper(?)";
+		return jdbcTemplate.query(sql, new Object[] { lastFmUsername },
 				new TrackWithArtistRowMapper());
 	}
 

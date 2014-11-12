@@ -15,26 +15,18 @@ import com.github.hakko.musiccabinet.domain.model.library.SpotifyUser;
 public class JdbcSpotifyDao implements SpotifyDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String UPDATE_SPOTIFY_USER="update music.spotify_user set userName = ?, blob = ?, fullName = ?, displayName = ?, country = ?, imageURL = ? where id = ?";
-                
-        private final String CREATE_SPOTIFY_USER="insert into music.spotify_user (userName, blob, fullName, displayName, country, imageURL) values (?, ?, ?, ?, ?, ?)";
 
-        private final String GET_SPOTIFY_USER="select id, userName, blob, fullName, displayName, country, imageURL from music.spotify_user where upper(userName) = upper(?) ";
-        
-        private final String GET_SPOTIFY_USER_ID="select id from music.spotify_user where upper(userName) = upper(?)";
-        
 	@Override
 	public void createOrUpdateSpotifyUser(SpotifyUser user) {
-                String sql;
+
 		user.setId(getSpotifyUserId(user.getUserName()));
 
 		Object[] params = new Object[] { user.getUserName(), user.getBlob(),
 				user.getFullName(), user.getDisplayName(), user.getCountry(),
 				user.getImageURL(), user.getId()};
-		sql = UPDATE_SPOTIFY_USER;
+		String sql = "update music.spotify_user set userName = ?, blob = ?, fullName = ?, displayName = ?, country = ?, imageURL = ? where id = ?";
 		if(user.getId() < 0) {
-			sql = CREATE_SPOTIFY_USER;
+			sql = "insert into music.spotify_user (userName, blob, fullName, displayName, country, imageURL) values (?, ?, ?, ?, ?, ?)";
 			params = new Object[] { user.getUserName(), user.getBlob(),
 					user.getFullName(), user.getDisplayName(), user.getCountry(),
 					user.getImageURL()};
@@ -45,7 +37,8 @@ public class JdbcSpotifyDao implements SpotifyDao, JdbcTemplateDao {
 
 	@Override
 	public SpotifyUser getSpotifyUser(String spotifyUsername) {
-		List<SpotifyUser> spotifyUsers =  jdbcTemplate.query(GET_SPOTIFY_USER,
+		String sql = "select id, userName, blob, fullName, displayName, country, imageURL from music.spotify_user where upper(userName) = upper(?) ";
+		List<SpotifyUser> spotifyUsers =  jdbcTemplate.query(sql,
 				new String[] { spotifyUsername }, new RowMapper<SpotifyUser>() {
 					@Override
 					public SpotifyUser mapRow(ResultSet rs, int rowNum)
@@ -66,7 +59,9 @@ public class JdbcSpotifyDao implements SpotifyDao, JdbcTemplateDao {
 	public int getSpotifyUserId(String spotifyName) {
 
 		try {
-			return jdbcTemplate.queryForInt(GET_SPOTIFY_USER_ID, spotifyName);
+			String sql = "select id from music.spotify_user where upper(userName) = upper(?)";
+
+			return jdbcTemplate.queryForInt(sql, spotifyName);
 		} catch (Exception e) {
 			return -1;
 		}

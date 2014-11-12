@@ -20,27 +20,18 @@ import com.github.hakko.musiccabinet.domain.model.library.LastFmUser;
 public class JdbcLastFmDao implements LastFmDao, JdbcTemplateDao {
 
 	private JdbcTemplate jdbcTemplate;
-        
-        private final String GET_LASTFM_USER_ID="select * from music.get_lastfmuser_id(?)";
-        
-        private final String GET_LASTFM_USER="select id, lastfm_user_capitalization, session_key"
-				+ " from music.lastfmuser where lastfm_user = upper(?)";
-        
-        private final String CREATE_LASTFM_USER="update music.lastfmuser set lastfm_user_capitalization = ?, session_key = ?	"
-				+ " where id = ?";
-        
-        private final String GET_LASTFM_GROUP_ID="select * from music.get_lastfmgroup_id(?)";
-        
-        private final String SET_LASTFM_GROUPS="insert into music.lastfmgroup_import (group_name) values (?)";
 
-        @Override
-	public int getLastFmUserId(String lastFmUsername) {		
-		return jdbcTemplate.queryForInt(GET_LASTFM_USER_ID,new Object[]{lastFmUsername});
+	public int getLastFmUserId(String lastFmUsername) {
+		String sql = "select * from music.get_lastfmuser_id(?)";
+		
+		return jdbcTemplate.queryForInt(sql, lastFmUsername);
 	}
 
 	@Override
 	public LastFmUser getLastFmUser(String lastFmUsername) {
-		return jdbcTemplate.queryForObject(GET_LASTFM_USER, new Object[]{lastFmUsername}, new RowMapper<LastFmUser>() {
+		String sql = "select id, lastfm_user_capitalization, session_key"
+				+ " from music.lastfmuser where lastfm_user = upper(?)";
+		return jdbcTemplate.queryForObject(sql, new Object[]{lastFmUsername}, new RowMapper<LastFmUser>() {
 			@Override
 			public LastFmUser mapRow(ResultSet rs, int rowNum) throws SQLException {
 				return new LastFmUser(rs.getInt(1), rs.getString(2), rs.getString(3));
@@ -51,13 +42,18 @@ public class JdbcLastFmDao implements LastFmDao, JdbcTemplateDao {
 	@Override
 	public void createOrUpdateLastFmUser(LastFmUser user) {
 		user.setId(getLastFmUserId(user.getLastFmUsername()));
-                
-		jdbcTemplate.update(CREATE_LASTFM_USER,new Object[]{user.getLastFmUsername(), user.getSessionKey(), user.getId()});
+		
+		String sql = "update music.lastfmuser set lastfm_user_capitalization = ?, session_key = ?	"
+				+ " where id = ?";
+		
+		jdbcTemplate.update(sql, user.getLastFmUsername(), user.getSessionKey(), user.getId());
 	}
 
 	@Override
 	public int getLastFmGroupId(String lastFmGroupName) {
-		return jdbcTemplate.queryForInt(GET_LASTFM_GROUP_ID,new Object[]{lastFmGroupName} );
+		String sql = "select * from music.get_lastfmgroup_id(?)";
+		
+		return jdbcTemplate.queryForInt(sql, lastFmGroupName);
 	}
 
 	@Override
@@ -72,7 +68,8 @@ public class JdbcLastFmDao implements LastFmDao, JdbcTemplateDao {
 	public void setLastFmGroups(List<LastFmGroup> lastFmGroups) {
 		jdbcTemplate.update("truncate music.lastfmgroup_import");
 		
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), SET_LASTFM_GROUPS);
+		String sql = "insert into music.lastfmgroup_import (group_name) values (?)";
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), sql);
 		batchUpdate.setBatchSize(1000);
 		batchUpdate.declareParameter(new SqlParameter("group_name", Types.VARCHAR));
 		for (LastFmGroup group : lastFmGroups) {

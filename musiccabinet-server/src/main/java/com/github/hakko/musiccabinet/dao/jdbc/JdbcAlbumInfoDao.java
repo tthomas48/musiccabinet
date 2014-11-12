@@ -31,36 +31,11 @@ public class JdbcAlbumInfoDao implements AlbumInfoDao, JdbcTemplateDao {
 	private JdbcTemplate jdbcTemplate;
 
 	private static final Logger LOG = Logger.getLogger(JdbcAlbumInfoDao.class);
-        
-        /**
-         * SQL Query Strings
-         */
-        private final String BATCH_INSERT_ALBUM_INFO = "insert into music.albuminfo_import (artist_name, album_name, smallimageurl, mediumimageurl, largeimageurl, extraLargeimageurl, listeners, playcount) values (?,?,?,?,?,?,?,?)";
-	
-        private final String GET_ALBUM_INFO ="select ai.largeimageurl, ai.extralargeimageurl from music.albuminfo ai" + " where ai.album_id = ?";
-        
-        private final String GET_ALBUM_INFO_FROM_ALBUM ="select ai.smallimageurl, ai.mediumimageurl, ai.largeimageurl, ai.extralargeimageurl, ai.listeners, ai.playcount from music.albuminfo ai" + 
-				" inner join music.album alb on ai.album_id = alb.id" +
-				" inner join music.artist art on alb.artist_id = art.id" +
-				" where alb.album_name = upper(?) and art.artist_name = upper(?)";
-        
-        private final String GET_ALBUM_INFOS_FOR_ARTIST = "select alb.album_name_capitalization, ai.mediumimageurl, "
-				+ " ai.largeimageurl, ai.extralargeimageurl, art.artist_name_capitalization"
-				+ " from music.albuminfo ai"
-				+ " inner join music.album alb on ai.album_id = alb.id"
-				+ " inner join music.artist art on alb.artist_id = art.id"
-				+ " where art.id = ?";
-        
-        private final String GET_ALBUMS_WITHOUT_INFO="select a.artist_name_capitalization, ma.album_name_capitalization from"
-				+ " library.album la"
-				+ " inner join music.album ma on la.album_id = ma.id"
-				+ " inner join music.artist a on ma.artist_id = a.id"
-				+ " where not exists ("
-				+ " select 1 from music.albuminfo where album_id = ma.id)"
-				+ " and ma.album_name_capitalization != '" + UNKNOWN_ALBUM + "'"
-				+ " order by a.id limit 3000";
-	
-        @Override
+
+	/**
+	 * SQL Query Strings
+	 */
+	@Override
 	public void createAlbumInfo(List<AlbumInfo> albumInfos) {
 		if (albumInfos.size() > 0) {
 			clearImportTable();
@@ -68,27 +43,40 @@ public class JdbcAlbumInfoDao implements AlbumInfoDao, JdbcTemplateDao {
 			updateLibrary();
 		}
 	}
-	
+
 	private void clearImportTable() {
 		jdbcTemplate.execute("truncate music.albuminfo_import");
 	}
-	
+
 	private void batchInsert(List<AlbumInfo> albumInfos) {
-		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(jdbcTemplate.getDataSource(), BATCH_INSERT_ALBUM_INFO);
+		String sql = "insert into music.albuminfo_import (artist_name, album_name, smallimageurl, mediumimageurl, largeimageurl, extraLargeimageurl, listeners, playcount) values (?,?,?,?,?,?,?,?)";
+		BatchSqlUpdate batchUpdate = new BatchSqlUpdate(
+				jdbcTemplate.getDataSource(), sql);
 		batchUpdate.setBatchSize(1000);
-		batchUpdate.declareParameter(new SqlParameter("artist_name", Types.VARCHAR));
-		batchUpdate.declareParameter(new SqlParameter("album_name", Types.VARCHAR));
-		batchUpdate.declareParameter(new SqlParameter("smallimageurl", Types.VARCHAR));
-		batchUpdate.declareParameter(new SqlParameter("mediumimageurl", Types.VARCHAR));
-		batchUpdate.declareParameter(new SqlParameter("largeimageurl", Types.VARCHAR));
-		batchUpdate.declareParameter(new SqlParameter("extraLargeimageurl", Types.VARCHAR));
-		batchUpdate.declareParameter(new SqlParameter("listeners", Types.INTEGER));
-		batchUpdate.declareParameter(new SqlParameter("playcount", Types.INTEGER));
-		
+		batchUpdate.declareParameter(new SqlParameter("artist_name",
+				Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("album_name",
+				Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("smallimageurl",
+				Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("mediumimageurl",
+				Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("largeimageurl",
+				Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("extraLargeimageurl",
+				Types.VARCHAR));
+		batchUpdate.declareParameter(new SqlParameter("listeners",
+				Types.INTEGER));
+		batchUpdate.declareParameter(new SqlParameter("playcount",
+				Types.INTEGER));
+
 		for (AlbumInfo ai : albumInfos) {
-			batchUpdate.update(new Object[]{ai.getAlbum().getArtist().getName(), ai.getAlbum().getName(),
-					ai.getSmallImageUrl(), ai.getMediumImageUrl(), ai.getLargeImageUrl(),
-					ai.getExtraLargeImageUrl(), ai.getListeners(), ai.getPlayCount()});
+			batchUpdate.update(new Object[] {
+					ai.getAlbum().getArtist().getName(),
+					ai.getAlbum().getName(), ai.getSmallImageUrl(),
+					ai.getMediumImageUrl(), ai.getLargeImageUrl(),
+					ai.getExtraLargeImageUrl(), ai.getListeners(),
+					ai.getPlayCount() });
 		}
 		batchUpdate.flush();
 	}
@@ -99,81 +87,92 @@ public class JdbcAlbumInfoDao implements AlbumInfoDao, JdbcTemplateDao {
 
 	@Override
 	public AlbumInfo getAlbumInfo(Uri albumId) {
-				
-		AlbumInfo albumInfo = null;
-		
-		try {
-			albumInfo = jdbcTemplate.queryForObject(GET_ALBUM_INFO,
-                                        new Object[]{albumId.getId()}, 
-					new RowMapper<AlbumInfo>() {
-				@Override
-				public AlbumInfo mapRow(ResultSet rs, int rowNum)
-						throws SQLException {
-					AlbumInfo ai = new AlbumInfo();
-					ai.setLargeImageUrl(rs.getString(1));
-					ai.setExtraLargeImageUrl(rs.getString(2));
-					return ai;
-				}
 
-			});
+		AlbumInfo albumInfo = null;
+
+		try {
+			String sql = "select ai.largeimageurl, ai.extralargeimageurl from music.albuminfo ai"
+					+ " where ai.album_id = ?";
+			albumInfo = jdbcTemplate.queryForObject(sql,
+					new Object[] { albumId.getId() },
+					new RowMapper<AlbumInfo>() {
+						@Override
+						public AlbumInfo mapRow(ResultSet rs, int rowNum)
+								throws SQLException {
+							AlbumInfo ai = new AlbumInfo();
+							ai.setLargeImageUrl(rs.getString(1));
+							ai.setExtraLargeImageUrl(rs.getString(2));
+							return ai;
+						}
+
+					});
 		} catch (DataAccessException e) {
 			LOG.warn("There's no album info for album " + albumId, e);
 		}
 
 		return albumInfo;
 	}
-	
+
 	@Override
 	public AlbumInfo getAlbumInfo(final Album album) {
 
-		AlbumInfo albumInfo = jdbcTemplate.queryForObject(GET_ALBUM_INFO_FROM_ALBUM, 
-				new Object[]{album.getName(), album.getArtist().getName()}, 
+		String sql = "select ai.smallimageurl, ai.mediumimageurl, ai.largeimageurl, ai.extralargeimageurl, ai.listeners, ai.playcount from music.albuminfo ai"
+				+ " inner join music.album alb on ai.album_id = alb.id"
+				+ " inner join music.artist art on alb.artist_id = art.id"
+				+ " where alb.album_name = upper(?) and art.artist_name = upper(?)";
+		AlbumInfo albumInfo = jdbcTemplate.queryForObject(sql, new Object[] {
+				album.getName(), album.getArtist().getName() },
 				new RowMapper<AlbumInfo>() {
-			@Override
-			public AlbumInfo mapRow(ResultSet rs, int rowNum)
-					throws SQLException {
-				AlbumInfo ai = new AlbumInfo();
-				ai.setAlbum(album);
-				ai.setSmallImageUrl(rs.getString(1));
-				ai.setMediumImageUrl(rs.getString(2));
-				ai.setLargeImageUrl(rs.getString(3));
-				ai.setExtraLargeImageUrl(rs.getString(4));
-				ai.setListeners(rs.getInt(5));
-				ai.setPlayCount(rs.getInt(6));
-				return ai;
-			}
-			
-		});
+					@Override
+					public AlbumInfo mapRow(ResultSet rs, int rowNum)
+							throws SQLException {
+						AlbumInfo ai = new AlbumInfo();
+						ai.setAlbum(album);
+						ai.setSmallImageUrl(rs.getString(1));
+						ai.setMediumImageUrl(rs.getString(2));
+						ai.setLargeImageUrl(rs.getString(3));
+						ai.setExtraLargeImageUrl(rs.getString(4));
+						ai.setListeners(rs.getInt(5));
+						ai.setPlayCount(rs.getInt(6));
+						return ai;
+					}
+
+				});
 
 		return albumInfo;
 	}
-	
+
 	@Override
 	public List<AlbumInfo> getAlbumInfosForArtist(final Uri artistUri) {
 
-		List<AlbumInfo> albums = jdbcTemplate.query(GET_ALBUM_INFOS_FOR_ARTIST, new Object[]{artistUri.getId()},
-				new RowMapper<AlbumInfo>() {
-			@Override
-			public AlbumInfo mapRow(ResultSet rs, int rowNum)
-					throws SQLException {
-				AlbumInfo ai = new AlbumInfo();
-				String albumName = rs.getString(1);
-				ai.setMediumImageUrl(rs.getString(2));
-				ai.setLargeImageUrl(rs.getString(3));
-				ai.setExtraLargeImageUrl(rs.getString(4));
-				String artistName = rs.getString(5);
-				ai.setAlbum(new Album(artistName, albumName));
-				return ai;
-			}
-		});
+		String sql = "select alb.album_name_capitalization, ai.mediumimageurl, "
+				+ " ai.largeimageurl, ai.extralargeimageurl, art.artist_name_capitalization"
+				+ " from music.albuminfo ai"
+				+ " inner join music.album alb on ai.album_id = alb.id"
+				+ " inner join music.artist art on alb.artist_id = art.id"
+				+ " where art.id = ?";
+		List<AlbumInfo> albums = jdbcTemplate.query(sql,
+				new Object[] { artistUri.getId() }, new RowMapper<AlbumInfo>() {
+					@Override
+					public AlbumInfo mapRow(ResultSet rs, int rowNum)
+							throws SQLException {
+						AlbumInfo ai = new AlbumInfo();
+						String albumName = rs.getString(1);
+						ai.setMediumImageUrl(rs.getString(2));
+						ai.setLargeImageUrl(rs.getString(3));
+						ai.setExtraLargeImageUrl(rs.getString(4));
+						String artistName = rs.getString(5);
+						ai.setAlbum(new Album(artistName, albumName));
+						return ai;
+					}
+				});
 
 		return albums;
 	}
 
 	@Override
 	public Map<Uri, AlbumInfo> getAlbumInfosForUris(List<Uri> paths) {
-		String sql = 
-				"select alb.album_name_capitalization, ai.mediumimageurl,"
+		String sql = "select alb.album_name_capitalization, ai.mediumimageurl,"
 				+ " ai.largeimageurl, ai.extralargeimageurl, alb.id from music.albuminfo ai"
 				+ " inner join music.album alb on ai.album_id = alb.id"
 				+ " where alb.id in (" + getParameters(paths.size()) + ")";
@@ -196,14 +195,23 @@ public class JdbcAlbumInfoDao implements AlbumInfoDao, JdbcTemplateDao {
 		} catch (DataAccessException e) {
 			LOG.warn("Could not fetch album infos for paths " + paths + "!", e);
 		}
-		
+
 		return albumInfos;
 	}
-	
+
 	@Override
 	public List<Album> getAlbumsWithoutInfo() {
-		
-		List<Album> albums = jdbcTemplate.query(GET_ALBUMS_WITHOUT_INFO, new RowMapper<Album>() {
+
+		String sql = "select a.artist_name_capitalization, ma.album_name_capitalization from"
+				+ " library.album la"
+				+ " inner join music.album ma on la.album_id = ma.id"
+				+ " inner join music.artist a on ma.artist_id = a.id"
+				+ " where not exists ("
+				+ " select 1 from music.albuminfo where album_id = ma.id)"
+				+ " and ma.album_name_capitalization != '"
+				+ UNKNOWN_ALBUM
+				+ "'" + " order by a.id limit 3000";
+		List<Album> albums = jdbcTemplate.query(sql, new RowMapper<Album>() {
 			@Override
 			public Album mapRow(ResultSet rs, int rowNum) throws SQLException {
 				return new Album(rs.getString(1), rs.getString(2));
@@ -219,7 +227,7 @@ public class JdbcAlbumInfoDao implements AlbumInfoDao, JdbcTemplateDao {
 	}
 
 	// Spring setters
-	
+
 	public void setDataSource(DataSource dataSource) {
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
