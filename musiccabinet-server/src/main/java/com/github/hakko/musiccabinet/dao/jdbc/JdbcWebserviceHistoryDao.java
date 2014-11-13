@@ -86,11 +86,11 @@ public class JdbcWebserviceHistoryDao implements JdbcTemplateDao,
 
 		jdbcTemplate.update(sql.toString());
 
-		String sql = "insert into library.webservice_history"
+		sql = new StringBuilder("insert into library.webservice_history"
 				+ " (artist_id, album_id, track_id, lastfmuser_id, lastfmgroup_id,"
 				+ " tag_id, calltype_id, page, invocation_time)"
-				+ " values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		jdbcTemplate.update(sql,
+				+ " values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		jdbcTemplate.update(sql.toString(),
 				new Object[] { artistId, albumId, trackId, userId, groupId,
 						tagId, wi.getCallType().getDatabaseId(), wi.getPage(),
 						invocationTime });
