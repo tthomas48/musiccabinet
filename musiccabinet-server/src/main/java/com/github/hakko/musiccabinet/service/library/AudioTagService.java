@@ -55,7 +55,7 @@ public class AudioTagService {
 	
 	private Set<String> ALLOWED_EXTENSIONS = new HashSet<>();
 
-	private static final Pattern GENRE_PATTERN = compile("\\((\\d+)\\).*");
+	private static final Pattern GENRE_PATTERN = compile("\\((\\d+)\\)(.*)");
     private static final Pattern TRACK_NUMBER_PATTERN = compile("(\\d+)/\\d+");
 
 	public static final String UNKNOWN_ALBUM = "[Unknown album]";
@@ -178,8 +178,14 @@ public class AudioTagService {
 		}
 		Matcher matcher = GENRE_PATTERN.matcher(genre);
 		if (matcher.matches()) {
-			return GenreTypes.getInstanceOf().getValueForId(
+			String standardGenre = GenreTypes.getInstanceOf().getValueForId(
 					toInt(matcher.group(1), -1));
+			if (standardGenre != null) {
+				return standardGenre;
+			}
+			if (matcher.groupCount() >= 2) {
+				return matcher.group(2);
+			}
 		}
 		return genre;
 	}

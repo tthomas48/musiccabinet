@@ -192,9 +192,15 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 			ALBUMS: for (Link albumLink : albumLinks) {
 				jahspotify.media.Album spotifyAlbum = loadAlbum(new SpotifyUri(
 						albumLink));
+				if (spotifyAlbum == null) {
+					continue ALBUMS;
+				}
 
 				jahspotify.media.Artist albumArtist = loadArtist(new SpotifyUri(
 						spotifyAlbum.getArtist()));
+				if (albumArtist == null) {
+					continue ALBUMS;
+				}
 
 				for (Album album : albums) {
 					if (spotifyAlbum.getName().toLowerCase()

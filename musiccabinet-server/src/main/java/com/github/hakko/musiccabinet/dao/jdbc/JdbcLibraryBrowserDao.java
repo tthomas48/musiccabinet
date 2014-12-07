@@ -200,10 +200,12 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 		List<Object> args = new ArrayList<>();
 		args.add(artist.getId());
-		Boolean response = jdbcTemplate.queryForObject(sql, args.toArray(),
+		List<Boolean> response = jdbcTemplate.queryForList(sql, args.toArray(),
 				Boolean.class);
-		response = (response != null ? response.booleanValue() : false);
-		return response;
+		if (response.size() == 0) {
+			return Boolean.FALSE;
+		}
+		return response.get(0);
 	}
 
 	@Override

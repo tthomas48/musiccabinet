@@ -5,6 +5,8 @@ import java.net.URISyntaxException;
 
 public class StreamUri implements Uri {
 
+	private static final long serialVersionUID = 3171248510848322686L;
+	
 	private URI uri;
 	
 	public StreamUri(URI uri) {

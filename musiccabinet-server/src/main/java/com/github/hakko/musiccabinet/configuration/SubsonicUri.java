@@ -6,6 +6,8 @@ import com.github.hakko.musiccabinet.dao.util.URIUtil;
 
 public class SubsonicUri implements Uri {
 	
+	private static final long serialVersionUID = 6942450687801550196L;
+	
 	private URI uri;
 	
 	public SubsonicUri(URI uri) {

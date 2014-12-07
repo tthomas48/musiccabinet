@@ -22,8 +22,8 @@ public class JdbcPlayCountDao implements PlayCountDao, JdbcTemplateDao {
 		String sql = "insert into library.playcount (lastfmuser_id, track_id, album_id, artist_id)"
 				+ " select ?,track_id,?,? from library.track where id = ?";
 		jdbcTemplate.update(sql, new Object[] { lastFmUser.getId(),
-				track.getMetaData().getAlbumUri(),
-				track.getMetaData().getArtistUri(), track.getUri() });
+				track.getMetaData().getAlbumUri().getId(),
+				track.getMetaData().getArtistUri().getId(), track.getUri().getId() });
 	}
 
 	@Override

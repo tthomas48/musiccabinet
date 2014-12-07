@@ -10,6 +10,8 @@ import com.github.hakko.musiccabinet.dao.util.URIUtil;
 
 public class SpotifyUri implements Uri {
 	
+	private static final long serialVersionUID = 7021929381296436638L;
+	
 	private URI uri;
 	
 	public SpotifyUri(String uri) {
