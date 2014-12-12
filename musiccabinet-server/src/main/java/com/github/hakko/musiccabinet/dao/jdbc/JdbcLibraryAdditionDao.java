@@ -90,7 +90,7 @@ public class JdbcLibraryAdditionDao implements LibraryAdditionDao,
 			if (md.getMediaType() != null) {
 				fileSuffix = md.getMediaType().getFilesuffix();
 			}
-			String sql = "update library.file_headertag_set extension = ?,"
+			String sql = "update library.file_headertag set extension = ?,"
 					+ "bitrate = ?, vbr = ?, duration = ?, artist_name = ?, album_artist_name = ?, composer_name = ?,"
 					+ "album_name = ?, track_name = ?, track_nr = ?, track_nrs = ?, disc_nr = ?, disc_nrs = ?, year = ?,"
 					+ "tag_name = ?, lyrics = ?, coverart = ?, artistsort_name = ?, albumartistsort_name = ?, "
