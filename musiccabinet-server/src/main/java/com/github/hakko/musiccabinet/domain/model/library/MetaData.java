@@ -9,7 +9,7 @@ public class MetaData {
 
 	private Mediatype mediaType;
 	private Short bitrate;
-	private Boolean vbr;
+	private Boolean vbr = Boolean.FALSE;
 	private Short duration;
 
 	private Uri uri;
@@ -27,8 +27,8 @@ public class MetaData {
 	private Integer year;
 	private String genre;
 	private String lyrics;
-	private Boolean hasLyrics;
-	private Boolean isCoverArtEmbedded;
+	private Boolean hasLyrics = Boolean.FALSE;
+	private Boolean isCoverArtEmbedded = Boolean.FALSE;
 	private String path;
 	private String artworkPath;
 	private Long size;

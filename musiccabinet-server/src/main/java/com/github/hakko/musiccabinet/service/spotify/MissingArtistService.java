@@ -2,7 +2,6 @@ package com.github.hakko.musiccabinet.service.spotify;
 
 import jahspotify.media.Artist;
 import jahspotify.media.Link;
-import jahspotify.media.Link.Type;
 import jahspotify.media.Playlist;
 import jahspotify.services.MediaHelper;
 
@@ -13,6 +12,7 @@ import java.util.Set;
 
 import org.joda.time.DateTime;
 
+import com.github.hakko.musiccabinet.configuration.SpotifyUri;
 import com.github.hakko.musiccabinet.dao.AlbumInfoDao;
 import com.github.hakko.musiccabinet.dao.LibraryAdditionDao;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLibraryBrowserDao;
@@ -100,15 +100,18 @@ public class MissingArtistService extends SearchIndexUpdateService {
 					continue ARTISTLINK;
 				}
 
+				SpotifyUri spotifyUri = new SpotifyUri(artistLink);
 				for (com.github.hakko.musiccabinet.domain.model.music.Artist existingArtist : existingArtists) {
 					if (existingArtist.getName().toLowerCase()
-							.equals(artist.getName().toLowerCase())) {
+							.equals(artist.getName().toLowerCase()) 
+							&& existingArtist.getSpotifyUri() != null 
+							&& existingArtist.getSpotifyUri().equals(spotifyUri)) {
 						addFinishedOperation();
 						continue ARTISTLINK;
 					}
 				}
 
-				spotifyLibraryBrowserDao.getAlbums(albums, artist.getName(),
+				spotifyLibraryBrowserDao.getAlbums(albums, artist.getName(), spotifyUri,
 						false);
 
 				NEXTALBUM: for (Album album : albums) {

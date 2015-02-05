@@ -85,7 +85,7 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 				jdbcLibraryBrowserDao.getAlbums(existingAlbums, artist, false);
 
 				albums.addAll(existingAlbums);
-				spotifyLibraryBrowserDao.getAlbums(albums, artistName, false);
+				spotifyLibraryBrowserDao.getAlbums(albums, artist, false);
 
 				NEXTALBUM: for (Album album : albums) {
 					// currently I don't want Various Artists junk and guest

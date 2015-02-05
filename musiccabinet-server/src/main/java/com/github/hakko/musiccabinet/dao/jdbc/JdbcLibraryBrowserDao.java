@@ -61,7 +61,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 	@Override
 	public Artist getArtist(String artistName) {
-		String sql = "select ma.id, ma.artist_name_capitalization from music.artist ma"
+		String sql = "select ma.id, ma.artist_name_capitalization, ma.spotify_uri from music.artist ma"
 				+ " where ma.artist_name_capitalization like ?";
 
 		return jdbcTemplate.queryForObject(sql, new Object[] { artistName },
@@ -70,7 +70,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 	@Override
 	public List<Artist> getArtists() {
-		String sql = "select ma.id, ma.artist_name_capitalization from music.artist ma"
+		String sql = "select ma.id, ma.artist_name_capitalization, ma.spotify_uri from music.artist ma"
 				+ " inner join library.artist la on la.artist_id = ma.id where la.hasalbums"
 				+ " order by ma.artist_name";
 
@@ -81,7 +81,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	public List<Artist> getArtists(String tag, int treshold) {
 		String topTagsTable = settingsService.getArtistTopTagsTable();
 
-		String sql = "select ma.id, ma.artist_name_capitalization from music.artist ma"
+		String sql = "select ma.id, ma.artist_name_capitalization from music.artist ma, ma.spotify_uri"
 				+ " inner join library.artist la on la.artist_id = ma.id"
 				+ " where la.hasalbums and exists (select 1 from"
 				+ " ? "
@@ -96,7 +96,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 
 	@Override
 	public List<Artist> getArtists(int indexLetter) {
-		String sql = "select ma.id, ma.artist_name_capitalization from music.artist ma"
+		String sql = "select ma.id, ma.artist_name_capitalization, ma.spotify_uri from music.artist ma"
 				+ " inner join library.artist la on la.artist_id = ma.id"
 				+ (indexLetter < 'A' || indexLetter > 'Z' ? " where ascii(artist_name) < 65 or ascii(artist_name) > 90"
 						: " where ascii(artist_name) = " + indexLetter)
@@ -824,8 +824,13 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " inner join library.directory d on f.directory_id = d.id"
 				+ " inner join library.track lt on lt.file_id = f.id"
 				+ " where d.path = ? and f.filename = ?";
-		return new SubsonicUri(jdbcTemplate.queryForInt(sql, new Object[] {
-				directory, filename }));
+		int id = jdbcTemplate.queryForInt(sql, new Object[] {
+				directory, filename });
+		if (id < 0) {
+			return null;
+		}
+		
+		return new SubsonicUri(id);
 	}
 
 	/*
@@ -845,7 +850,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 			return new SubsonicUri(jdbcTemplate.queryForInt(sql, new Object[] {
 					directory, filename }));
 		} catch (DataAccessException e) {
-			return new SubsonicUri(-1);
+			return null;
 		}
 	}
 

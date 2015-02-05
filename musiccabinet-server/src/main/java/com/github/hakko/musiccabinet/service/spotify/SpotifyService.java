@@ -41,7 +41,7 @@ public class SpotifyService implements ConnectionListener {
 	}
 
 	public void unlock() {
-		if (!lock.isHeldByCurrentThread()) {
+		if (!lock.isHeldByCurrentThread() || !lock.isLocked()) {
 			return;
 		}
 		lock.unlock();
@@ -88,8 +88,14 @@ public class SpotifyService implements ConnectionListener {
 			final BlockingRequest<Boolean> blockingRequest = new BlockingRequest<Boolean>() {
 				@Override
 				public void run() {
-					JahSpotifyService.initialize(tempFolder);
-					getSpotify().addConnectionListener(SpotifyService.this);
+					try {
+						JahSpotifyService.initialize(tempFolder);
+						getSpotify().addConnectionListener(SpotifyService.this);
+					} catch (UnsatisfiedLinkError e) {
+						System.err.println("Unable to find libjahspotify.so.");
+						e.printStackTrace();
+						finish(Boolean.FALSE);
+					}
 				}
 			};
 			AbstractConnectionListener initListener = new AbstractConnectionListener() {
@@ -192,7 +198,7 @@ public class SpotifyService implements ConnectionListener {
 
 	@Override
 	public void initialized(boolean initialized) {
-		synchronized(listeners) {
+		synchronized (listeners) {
 			for (ConnectionListener listener : listeners) {
 				listener.initialized(initialized);
 			}
@@ -317,13 +323,13 @@ public class SpotifyService implements ConnectionListener {
 	public SpotifyUser getSpotifyUser() {
 		return spotifyUser;
 	}
-	
+
 	public SpotifySettingsService getSpotifySettingsService() {
 		return settingsService;
 	}
-	
+
 	public String cleanAlbumName(String name) {
-		if(name == null) {
+		if (name == null) {
 			return "";
 		}
 		name = name.replaceAll("\\(Deluxe Version\\)", "");

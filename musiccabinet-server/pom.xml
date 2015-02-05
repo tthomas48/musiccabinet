@@ -15,7 +15,7 @@
 		<version.commons-io>2.4</version.commons-io>
 		<version.joda-time>2.1</version.joda-time>
 		<version.c3p0>0.9.2-pre4</version.c3p0>
-		<version.postgresql-jdbc>9.0-801.jdbc4</version.postgresql-jdbc>
+		<version.postgresql-jdbc>9.1-901-1.jdbc4</version.postgresql-jdbc>
 		<version.httpclient>4.2.1</version.httpclient>
 		<version.woodstox>4.1.4</version.woodstox>
 		<version.junit>4.10</version.junit>

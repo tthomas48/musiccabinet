@@ -46,7 +46,7 @@ public class JdbcMusicDao implements MusicDao, JdbcTemplateDao {
 		}
 		
 		
-		String sql = "select id, artist_name_capitalization from music.artist"
+		String sql = "select id, artist_name_capitalization, spotify_uri from music.artist"
 				+ " where id in (" + PostgreSQLUtil.getUriParameters(artistIds) + ")"
 				+ " order by artist_name_capitalization";
 		

@@ -38,7 +38,7 @@ public class JdbcNameSearchDao implements NameSearchDao, JdbcTemplateDao {
 
 	@Override
 	public NameSearchResult<Artist> getArtists(String userQuery, int offset, int limit) {
-		String sql = "select ma.id, ma.artist_name_capitalization"
+		String sql = "select ma.id, ma.artist_name_capitalization, ma.spotify_uri"
 				+ " from library.artist la"
 				+ " inner join music.artist ma on la.artist_id = ma.id"
 				+ " where la.artist_name_search like ?"

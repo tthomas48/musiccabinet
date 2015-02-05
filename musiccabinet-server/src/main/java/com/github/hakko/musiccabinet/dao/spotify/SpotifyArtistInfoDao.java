@@ -42,24 +42,24 @@ public class SpotifyArtistInfoDao implements ArtistInfoDao {
 				return null;
 			}
 		
-		jahspotify.media.Artist artist = spotifyService.getSpotify()
-				.readArtist(link, true);
-		if (!MediaHelper.waitFor(artist, 60)) {
-			return null;
-		}
-
-		ArtistInfo ai = new ArtistInfo();
-		ai.setArtist(new Artist(uri, artist.getName()));
-
-		// the JNI code does not seem to populate this yet
-		if (artist.getPortraits().size() > 0) {
-			ai.setLargeImageUrl("coverArt.view?path="
-					+ artist.getPortraits().get(0).asString());
-		}
-		ai.setBioSummary(artist.getBios());
-		// TODO: What does this do?
-		ai.setInSearchIndex(false);
-		return ai;
+			jahspotify.media.Artist artist = spotifyService.getSpotify()
+					.readArtist(link, true);
+			if (!MediaHelper.waitFor(artist, 30)) {
+				return null;
+			}
+	
+			ArtistInfo ai = new ArtistInfo();
+			ai.setArtist(new Artist(uri, artist.getName()));
+	
+			// the JNI code does not seem to populate this yet
+			if (artist.getPortraits().size() > 0) {
+				ai.setLargeImageUrl("coverArt.view?path="
+						+ artist.getPortraits().get(0).asString());
+			}
+			ai.setBioSummary(artist.getBios());
+			// TODO: What does this do?
+			ai.setInSearchIndex(false);
+			return ai;
 		} finally {
 			spotifyService.unlock();
 		}
@@ -89,7 +89,7 @@ public class SpotifyArtistInfoDao implements ArtistInfoDao {
 					.readArtist(link);
 			ArtistInfo ai = new ArtistInfo();
 			ai.setArtist(subsonicArtist);
-			if (!MediaHelper.waitFor(artist, 60)) {
+			if (!MediaHelper.waitFor(artist, 10)) {
 				return ai;
 			}
 

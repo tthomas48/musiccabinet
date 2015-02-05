@@ -90,7 +90,7 @@ public class JdbcMusicBrainzArtistDao implements MusicBrainzArtistDao, JdbcTempl
 	@Override
 	public List<Artist> getMissingArtists() {
 		return jdbcTemplate.query(
-				"select ma.id, ma.artist_name_capitalization from library.artist la"
+				"select ma.id, ma.artist_name_capitalization, ma.spotify_uri from library.artist la"
 				+ " inner join music.artist ma on la.artist_id = ma.id where hasalbums"
 				+ " and not exists (select 1 from music.mb_artist mba where mba.artist_id = ma.id)"
 				+ " and not exists (select 1 from library.webservice_history h where h.artist_id = ma.id"

@@ -162,16 +162,25 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 			return;
 		}
 
-		getAlbums(albums, artist.getName(), sortAscending);
+		getAlbums(albums, artist.getName(), artist.getSpotifyUri(), sortAscending);
 	}
 
-	public void getAlbums(List<Album> albums, String artistName,
+	public void getAlbums(List<Album> albums, String artistName, Uri spotifyUri, 
 			boolean sortAscending) {
 
 		Artist foundArtist = null;
 		NameSearchResult<Artist> artists = nameSearchService.getArtists(
 				artistName, 0, 5);
 		for (Artist a : artists.getResults()) {
+			if (spotifyUri != null && spotifyUri.equals(a.getSpotifyUri())) {
+				foundArtist = a;
+				break;
+			}
+			if (spotifyUri != null && spotifyUri.equals(a.getUri())) {
+				foundArtist = a;
+				break;
+			}
+			// fall back to this
 			if (a.getName().toLowerCase().equals(artistName.toLowerCase())) {
 				foundArtist = a;
 			}
@@ -179,7 +188,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 		if (foundArtist == null) {
 			return;
 		}
-		Uri artistUri = foundArtist.getUri();
+		Uri artistUri = foundArtist.getSpotifyUri() != null ? foundArtist.getSpotifyUri() : foundArtist.getUri();
 
 		try {
 			if (!spotifyService.lock()) {
@@ -346,7 +355,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 					jahspotify.media.Track spotifyTrack = spotifyService
 							.getSpotify().readTrack(
 									((SpotifyUri) uri).getLink());
-					if (!MediaHelper.waitFor(spotifyTrack, 60)) {
+					if (!MediaHelper.waitFor(spotifyTrack, 10)) {
 						continue;
 					}
 					MetaData md = new MetaData();
@@ -360,6 +369,9 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 
 					jahspotify.media.Artist artist = loadArtist(new SpotifyUri(
 							album.getArtist()));
+					if (!MediaHelper.waitFor(artist, 10)) {
+						continue;
+					}
 
 					md.setUri(uri);
 					md.setMediaType(MetaData.Mediatype.MP3);
@@ -473,7 +485,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 
 	@Override
 	public Uri getTrackUri(String filename) {
-		return null;
+		return URIUtil.parseURI(filename);
 	}
 
 	@Override
