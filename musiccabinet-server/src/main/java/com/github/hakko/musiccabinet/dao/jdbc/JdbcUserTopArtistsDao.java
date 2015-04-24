@@ -66,7 +66,7 @@ public class JdbcUserTopArtistsDao implements UserTopArtistsDao,
 	public List<ArtistRecommendation> getUserTopArtists(LastFmUser user,
 			Period period, int offset, int limit) {
 
-		String sql = "select a.id, a.artist_name_capitalization, ai.largeimageurl"
+		String sql = "select a.id, a.artist_name_capitalization, ai.extralargeimageurl"
 				+ " from music.artistinfo ai"
 				+ " inner join music.artist a on ai.artist_id = a.id"
 				+ " inner join music.usertopartist uta on uta.artist_id = a.id"

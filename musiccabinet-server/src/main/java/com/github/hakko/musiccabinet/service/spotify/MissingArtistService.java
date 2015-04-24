@@ -62,7 +62,8 @@ public class MissingArtistService extends SearchIndexUpdateService {
 					.getSpotifySettingsService().getSpotifyUsers();
 
 			for (String username : spotifyUsers) {
-				Playlist starred = spotifyService.getSpotify().readStarredPlaylist(username, 0,0);
+				Playlist starred = spotifyService.getSpotify()
+						.readStarredPlaylist(username, 0, 0);
 				if (!MediaHelper.waitFor(starred, 60)) {
 					return;
 				}
@@ -94,7 +95,7 @@ public class MissingArtistService extends SearchIndexUpdateService {
 					addFinishedOperation();
 					continue ARTISTLINK;
 				}
-				
+
 				if (artist.getName().toLowerCase().contains("various")) {
 					addFinishedOperation();
 					continue ARTISTLINK;
@@ -103,16 +104,21 @@ public class MissingArtistService extends SearchIndexUpdateService {
 				SpotifyUri spotifyUri = new SpotifyUri(artistLink);
 				for (com.github.hakko.musiccabinet.domain.model.music.Artist existingArtist : existingArtists) {
 					if (existingArtist.getName().toLowerCase()
-							.equals(artist.getName().toLowerCase()) 
-							&& existingArtist.getSpotifyUri() != null 
-							&& existingArtist.getSpotifyUri().equals(spotifyUri)) {
+							.equals(artist.getName().toLowerCase())) {
 						addFinishedOperation();
 						continue ARTISTLINK;
 					}
+					if (existingArtist.getSpotifyUri() != null
+							&& existingArtist.getSpotifyUri()
+									.equals(spotifyUri)) {
+						addFinishedOperation();
+						continue ARTISTLINK;
+
+					}
 				}
 
-				spotifyLibraryBrowserDao.getAlbums(albums, artist.getName(), spotifyUri,
-						false);
+				spotifyLibraryBrowserDao.getAlbums(albums, artist.getName(),
+						spotifyUri, false);
 
 				NEXTALBUM: for (Album album : albums) {
 
@@ -125,10 +131,13 @@ public class MissingArtistService extends SearchIndexUpdateService {
 					if (album.getTrackUris().size() < 5) {
 						continue NEXTALBUM;
 					}
-					
+
 					AlbumInfo albumInfo = new AlbumInfo();
 					albumInfo.setAlbum(album);
+					albumInfo.setSmallImageUrl(album.getCoverArtURL());
+					albumInfo.setMediumImageUrl(album.getCoverArtURL());
 					albumInfo.setLargeImageUrl(album.getCoverArtURL());
+					albumInfo.setExtraLargeImageUrl(album.getCoverArtURL());
 					albumInfos.add(albumInfo);
 
 					List<Track> tracks = spotifyLibraryBrowserDao
@@ -149,7 +158,7 @@ public class MissingArtistService extends SearchIndexUpdateService {
 					libraryAdditionDao.addFiles("spotify:", files);
 					libraryAdditionDao.updateLibrary();
 					files.clear();
-					
+
 					albumInfoDao.createAlbumInfo(albumInfos);
 					albumInfos.clear();
 				}
@@ -161,7 +170,7 @@ public class MissingArtistService extends SearchIndexUpdateService {
 			if (files.size() > 0) {
 				libraryAdditionDao.addFiles("spotify:", files);
 				libraryAdditionDao.updateLibrary();
-				
+
 				albumInfoDao.createAlbumInfo(albumInfos);
 			}
 		} finally {
@@ -191,7 +200,7 @@ public class MissingArtistService extends SearchIndexUpdateService {
 	public void setLibraryAdditionDao(LibraryAdditionDao libraryAdditionDao) {
 		this.libraryAdditionDao = libraryAdditionDao;
 	}
-	
+
 	public void setAlbumInfoDao(AlbumInfoDao albumInfoDao) {
 		this.albumInfoDao = albumInfoDao;
 	}

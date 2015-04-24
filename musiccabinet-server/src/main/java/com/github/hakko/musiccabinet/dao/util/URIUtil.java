@@ -20,6 +20,9 @@ public class URIUtil {
 
 	public static Uri parseURI(String uri) {
 		try {
+      if (uri == null) {
+        return null;
+      }
 			if (uri.startsWith(SUBSONIC_PREFIX)) {
 				return new SubsonicUri(new URI(uri));
 			} else if (uri.startsWith(SPOTIFY_PREFIX)) {

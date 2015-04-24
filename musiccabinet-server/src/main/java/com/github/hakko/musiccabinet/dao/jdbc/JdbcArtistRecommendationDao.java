@@ -21,7 +21,7 @@ public class JdbcArtistRecommendationDao implements ArtistRecommendationDao, Jdb
 	public List<ArtistRecommendation> getRelatedArtistsInLibrary(
 			Uri artistUri, int amount, boolean onlyAlbumArtists) {
 
-		String sql = "select ma.id, ma.artist_name_capitalization, ai.largeimageurl"
+		String sql = "select ma.id, ma.artist_name_capitalization, ai.extralargeimageurl"
 			+ " from music.artistinfo ai"
 			+ " inner join music.artist ma on ai.artist_id = ma.id"
 			+ " inner join library.artist la on la.artist_id = ma.id "
@@ -51,7 +51,7 @@ public class JdbcArtistRecommendationDao implements ArtistRecommendationDao, Jdb
 	public List<ArtistRecommendation> getGenreArtistsInLibrary(
 			String tagName, int offset, int length, boolean onlyAlbumArtists) {
 		String topTagTable = settingsService.getArtistTopTagsTable();
-		String sql = "select ma.id, ma.artist_name_capitalization, ai.largeimageurl"
+		String sql = "select ma.id, ma.artist_name_capitalization, ai.extralargeimageurl"
 				+ " from music.artistinfo ai"
 				+ " inner join music.artist ma on ai.artist_id = ma.id"
 				+ " inner join library.artist la on la.artist_id = ma.id "
@@ -86,7 +86,7 @@ public class JdbcArtistRecommendationDao implements ArtistRecommendationDao, Jdb
 	@Override
 	public List<ArtistRecommendation> getRecommendedArtistsInLibrary(
 			String lastFmUsername, int offset, int limit, boolean onlyAlbumArtists) {
-		String sql = "select ma.id, ma.artist_name_capitalization, ai.largeimageurl"
+		String sql = "select ma.id, ma.artist_name_capitalization, ai.extralargeimageurl"
 				+ " from music.artistinfo ai"
 				+ " inner join music.artist ma on ai.artist_id = ma.id"
 				+ " inner join library.artist la on la.artist_id = ma.id"
@@ -119,7 +119,7 @@ public class JdbcArtistRecommendationDao implements ArtistRecommendationDao, Jdb
 	@Override
 	public List<ArtistRecommendation> getGroupArtistsInLibrary(
 			String lastFmGroupName, int offset, int limit, boolean onlyAlbumArtists) {
-		String sql = "select ma.id, ma.artist_name_capitalization, ai.largeimageurl"
+		String sql = "select ma.id, ma.artist_name_capitalization, ai.extralargeimageurl"
 				+ " from music.artistinfo ai"
 				+ " inner join music.artist ma on ai.artist_id = ma.id"
 				+ " inner join library.artist la on la.artist_id = ma.id"

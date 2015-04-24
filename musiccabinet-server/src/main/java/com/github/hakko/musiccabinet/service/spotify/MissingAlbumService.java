@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.joda.time.DateTime;
 
+import com.github.hakko.musiccabinet.configuration.Uri;
 import com.github.hakko.musiccabinet.dao.AlbumInfoDao;
 import com.github.hakko.musiccabinet.dao.LibraryAdditionDao;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLibraryBrowserDao;
@@ -85,7 +86,7 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 				jdbcLibraryBrowserDao.getAlbums(existingAlbums, artist, false);
 
 				albums.addAll(existingAlbums);
-				spotifyLibraryBrowserDao.getAlbums(albums, artist, false);
+				spotifyLibraryBrowserDao.getAlbums(albums, artist.getName(), artist.getSpotifyUri(), false);
 
 				NEXTALBUM: for (Album album : albums) {
 					// currently I don't want Various Artists junk and guest
@@ -117,7 +118,10 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 					
 					AlbumInfo albumInfo = new AlbumInfo();
 					albumInfo.setAlbum(album);
+					albumInfo.setSmallImageUrl(album.getCoverArtURL());
+					albumInfo.setMediumImageUrl(album.getCoverArtURL());
 					albumInfo.setLargeImageUrl(album.getCoverArtURL());
+					albumInfo.setExtraLargeImageUrl(album.getCoverArtURL());
 					albumInfos.add(albumInfo);
 					
 

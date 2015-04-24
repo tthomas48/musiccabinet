@@ -183,6 +183,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 			// fall back to this
 			if (a.getName().toLowerCase().equals(artistName.toLowerCase())) {
 				foundArtist = a;
+				break;
 			}
 		}
 		if (foundArtist == null) {

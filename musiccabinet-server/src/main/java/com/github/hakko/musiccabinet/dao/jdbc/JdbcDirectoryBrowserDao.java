@@ -57,7 +57,7 @@ public class JdbcDirectoryBrowserDao implements DirectoryBrowserDao, JdbcTemplat
 	@Override
 	public List<Album> getAlbums(int directoryId, boolean sortByYear, boolean sortAscending) {
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.largeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
 				+ " (select distinct lt.album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids " 
 				+ " from library.directory d"
 				+ " inner join library.file f on f.directory_id = d.id" 

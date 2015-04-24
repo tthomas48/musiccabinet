@@ -9,6 +9,7 @@ public class SpotifySettingsService {
 
 	private String cache;
 	private String userName;
+	private String password;
 	private List<String> spotifyUsers;
 
 	public String getSpotifyCache() {
@@ -33,6 +34,14 @@ public class SpotifySettingsService {
 
 	public void setSpotifyUsers(List<String> spotifyUsers) {
 		this.spotifyUsers = spotifyUsers;
+	}
+
+	public String getSpotifyPassword() {
+		return password;
+	}
+
+	public void setSpotifyPassword(String password) {
+		this.password = password;
 	}
 
 }

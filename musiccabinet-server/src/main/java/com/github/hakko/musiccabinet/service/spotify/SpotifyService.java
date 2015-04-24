@@ -138,6 +138,33 @@ public class SpotifyService implements ConnectionListener {
 					} else {
 						System.err.println("Logged in: " + loggedIn);
 					}
+				} else if (user != null
+						&& settingsService.getSpotifyPassword() != null) {
+					System.err
+							.println("Logging in with username/password settings.");
+
+					final BlockingRequest<Boolean> loginRequest = new BlockingRequest<Boolean>() {
+						@Override
+						public void run() {
+							login(user.getUserName(),
+									settingsService.getSpotifyPassword(), null);
+						}
+					};
+					AbstractConnectionListener loginListener = new AbstractConnectionListener() {
+						@Override
+						public void loggedIn(boolean success) {
+							loginRequest.finish(success);
+						}
+					};
+
+					registerListener(loginListener);
+					Boolean loggedIn = loginRequest.start();
+					removeListener(loginListener);
+					if (loggedIn == null || !loggedIn) {
+						System.err.println("Invalid username or password.");
+					} else {
+						System.err.println("Logged in: " + loggedIn);
+					}
 
 				} else {
 					System.err.println("No existing blob.");
