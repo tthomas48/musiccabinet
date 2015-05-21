@@ -40,41 +40,21 @@ public class SpotifySearchService implements INameSearchService {
 			return new NameSearchResult<Artist>(Collections.EMPTY_LIST, offset);
 		}
 
-		try {
-			if (!spotifyService.lock()) {
-				return new NameSearchResult<Artist>(Collections.EMPTY_LIST,
-						offset);
-			}
-
-			SearchResult searchResult = new BlockingRequest<SearchResult>() {
-				@Override
-				public void run() {
-					spotifyService.getSpotify().initiateSearch(
-							new Search(Query.artist(userQuery)),
-							new SearchListener() {
-								@Override
-								public void searchComplete(
-										SearchResult searchResult) {
-									finish(searchResult);
-								}
-							});
-
-				}
-			}.start();
-
-			List<Artist> result = new ArrayList<Artist>();
-			List<Link> artists = searchResult.getArtistsFound();
-			LOG.debug("Got back " + artists.size());
-			for (Link link : artists) {
-				jahspotify.media.Artist artist = spotifyService.getSpotify()
-						.readArtist(link, true);
-				result.add(new Artist(link.asString(), artist.getName()));
-			}
-			LOG.debug(result);
-			return new NameSearchResult(result, offset);
-		} finally {
-			spotifyService.unlock();
+		SearchResult searchResult = spotifyService.search(Query
+				.artist(userQuery));
+		if (searchResult == null) {
+			return new NameSearchResult<Artist>(Collections.EMPTY_LIST, offset);
 		}
+
+		List<Artist> result = new ArrayList<Artist>();
+		List<Link> artists = searchResult.getArtistsFound();
+		LOG.debug("Got back " + artists.size());
+		for (Link link : artists) {
+			jahspotify.media.Artist artist = spotifyService.readArtist(link);
+			result.add(new Artist(link.asString(), artist.getName()));
+		}
+		LOG.debug(result);
+		return new NameSearchResult(result, offset);
 	}
 
 	@Override
@@ -85,44 +65,24 @@ public class SpotifySearchService implements INameSearchService {
 			return new NameSearchResult<Album>(Collections.EMPTY_LIST, offset);
 		}
 
-		try {
-			if (!spotifyService.lock()) {
-				return new NameSearchResult<Album>(Collections.EMPTY_LIST,
-						offset);
-			}
-			SearchResult searchResult = new BlockingRequest<SearchResult>() {
-				@Override
-				public void run() {
-					spotifyService.getSpotify().initiateSearch(
-							new Search(new AlbumQuery(userQuery)),
-							new SearchListener() {
-								@Override
-								public void searchComplete(
-										SearchResult searchResult) {
-									finish(searchResult);
-								}
-							});
-
-				}
-			}.start();
-
-			List<Album> result = new ArrayList<Album>();
-			List<Link> albums = searchResult.getAlbumsFound();
-			LOG.debug("Got back " + albums.size());
-			for (Link link : albums) {
-				jahspotify.media.Album album = spotifyService.getSpotify()
-						.readAlbum(link, true);
-				jahspotify.media.Artist artist = spotifyService.getSpotify()
-						.readArtist(album.getArtist(), true);
-				result.add(new Album(new Artist(artist.getId().toString(),
-						artist.getName()), new SpotifyUri(link), album
-						.getName()));
-			}
-			LOG.debug(result);
-			return new NameSearchResult(result, offset);
-		} finally {
-			spotifyService.unlock();
+		SearchResult searchResult = spotifyService.search(new AlbumQuery(
+				userQuery));
+		if (searchResult == null) {
+			return new NameSearchResult<Album>(Collections.EMPTY_LIST, offset);
 		}
+
+		List<Album> result = new ArrayList<Album>();
+		List<Link> albums = searchResult.getAlbumsFound();
+		LOG.debug("Got back " + albums.size());
+		for (Link link : albums) {
+			jahspotify.media.Album album = spotifyService.readAlbum(link);
+			jahspotify.media.Artist artist = spotifyService.readArtist(album
+					.getArtist());
+			result.add(new Album(new Artist(artist.getId().toString(), artist
+					.getName()), new SpotifyUri(link), album.getName()));
+		}
+		LOG.debug(result);
+		return new NameSearchResult(result, offset);
 	}
 
 	@Override
@@ -134,51 +94,32 @@ public class SpotifySearchService implements INameSearchService {
 			return new NameSearchResult<Track>(Collections.EMPTY_LIST, offset);
 		}
 
-		try {
-			List<Track> result = new ArrayList<Track>();
-			if (!spotifyService.lock()) {
-				return new NameSearchResult(result, offset);
-			}
-
-			SearchResult searchResult = new BlockingRequest<SearchResult>() {
-				@Override
-				public void run() {
-					spotifyService.getSpotify().initiateSearch(
-							new Search(new TrackQuery(userQuery)),
-							new SearchListener() {
-								@Override
-								public void searchComplete(
-										SearchResult searchResult) {
-									finish(searchResult);
-								}
-							});
-
-				}
-			}.start();
-
-			List<Link> tracks = searchResult.getTracksFound();
-			LOG.debug("Got back " + tracks.size());
-			for (Link link : tracks) {
-				jahspotify.media.Track track = spotifyService.getSpotify()
-						.readTrack(link);
-				jahspotify.media.Album album = spotifyService.getSpotify()
-						.readAlbum(track.getAlbum(), true);
-				jahspotify.media.Artist artist = spotifyService.getSpotify()
-						.readArtist(album.getArtist(), true);
-
-				MetaData md = new MetaData();
-				md.setAlbum(album.getName());
-				md.setAlbumUri(new SpotifyUri(track.getAlbum()));
-				md.setArtist(artist.getName());
-				md.setArtistUri(new SpotifyUri(album.getArtist()));
-				md.setExplicit(track.isExplicit() ? 1 : 0);
-				result.add(new Track(new SpotifyUri(link), track.getTitle(), md));
-			}
-			LOG.debug(result);
-			return new NameSearchResult(result, offset);
-		} finally {
-			spotifyService.unlock();
+		SearchResult searchResult = spotifyService.search(new TrackQuery(
+				userQuery));
+		if (searchResult == null) {
+			return new NameSearchResult<Track>(Collections.EMPTY_LIST, offset);
 		}
+		List<Track> result = new ArrayList<Track>();
+
+		List<Link> tracks = searchResult.getTracksFound();
+		LOG.debug("Got back " + tracks.size());
+		for (Link link : tracks) {
+			jahspotify.media.Track track = spotifyService.readTrack(link);
+			jahspotify.media.Album album = spotifyService.readAlbum(track
+					.getAlbum());
+			jahspotify.media.Artist artist = spotifyService.readArtist(album
+					.getArtist());
+
+			MetaData md = new MetaData();
+			md.setAlbum(album.getName());
+			md.setAlbumUri(new SpotifyUri(track.getAlbum()));
+			md.setArtist(artist.getName());
+			md.setArtistUri(new SpotifyUri(album.getArtist()));
+			md.setExplicit(track.isExplicit() ? 1 : 0);
+			result.add(new Track(new SpotifyUri(link), track.getTitle(), md));
+		}
+		LOG.debug(result);
+		return new NameSearchResult(result, offset);
 	}
 
 	@Override

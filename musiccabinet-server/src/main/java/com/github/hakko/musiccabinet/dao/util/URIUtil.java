@@ -58,6 +58,13 @@ public class URIUtil {
 		}
 		return null;
 	}
+	
+	public static Link getSpotifyLink(Uri uri) {
+		if (!isSpotify(uri)) {
+			return null;
+		}
+		return getSpotifyLink(uri.toString());
+	}
 
 	public static Link getSpotifyLink(URI uri) {
 		if (!isSpotify(uri)) {

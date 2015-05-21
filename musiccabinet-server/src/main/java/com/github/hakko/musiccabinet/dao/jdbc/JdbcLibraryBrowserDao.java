@@ -133,11 +133,11 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " inner join ("
 				+ " select artist_id, max(invocation_time) as last_invocation_time"
 				+ " from library.playcount pc "
-				+ " ? "
+				+ userCriteria
 				+ " group by artist_id"
 				+ ") pc on pc.artist_id = a.id where true "
-				+ " ? "
-				+ " ? "
+				+ artistNameCriteria
+				+ hasAlbumsCriteria
 				+ " order by last_invocation_time desc offset ? limit ?";
 
 		return jdbcTemplate.query(sql, args.toArray(),
@@ -249,8 +249,9 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		final Integer albumId = albumUri.getId();
 
 		String sql = "select ma.artist_id, null, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, lt.track_ids, ma.spotify_uri"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, lt.track_ids, ma.spotify_uri, coalesce(ur.rating, 0)"
 				+ " from music.album ma"
+				+ " left outer join library.user_rating ur on ma.id = ur.id"
 				+ " inner join library.album la on la.album_id = ma.id "
 				+ " inner join (select la2.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
 				+ "		from library.album la2"
@@ -281,7 +282,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		final Integer artistId = artist.getUri().getId();
 
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri, coalesce(ur.rating, 0) from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
 				+ " from library.track lt"
 				+ " inner join music.album ma on lt.album_id = ma.id"
@@ -291,6 +292,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " or ft.artist_id = "
 				+ artistId
 				+ " group by lt.album_id) tr"
+				+ " left outer join library.user_rating ur on ur.id = tr.album_id"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
 				+ " inner join music.artist a on ma.artist_id = a.id"
@@ -325,7 +327,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 			int offset, int limit, String query) {
 
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri, coalesce(ur.rating, 0) from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.sort_id, max(ltf.modified) modified"
 				+ " from library.track lt"
 				+ " inner join library.file ltf on ltf.id = lt.file_id"
@@ -339,6 +341,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ (query != null ? " and la.album_name_search like ? " : "")
 				+ "  order by la.id desc offset ? limit ?) filter on lt.album_id = filter.album_id"
 				+ " group by lt.album_id, filter.sort_id) tr"
+				+ " left outer join library.user_rating ur on ur.id = tr.album_id"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
 				+ " inner join music.artist a on ma.artist_id = a.id"
@@ -372,7 +375,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		args.add(limit);
 
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri, coalesce(ur.rating, 0) from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.last_invocation_time"
 				+ " from library.track lt"
 				+ " inner join music.album ma on (lt.album_id = ma.id"
@@ -388,6 +391,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ albumNameCriteria
 				+ " group by la.album_id order by last_invocation_time desc offset ? limit ?) filter on lt.album_id = filter.album_id"
 				+ " group by lt.album_id, filter.last_invocation_time) tr"
+				+ " left outer join library.user_rating ur on ur.id = tr.album_id"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
 				+ " inner join music.artist a on ma.artist_id = a.id"
@@ -419,7 +423,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		args.add(limit);
 
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri, coalesce(ur.rating, 0) from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.cnt"
 				+ " from library.track lt"
 				+ " inner join music.album ma on (lt.album_id = ma.id"
@@ -435,6 +439,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ albumNameCriteria
 				+ " group by la.album_id order by cnt desc offset ? limit ?) filter on lt.album_id = filter.album_id"
 				+ " group by lt.album_id, filter.cnt) tr"
+				+ " left outer join library.user_rating ur on ur.id = tr.album_id"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
 				+ " inner join music.artist a on ma.artist_id = a.id"
@@ -451,7 +456,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 	@Override
 	public List<Album> getRandomAlbums(boolean spotifyEnabled, int limit) {
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri, coalesce(ur.rating, 0) from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
 				+ " from library.track lt"
 				+ " inner join music.album ma on (lt.album_id = ma.id "
@@ -461,6 +466,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ " inner join (select album_id from library.album la order by random() limit ? "
 				+ " ) la on la.album_id = ma.id"
 				+ " group by lt.album_id) tr"
+				+ " left outer join library.user_rating ur on ur.id = tr.album_id"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
 				+ " inner join music.artist a on ma.artist_id = a.id"
@@ -491,7 +497,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		args.add(limit);
 
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri, coalesce(ur.rating, 0) from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids, filter.added"
 				+ " from library.track lt"
 				+ " inner join music.album ma on (lt.album_id = ma.id"
@@ -506,6 +512,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ albumNameCriteria
 				+ " order by sa.added desc offset ? limit ?) filter on lt.album_id = filter.album_id"
 				+ " group by lt.album_id, filter.added) tr"
+				+ " left outer join library.user_rating ur on ur.id = tr.album_id"				
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
 				+ " inner join music.artist a on ma.artist_id = a.id"
@@ -896,7 +903,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		args.add(limit);
 
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri, coalesce(ur.rating, 0) from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
 				+ " from library.track lt"
 				+ " inner join music.album ma on lt.album_id = ma.id"
@@ -905,6 +912,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ albumNameCriteria
 				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
 				+ " group by lt.album_id) tr"
+				+ " left outer join library.user_rating ur on ur.id = tr.album_id"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
 				+ " inner join music.artist a on ma.artist_id = a.id"
@@ -949,7 +957,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		args.add(limit);
 
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri, coalesce(ur.rating, 0) from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
 				+ " from library.track lt"
 				+ " inner join music.album ma on lt.album_id = ma.id"
@@ -958,6 +966,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ albumNameCriteria
 				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
 				+ " group by lt.album_id) tr"
+				+ " left outer join library.user_rating ur on ur.id = tr.album_id"				
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
 				+ " inner join music.artist a on ma.artist_id = a.id"
@@ -995,7 +1004,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 		args.add(limit);
 
 		String sql = "select ma.artist_id, a.artist_name_capitalization, ma.id, ma.album_name_capitalization, la.year,"
-				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri from"
+				+ " d1.path, f1.filename, d2.path, f2.filename, ai.extralargeimageurl, tr.track_ids, ma.spotify_uri, coalesce(ur.rating, 0) from"
 				+ " (select lt.album_id as album_id, array_agg(lt.id order by coalesce(ft.disc_nr, 1)*100 + coalesce(ft.track_nr, 0)) as track_ids"
 				+ " from library.track lt"
 				+ " inner join music.album ma on lt.album_id = ma.id"
@@ -1005,6 +1014,7 @@ public class JdbcLibraryBrowserDao implements LibraryBrowserDao,
 				+ albumNameCriteria
 				+ (spotifyEnabled ? "" : " and ma.spotify_uri is null ")
 				+ " group by lt.album_id) tr"
+				+ " left outer join library.user_rating ur on ur.id = tr.album_id"
 				+ " inner join library.album la on la.album_id = tr.album_id"
 				+ " inner join music.album ma on la.album_id = ma.id"
 				+ " inner join music.artist a on ma.artist_id = a.id"

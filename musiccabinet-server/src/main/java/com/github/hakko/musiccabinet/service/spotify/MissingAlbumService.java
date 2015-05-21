@@ -1,6 +1,8 @@
 package com.github.hakko.musiccabinet.service.spotify;
 
 import static com.github.hakko.musiccabinet.domain.model.library.WebserviceInvocation.Calltype.SPOTIFY_MISSING_ALBUMS;
+import jahspotify.media.Link;
+import jahspotify.media.Playlist;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,6 +16,7 @@ import com.github.hakko.musiccabinet.dao.AlbumInfoDao;
 import com.github.hakko.musiccabinet.dao.LibraryAdditionDao;
 import com.github.hakko.musiccabinet.dao.jdbc.JdbcLibraryBrowserDao;
 import com.github.hakko.musiccabinet.dao.spotify.SpotifyLibraryBrowserDao;
+import com.github.hakko.musiccabinet.dao.util.URIUtil;
 import com.github.hakko.musiccabinet.domain.model.library.File;
 import com.github.hakko.musiccabinet.domain.model.music.Album;
 import com.github.hakko.musiccabinet.domain.model.music.AlbumInfo;
@@ -52,6 +55,26 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 
 		setTotalOperations(artistNames.size());
 
+		List<String> spotifyUsers = spotifyService.getSpotifySettingsService()
+				.getSpotifyUsers();
+		// we want to be sure that we download albums for all the tracks
+		List<String> forcedAlbums = new ArrayList<String>();
+		List<String> forcedArtists = new ArrayList<String>();
+		for (String username : spotifyUsers) {
+			Playlist starred = spotifyService.readStarredPlaylist(username);
+
+			for (Link trackLink : starred.getTracks()) {
+				jahspotify.media.Track track = spotifyService
+						.readTrack(trackLink);
+				for (Link artist : track.getArtists()) {
+					forcedArtists.add(artist.toString());	
+				}
+				
+				forcedAlbums.add(track.getAlbum().toString());
+			}
+		}
+		
+
 		// add the spotify virtual directory if it doesn't exist
 		Set<String> spotifyDir = new HashSet<String>();
 		spotifyDir.add("spotify:");
@@ -79,8 +102,12 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 					continue;
 				}
 				
+				boolean isStarred = true;
 				if (jdbcLibraryBrowserDao.isStarred(artist) == false) {
-					continue;
+					if (!forcedArtists.contains(artist.getSpotifyUri().toString())) {
+						continue;
+					}
+					isStarred = false;
 				}
 				
 				jdbcLibraryBrowserDao.getAlbums(existingAlbums, artist, false);
@@ -112,7 +139,13 @@ public class MissingAlbumService extends SearchIndexUpdateService {
 					}
 
 					// we don't want tons of singles
-					if (album.getTrackUris().size() < 5) {
+					boolean forced = forcedAlbums.contains(album.getSpotifyUri().toString());
+					System.err.println("Forced " + forced + ":" + album.getSpotifyUri());
+					if (!forced && album.getTrackUris().size() < 5) {
+						continue NEXTALBUM;
+					}
+					
+					if (!forced && !isStarred) {
 						continue NEXTALBUM;
 					}
 					

@@ -97,42 +97,30 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 		if (albumUri instanceof SpotifyUri == false) {
 			return null;
 		}
-		try {
-			if (!spotifyService.lock()) {
-				return null;
-			}
-
-			LOG.debug("Trying to get album " + albumUri);
-			jahspotify.media.Album spotifyAlbum = loadAlbum(albumUri);
-			if (spotifyAlbum == null) {
-				return null;
-			}
-
-			List<Link> trackLinks = spotifyAlbum.getTracks();
-			List<Uri> tracks = new ArrayList<Uri>();
-			for (Link track : trackLinks) {
-				tracks.add(new SpotifyUri(track));
-			}
-			return new Album(new SpotifyUri(spotifyAlbum.getArtist()),
-					spotifyAlbum.getArtist().getId(), albumUri,
-					spotifyAlbum.getName(), spotifyAlbum.getYear(),
-					spotifyAlbum.getCover().asString(), false, spotifyAlbum
-							.getCover().asString(), tracks, new SpotifyUri(
-							spotifyAlbum.getId()));
-		} finally {
-			spotifyService.unlock();
+		LOG.debug("Trying to get album " + albumUri);
+		jahspotify.media.Album spotifyAlbum = loadAlbum(albumUri);
+		if (spotifyAlbum == null) {
+			return null;
 		}
+
+		List<Link> trackLinks = spotifyAlbum.getTracks();
+		List<Uri> tracks = new ArrayList<Uri>();
+		for (Link track : trackLinks) {
+			tracks.add(new SpotifyUri(track));
+		}
+		return new Album(new SpotifyUri(spotifyAlbum.getArtist()), spotifyAlbum
+				.getArtist().getId(), albumUri, spotifyAlbum.getName(),
+				spotifyAlbum.getYear(), spotifyAlbum.getCover().asString(),
+				false, spotifyAlbum.getCover().asString(), tracks,
+				new SpotifyUri(spotifyAlbum.getId()), 0d);
 	}
 
 	private jahspotify.media.Album loadAlbum(Uri albumUri) {
 		jahspotify.media.Album spotifyAlbum = albumCache.getIfPresent(albumUri);
 		if (spotifyAlbum == null) {
 
-			spotifyAlbum = spotifyService.getSpotify().readAlbum(
-					((SpotifyUri) albumUri).getLink(), true);
-			if (!MediaHelper.waitFor(spotifyAlbum, 60)) {
-				return null;
-			}
+			spotifyAlbum = spotifyService.readAlbum(((SpotifyUri) albumUri)
+					.getLink());
 			albumCache.put(albumUri, spotifyAlbum);
 		}
 		return spotifyAlbum;
@@ -142,11 +130,8 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 		jahspotify.media.Artist spotifyArtist = artistCache
 				.getIfPresent(artistUri);
 		if (spotifyArtist == null) {
-			spotifyArtist = spotifyService.getSpotify().readArtist(
-					((SpotifyUri) artistUri).getLink(), true);
-			if (!MediaHelper.waitFor(spotifyArtist, 60)) {
-				return null;
-			}
+			spotifyArtist = spotifyService.readArtist(((SpotifyUri) artistUri)
+					.getLink());
 			artistCache.put(artistUri, spotifyArtist);
 		}
 		return spotifyArtist;
@@ -162,11 +147,12 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 			return;
 		}
 
-		getAlbums(albums, artist.getName(), artist.getSpotifyUri(), sortAscending);
+		getAlbums(albums, artist.getName(), artist.getSpotifyUri(),
+				sortAscending);
 	}
 
-	public void getAlbums(List<Album> albums, String artistName, Uri spotifyUri, 
-			boolean sortAscending) {
+	public void getAlbums(List<Album> albums, String artistName,
+			Uri spotifyUri, boolean sortAscending) {
 
 		Artist foundArtist = null;
 		NameSearchResult<Artist> artists = nameSearchService.getArtists(
@@ -189,60 +175,53 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 		if (foundArtist == null) {
 			return;
 		}
-		Uri artistUri = foundArtist.getSpotifyUri() != null ? foundArtist.getSpotifyUri() : foundArtist.getUri();
+		Uri artistUri = foundArtist.getSpotifyUri() != null ? foundArtist
+				.getSpotifyUri() : foundArtist.getUri();
 
-		try {
-			if (!spotifyService.lock()) {
-				return;
+		jahspotify.media.Artist spotifyArtist = loadArtist(artistUri);
+
+		List<Link> albumLinks = spotifyArtist.getAlbums();
+		ALBUMS: for (Link albumLink : albumLinks) {
+			jahspotify.media.Album spotifyAlbum = loadAlbum(new SpotifyUri(
+					albumLink));
+			if (spotifyAlbum == null) {
+				continue ALBUMS;
 			}
 
-			jahspotify.media.Artist spotifyArtist = loadArtist(artistUri);
-
-			List<Link> albumLinks = spotifyArtist.getAlbums();
-			ALBUMS: for (Link albumLink : albumLinks) {
-				jahspotify.media.Album spotifyAlbum = loadAlbum(new SpotifyUri(
-						albumLink));
-				if (spotifyAlbum == null) {
-					continue ALBUMS;
-				}
-
-				jahspotify.media.Artist albumArtist = loadArtist(new SpotifyUri(
-						spotifyAlbum.getArtist()));
-				if (albumArtist == null) {
-					continue ALBUMS;
-				}
-
-				for (Album album : albums) {
-					if (spotifyAlbum.getName().toLowerCase()
-							.equals(album.getName().toLowerCase())) {
-						continue ALBUMS;
-					}
-				}
-
-				List<Link> trackLinks = spotifyAlbum.getTracks();
-				List<Uri> tracks = new ArrayList<Uri>();
-				for (Link track : trackLinks) {
-					tracks.add(new SpotifyUri(track));
-				}
-				// Image image =
-				// spotifyService.getSpotify().readImage(spotifyAlbum.getCover());
-				String albumName = spotifyAlbum.getName();
-				Integer year = spotifyAlbum.getYear();
-				Link cover = spotifyAlbum.getCover();
-				Uri albumArtistUri = new SpotifyUri(albumArtist.getId());
-				String albumArtistName = albumArtist.getName();
-				Uri albumUri = new SpotifyUri(albumLink);
-				String coverUri = "";
-				if (cover != null) {
-					coverUri = cover.asString();
-				}
-				Uri albumLinkUri = new SpotifyUri(albumLink);
-				albums.add(new Album(albumArtistUri, albumArtistName, albumUri,
-						albumName, year, coverUri, false, coverUri, tracks,
-						albumLinkUri));
+			jahspotify.media.Artist albumArtist = loadArtist(new SpotifyUri(
+					spotifyAlbum.getArtist()));
+			if (albumArtist == null) {
+				continue ALBUMS;
 			}
-		} finally {
-			spotifyService.unlock();
+
+			for (Album album : albums) {
+				if (spotifyAlbum.getName().toLowerCase()
+						.equals(album.getName().toLowerCase())) {
+					continue ALBUMS;
+				}
+			}
+
+			List<Link> trackLinks = spotifyAlbum.getTracks();
+			List<Uri> tracks = new ArrayList<Uri>();
+			for (Link track : trackLinks) {
+				tracks.add(new SpotifyUri(track));
+			}
+			// Image image =
+			// spotifyService.getSpotify().readImage(spotifyAlbum.getCover());
+			String albumName = spotifyAlbum.getName();
+			Integer year = spotifyAlbum.getYear();
+			Link cover = spotifyAlbum.getCover();
+			Uri albumArtistUri = new SpotifyUri(albumArtist.getId());
+			String albumArtistName = albumArtist.getName();
+			Uri albumUri = new SpotifyUri(albumLink);
+			String coverUri = "";
+			if (cover != null) {
+				coverUri = cover.asString();
+			}
+			Uri albumLinkUri = new SpotifyUri(albumLink);
+			albums.add(new Album(albumArtistUri, albumArtistName, albumUri,
+					albumName, year, coverUri, false, coverUri, tracks,
+					albumLinkUri, 0d));
 		}
 	}
 
@@ -259,20 +238,20 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	}
 
 	@Override
-	public List<Album> getRecentlyAddedAlbums(boolean spotifyEnabled, int offset, int limit,
-			String query) {
-		return new ArrayList<Album>();
-	}
-
-	@Override
-	public List<Album> getRecentlyPlayedAlbums(boolean spotifyEnabled, String lastFmUsername,
+	public List<Album> getRecentlyAddedAlbums(boolean spotifyEnabled,
 			int offset, int limit, String query) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getMostPlayedAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
-			int limit, String query) {
+	public List<Album> getRecentlyPlayedAlbums(boolean spotifyEnabled,
+			String lastFmUsername, int offset, int limit, String query) {
+		return new ArrayList<Album>();
+	}
+
+	@Override
+	public List<Album> getMostPlayedAlbums(boolean spotifyEnabled,
+			String lastFmUsername, int offset, int limit, String query) {
 		return new ArrayList<Album>();
 	}
 
@@ -282,8 +261,8 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	}
 
 	@Override
-	public List<Album> getStarredAlbums(boolean spotifyEnabled, String lastFmUsername, int offset,
-			int limit, String query) {
+	public List<Album> getStarredAlbums(boolean spotifyEnabled,
+			String lastFmUsername, int offset, int limit, String query) {
 
 		/*
 		 * SearchResult searchResult = new BlockingRequest<SearchResult>() {
@@ -346,58 +325,44 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	@Override
 	public List<Track> getTracks(List<? extends Uri> trackUris) {
 		List<Track> tracks = new ArrayList<Track>();
-		try {
-			if (!spotifyService.lock()) {
-				return tracks;
-			}
+		for (Uri uri : trackUris) {
+			if (URIUtil.isSpotify(uri)) {
+				jahspotify.media.Track spotifyTrack = spotifyService
+						.readTrack(((SpotifyUri) uri).getLink());
+				MetaData md = new MetaData();
 
-			for (Uri uri : trackUris) {
-				if (URIUtil.isSpotify(uri)) {
-					jahspotify.media.Track spotifyTrack = spotifyService
-							.getSpotify().readTrack(
-									((SpotifyUri) uri).getLink());
-					if (!MediaHelper.waitFor(spotifyTrack, 10)) {
-						continue;
-					}
-					MetaData md = new MetaData();
-
-					jahspotify.media.Album album = loadAlbum(new SpotifyUri(
-							spotifyTrack.getAlbum()));
-					if(album == null) {
-						continue;
-					}
-					md.setAlbum(album.getName());
-
-					jahspotify.media.Artist artist = loadArtist(new SpotifyUri(
-							album.getArtist()));
-					if (!MediaHelper.waitFor(artist, 10)) {
-						continue;
-					}
-
-					md.setUri(uri);
-					md.setMediaType(MetaData.Mediatype.MP3);
-					md.setArtist(artist.getName());
-					md.setTrackNr((short) spotifyTrack.getTrackNumber());
-					md.setDiscNr((short) 1);
-					md.setDuration((short) (spotifyTrack.getLength() / 1000));
-					md.setYear(album.getYear());
-					md.setAlbumUri(new SpotifyUri(spotifyTrack.getAlbum()));
-					md.setArtistUri(new SpotifyUri(spotifyTrack.getArtists()
-							.get(0)));
-					md.setModified(new Date().getTime());
-					md.setBitrate((short) 0);
-					md.setSize(0l);
-					md.setPath(uri.toString());
-					md.setTitle(spotifyTrack.getTitle());
-					md.setExplicit(spotifyTrack.isExplicit() ? 1 : 0);
-					tracks.add(new Track(uri, spotifyTrack.getTitle(), md));
+				jahspotify.media.Album album = loadAlbum(new SpotifyUri(
+						spotifyTrack.getAlbum()));
+				if (album == null) {
+					continue;
 				}
-			}
-			return tracks;
-		} finally {
-			spotifyService.unlock();
-		}
+				md.setAlbum(album.getName());
 
+				jahspotify.media.Artist artist = loadArtist(new SpotifyUri(
+						album.getArtist()));
+				if (!MediaHelper.waitFor(artist, 10)) {
+					continue;
+				}
+
+				md.setUri(uri);
+				md.setMediaType(MetaData.Mediatype.MP3);
+				md.setArtist(artist.getName());
+				md.setTrackNr((short) spotifyTrack.getTrackNumber());
+				md.setDiscNr((short) 1);
+				md.setDuration((short) (spotifyTrack.getLength() / 1000));
+				md.setYear(album.getYear());
+				md.setAlbumUri(new SpotifyUri(spotifyTrack.getAlbum()));
+				md.setArtistUri(new SpotifyUri(spotifyTrack.getArtists().get(0)));
+				md.setModified(new Date().getTime());
+				md.setBitrate((short) 0);
+				md.setSize(0l);
+				md.setPath(uri.toString());
+				md.setTitle(spotifyTrack.getTitle());
+				md.setExplicit(spotifyTrack.isExplicit() ? 1 : 0);
+				tracks.add(new Track(uri, spotifyTrack.getTitle(), md));
+			}
+		}
+		return tracks;
 	}
 
 	@Override
@@ -418,30 +383,17 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 		// this should be handled in the MissingArtistService
 		return new ArrayList<>();
 		/*
-		try {
-			if (!spotifyService.lock()) {
-				return null;
-			}
-			jahspotify.media.Playlist playlist = spotifyService.getSpotify()
-					.readPlaylist(
-							Link.create("spotify:user:"
-									+ spotifyService.getSpotifyUser()
-											.getUserName() + ":starred"), 0,
-							1000);
-			if (!MediaHelper.waitFor(playlist, 60)) {
-				return null;
-			}
-			List<Link> trackLinks = playlist.getTracks();
-			List<Uri> uris = new ArrayList<Uri>();
-			for (Link trackLink : trackLinks) {
-				uris.add(new SpotifyUri(trackLink));
-			}
-			return uris;
-
-		} finally {
-			spotifyService.unlock();
-		}
-		*/
+		 * try { if (!spotifyService.lock()) { return null; }
+		 * jahspotify.media.Playlist playlist = spotifyService.getSpotify()
+		 * .readPlaylist( Link.create("spotify:user:" +
+		 * spotifyService.getSpotifyUser() .getUserName() + ":starred"), 0,
+		 * 1000); if (!MediaHelper.waitFor(playlist, 60)) { return null; }
+		 * List<Link> trackLinks = playlist.getTracks(); List<Uri> uris = new
+		 * ArrayList<Uri>(); for (Link trackLink : trackLinks) { uris.add(new
+		 * SpotifyUri(trackLink)); } return uris;
+		 * 
+		 * } finally { spotifyService.unlock(); }
+		 */
 	}
 
 	@Override
@@ -513,24 +465,26 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 	}
 
 	@Override
-	public List<Album> getAlbumsByName(boolean spotifyEnabled, int offset, int limit, String query) {
+	public List<Album> getAlbumsByName(boolean spotifyEnabled, int offset,
+			int limit, String query) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getAlbumsByArtist(boolean spotifyEnabled, int offset, int limit, String query) {
+	public List<Album> getAlbumsByArtist(boolean spotifyEnabled, int offset,
+			int limit, String query) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getAlbumsByYear(boolean spotifyEnabled, int offset, int limit, String query,
-			int fromYear, int toYear) {
+	public List<Album> getAlbumsByYear(boolean spotifyEnabled, int offset,
+			int limit, String query, int fromYear, int toYear) {
 		return new ArrayList<Album>();
 	}
 
 	@Override
-	public List<Album> getAlbumsByGenre(boolean spotifyEnabled, int offset, int limit, String query,
-			String genre) {
+	public List<Album> getAlbumsByGenre(boolean spotifyEnabled, int offset,
+			int limit, String query, String genre) {
 		return new ArrayList<Album>();
 	}
 

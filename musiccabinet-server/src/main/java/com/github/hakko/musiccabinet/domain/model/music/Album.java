@@ -19,6 +19,7 @@ public class Album {
 	protected List<Uri> trackUris;
 	protected Uri uri;
 	protected Uri spotifyUri;
+	protected Integer rating;
 	
 	public Album() {
 		setArtist(new Artist());
@@ -40,12 +41,12 @@ public class Album {
 	}
 	
 	public Album(int artistId, String artistName, int id, String name, Integer year, String coverArtFile,
-			boolean coverArtEmbedded, String coverArtURL, List<Uri> trackUris, Uri spotifyUri) {
-		this(new SubsonicUri(artistId), artistName, new SubsonicUri(id), name, year, coverArtFile, coverArtEmbedded, coverArtURL, trackUris, spotifyUri);
+			boolean coverArtEmbedded, String coverArtURL, List<Uri> trackUris, Uri spotifyUri, Integer rating) {
+		this(new SubsonicUri(artistId), artistName, new SubsonicUri(id), name, year, coverArtFile, coverArtEmbedded, coverArtURL, trackUris, spotifyUri, rating);
 	}
 	
 	public Album(Uri artistUri, String artistName, Uri albumUri, String name, Integer year, String coverArtFile,
-			boolean coverArtEmbedded, String coverArtURL, List<Uri> trackUris, Uri spotifyUri) {
+			boolean coverArtEmbedded, String coverArtURL, List<Uri> trackUris, Uri spotifyUri, Integer rating) {
 		this.artist = new Artist(artistUri, artistName);
 		this.uri = albumUri;
 		this.name = name;
@@ -55,6 +56,7 @@ public class Album {
 		this.coverArtURL = coverArtURL;
 		this.trackUris = trackUris;
 		this.spotifyUri = spotifyUri;
+		this.rating = rating;
 	}
 	
 	
@@ -174,6 +176,14 @@ public class Album {
 
 	public void setSpotifyUri(Uri spotifyUri) {
 		this.spotifyUri = spotifyUri;
+	}
+
+	public Integer getRating() {
+		return rating;
+	}
+
+	public void setRating(Integer rating) {
+		this.rating = rating;
 	}
 
 }

@@ -30,7 +30,7 @@ public class JdbcPlaylistGeneratorDao implements PlaylistGeneratorDao,
 			int totalCount) {
 		String sql = "select t.id from library.track t"
 				+ " inner join library.artisttoptrackplaycount att on att.track_id = t.id"
-				+ " where att.artist_id = " + " order by rank limit ";
+				+ " where att.artist_id = ? " + " order by rank limit ?";
 		return jdbcTemplate.query(sql, new Object[] { artistUri.getId(),
 				totalCount }, new UriRowMapper());
 	}

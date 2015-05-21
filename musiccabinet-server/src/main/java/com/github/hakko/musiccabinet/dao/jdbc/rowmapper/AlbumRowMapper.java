@@ -30,24 +30,27 @@ public class AlbumRowMapper implements RowMapper<Album> {
 			coverArtFile = getFileName(rs.getString(8), rs.getString(9));
 		}
 		String coverArtURL = rs.getString(10);
-		Integer[] trackIds = (Integer[])rs.getArray(11).getArray();
-		
+		Integer[] trackIds = (Integer[]) rs.getArray(11).getArray();
+
 		Uri spotifyUri = null;
 		String spotifyUriString = rs.getString(12);
-		if(StringUtils.isNotEmpty(spotifyUriString)) {
-		  spotifyUri = new SpotifyUri(spotifyUriString);	
+		if (StringUtils.isNotEmpty(spotifyUriString)) {
+			spotifyUri = new SpotifyUri(spotifyUriString);
 		}
+		Integer rating = rs.getInt(13);
+
 		List<Uri> trackUris = new ArrayList<Uri>();
-		for(Integer trackId : trackIds) {
+		for (Integer trackId : trackIds) {
 			trackUris.add(new SubsonicUri(trackId));
 		}
-		return new Album(artistId, artistName, albumId, albumName, year, coverArtFile,
-				coverArtEmbedded, coverArtURL, trackUris, spotifyUri);
+		return new Album(artistId, artistName, albumId, albumName, year,
+				coverArtFile, coverArtEmbedded, coverArtURL, trackUris,
+				spotifyUri, rating);
 	}
 
 	private String getFileName(String directory, String filename) {
-		return directory == null || filename == null ? null : 
-			directory + separatorChar + filename;
+		return directory == null || filename == null ? null : directory
+				+ separatorChar + filename;
 	}
 
 }
