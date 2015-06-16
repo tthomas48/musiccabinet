@@ -19,6 +19,9 @@ import jahspotify.services.JahSpotifyService;
 import jahspotify.services.MediaHelper;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,69 +42,14 @@ public class SpotifyService implements ConnectionListener {
 	private boolean connected;
 	private boolean loggedIn;
 	private boolean loggingIn;
+	private boolean available;
 	private SpotifyUser spotifyUser;
 
 	public void init() {
 		new SpotifyBlockingRequest<Boolean>() {
 			public void run() {
 
-				System.err.println("Attempting to initialize spotify.");
-				try {
-					JahSpotifyService.class.getMethod("initialize", File.class);
-
-				} catch (NoSuchMethodException e) {
-					System.err.println("Did not find spotify libraries.");
-					initialized = false;
-					return;
-				}
-
-				final File tempFolder = new File(
-						settingsService.getSpotifyCache());
-				if (!tempFolder.exists()) {
-					if (!tempFolder.mkdir()) {
-						System.err
-								.println("Could not find or create spotify cache directory: "
-										+ tempFolder.getAbsolutePath());
-						return;
-					}
-				}
-
-				if (!tempFolder.isDirectory()) {
-					System.err.println("Spotify cache must be a directory: "
-							+ tempFolder.getAbsolutePath());
-					return;
-				}
-				if (!tempFolder.canWrite()) {
-					System.err.println("Spotify cache must be a writable: "
-							+ tempFolder.getAbsolutePath());
-					return;
-				}
-
-				final BlockingRequest<Boolean> blockingRequest = new BlockingRequest<Boolean>() {
-					@Override
-					public void run() {
-						try {
-							JahSpotifyService.initialize(tempFolder);
-							getSpotify().addConnectionListener(
-									SpotifyService.this);
-						} catch (UnsatisfiedLinkError e) {
-							System.err
-									.println("Unable to find libjahspotify.so.");
-							e.printStackTrace();
-							finish(Boolean.FALSE);
-						}
-					}
-				};
-				AbstractConnectionListener initListener = new AbstractConnectionListener() {
-					@Override
-					public void initialized(boolean initialized) {
-						blockingRequest.finish(initialized);
-					}
-				};
-				registerListener(initListener);
-				SpotifyService.initialized = blockingRequest.start();
-				removeListener(initListener);
-				System.err.println("Callback hit");
+				initNoLogin();
 
 				if (settingsService.getSpotifyUserName() != null) {
 					System.err.println(settingsService.getSpotifyUserName());
@@ -178,6 +126,88 @@ public class SpotifyService implements ConnectionListener {
 		}.start();
 	}
 
+	private void initNoLogin() {
+		if (initialized)
+			return;
+		available = false;
+		System.err.println("Attempting to initialize spotify.");
+		try {
+			JahSpotifyService.class.getMethod("initialize", byte[].class,
+					File.class);
+
+		} catch (NoSuchMethodException e) {
+			System.err.println("Did not find spotify libraries.");
+			e.printStackTrace();
+			initialized = false;
+			return;
+		}
+		available = true;
+
+		byte[] keyData = null;
+		try {
+			RandomAccessFile f = new RandomAccessFile(
+					settingsService.getSpotifyKey(), "r");
+			keyData = new byte[(int) f.length()];
+			f.readFully(keyData);
+		} catch (FileNotFoundException e) {
+			System.err.println("Could not find spotify key.");
+			initialized = false;
+			return;
+		} catch (IOException e) {
+			System.err.println("Could not read spotify key.");
+			e.printStackTrace();
+			initialized = false;
+			return;
+		}
+
+		final File tempFolder = new File(settingsService.getSpotifyCache());
+		if (!tempFolder.exists()) {
+			if (!tempFolder.mkdir()) {
+				System.err
+						.println("Could not find or create spotify cache directory: "
+								+ tempFolder.getAbsolutePath());
+				return;
+			}
+		}
+
+		if (!tempFolder.isDirectory()) {
+			System.err.println("Spotify cache must be a directory: "
+					+ tempFolder.getAbsolutePath());
+			return;
+		}
+		if (!tempFolder.canWrite()) {
+			System.err.println("Spotify cache must be a writable: "
+					+ tempFolder.getAbsolutePath());
+			return;
+		}
+
+		final byte[] spotifyKey = keyData;
+		final BlockingRequest<Boolean> blockingRequest = new BlockingRequest<Boolean>() {
+			@Override
+			public void run() {
+				try {
+					JahSpotifyService.initialize(spotifyKey, tempFolder);
+					getSpotify().addConnectionListener(SpotifyService.this);
+				} catch (UnsatisfiedLinkError e) {
+					System.err.println("Unable to find libjahspotify.so.");
+					e.printStackTrace();
+					finish(Boolean.FALSE);
+				}
+			}
+		};
+		AbstractConnectionListener initListener = new AbstractConnectionListener() {
+			@Override
+			public void initialized(boolean initialized) {
+				blockingRequest.finish(initialized);
+			}
+		};
+		registerListener(initListener);
+		SpotifyService.initialized = blockingRequest.start();
+		removeListener(initListener);
+		System.err.println("Callback hit");
+
+	}
+
 	public void setSettingsService(SpotifySettingsService settingsService) {
 		this.settingsService = settingsService;
 	}
@@ -187,10 +217,7 @@ public class SpotifyService implements ConnectionListener {
 	}
 
 	public boolean isSpotifyAvailable() {
-		if (!initialized) {
-			return false;
-		}
-		return JahSpotifyService.getInstance() != null;
+		return available;
 	}
 
 	public PlayerStatus getStatus() {
@@ -232,6 +259,10 @@ public class SpotifyService implements ConnectionListener {
 
 			@Override
 			public void run() {
+				initNoLogin();
+				if (!initialized) {
+					this.finish(Boolean.FALSE);
+				}
 				getSpotify().login(username, password, blob, true);
 				this.finish(Boolean.TRUE);
 
@@ -241,6 +272,10 @@ public class SpotifyService implements ConnectionListener {
 	}
 
 	public boolean isLoggedIn() {
+		if (!available || !initialized) {
+			return false;
+		}
+
 		SpotifyBlockingRequest<Boolean> sbr = new SpotifyBlockingRequest<Boolean>(
 				Boolean.FALSE) {
 

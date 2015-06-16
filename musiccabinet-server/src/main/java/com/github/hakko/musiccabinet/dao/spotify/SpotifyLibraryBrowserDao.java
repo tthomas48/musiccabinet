@@ -112,7 +112,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 				.getArtist().getId(), albumUri, spotifyAlbum.getName(),
 				spotifyAlbum.getYear(), spotifyAlbum.getCover().asString(),
 				false, spotifyAlbum.getCover().asString(), tracks,
-				new SpotifyUri(spotifyAlbum.getId()), 0d);
+				new SpotifyUri(spotifyAlbum.getId()), 0);
 	}
 
 	private jahspotify.media.Album loadAlbum(Uri albumUri) {
@@ -221,7 +221,7 @@ public class SpotifyLibraryBrowserDao implements LibraryBrowserDao {
 			Uri albumLinkUri = new SpotifyUri(albumLink);
 			albums.add(new Album(albumArtistUri, albumArtistName, albumUri,
 					albumName, year, coverUri, false, coverUri, tracks,
-					albumLinkUri, 0d));
+					albumLinkUri, 0));
 		}
 	}
 
